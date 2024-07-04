@@ -3,12 +3,27 @@ import time
 import os
 import csv
 import glob
+import threading
 
 # Set the desired quality for directory filtering
 quality = 'FHD'
 
-# Function to convert magnet link to torrent info
-def magnet_to_torrent_info(magnet_uri, output_dir):
+# Function to convert magnet link to torrent info with a timeout
+def magnet_to_torrent_info(magnet_uri, output_dir, timeout=10):
+    def download_metadata(ses, handle, result):
+        try:
+            start_time = time.time()
+            while not handle.status().has_metadata:
+                time.sleep(1)
+                if time.time() - start_time > timeout:
+                    raise TimeoutError(f"Timeout reached ({timeout} seconds)")
+            result.append(handle.torrent_file())
+        except Exception as e:
+            print(f"Exception during metadata download: {e}")
+        finally:
+            ses.pause()
+            ses.remove_torrent(handle)
+
     ses = lt.session({'listen_interfaces': '0.0.0.0:6881'})
     magnet_params = lt.parse_magnet_uri(magnet_uri)
     magnet_params.save_path = output_dir
@@ -21,14 +36,16 @@ def magnet_to_torrent_info(magnet_uri, output_dir):
     # Print the magnet link being processed
     print(f'Downloading metadata for: {magnet_uri}')
 
-    # Wait for the metadata to be downloaded
-    while not handle.status().has_metadata:
-        time.sleep(1)
+    result = []
+    thread = threading.Thread(target=download_metadata, args=(ses, handle, result))
+    thread.start()
+    thread.join(timeout)
 
-    ses.pause()
-    info = handle.torrent_file()
-    ses.remove_torrent(handle)
-    return info
+    if not result:
+        print(f'Timeout reached for magnet link: {magnet_uri}')
+        return None
+
+    return result[0]
 
 # Function to process CSV files and write to content.csv
 def process_csv_files():
@@ -45,6 +62,7 @@ def process_csv_files():
         # Search for CSV files with sequential naming
         csv_files = sorted(glob.glob(os.path.join(subdir, '[0-9]*.csv')), key=lambda f: int(os.path.splitext(os.path.basename(f))[0]))
         for csv_file in csv_files:
+            all_magnets_successful = True  # Flag to track if all magnets were processed successfully
             # Process each CSV file
             with open(csv_file, 'r') as file, open(content_file_path, 'a', newline='') as content_file:
                 content_writer = csv.writer(content_file)
@@ -58,9 +76,10 @@ def process_csv_files():
                     torrent_name = torrent_name.strip()
                     infohash = infohash.strip()
 
-                    # Get the torrent info from the magnet link
+                    # Get the torrent info from the magnet link with a timeout
                     torrent_info = magnet_to_torrent_info(magnet_link.strip(), subdir)
                     if torrent_info is None:
+                        all_magnets_successful = False
                         continue
 
                     # Get the list of files
@@ -73,10 +92,13 @@ def process_csv_files():
                         content_writer.writerow([torrent_name, file_entry, infohash, file_index])
                         print(f'Added file {file_entry} from torrent {torrent_name} with index {file_index} to content.csv')
 
-            # Rename the CSV file to .archive after processing
-            archive_file_path = csv_file.rsplit('.', 1)[0] + '.archive'
-            os.rename(csv_file, archive_file_path)
-            print(f'Renamed {csv_file} to {archive_file_path}')
+            # Rename the CSV file to .archive only if all magnets were successful
+            if all_magnets_successful:
+                archive_file_path = csv_file.rsplit('.', 1)[0] + '.archive'
+                os.rename(csv_file, archive_file_path)
+                print(f'Renamed {csv_file} to {archive_file_path}')
+            else:
+                print(f'Not renaming {csv_file} as some magnets failed to fetch metadata.')
 
 # Call the function to start processing
 process_csv_files()
