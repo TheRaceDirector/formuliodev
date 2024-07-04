@@ -6,7 +6,7 @@ import glob
 import threading
 
 # Set the desired quality for directory filtering
-quality = 'FHD'
+quality = '4K'
 
 # Function to convert magnet link to torrent info with a timeout
 def magnet_to_torrent_info(magnet_uri, output_dir, timeout=10):
