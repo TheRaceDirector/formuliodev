@@ -1,5 +1,8 @@
 FROM python:3.10.12
 
+# Add a non-root user
+RUN groupadd -r appuser && useradd -r -g appuser -s /bin/bash -d /home/appuser appuser
+
 # Set the working directory
 WORKDIR /usr/src/app
 
@@ -8,7 +11,9 @@ COPY requirements.txt ./
 
 # Install necessary packages
 RUN apt-get update && \
-    apt-get install -y build-essential libboost-system-dev libboost-python-dev libssl-dev libtorrent-rasterbar-dev
+    apt-get install -y build-essential libboost-system-dev libboost-python-dev libssl-dev libtorrent-rasterbar-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 RUN pip install --upgrade pip setuptools wheel && \
@@ -17,8 +22,15 @@ RUN pip install --upgrade pip setuptools wheel && \
 # Copy the rest of the application code
 COPY . .
 
-# Make all 0run_scripts.py scripts executable
-RUN find . -name "0run_scripts.py" -exec chmod +x {} +
+# Change ownership of the application directory
+RUN chown -R appuser:appuser /usr/src/app
 
-# Command to run the application 
+# Make all 0run_scripts.py scripts and their dependencies executable
+RUN find . -name "0run_scripts.py" -exec chmod +x {} + && \
+    find . -name "*.py" -exec chmod +x {} +
+
+# Switch to the non-root user
+USER appuser
+
+# Command to run the application
 CMD ["python3", "formulio-addon.py"]
