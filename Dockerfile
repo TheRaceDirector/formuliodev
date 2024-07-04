@@ -20,5 +20,5 @@ COPY . .
 # Make all 0run_scripts.py scripts executable
 RUN find . -name "0run_scripts.py" -exec chmod +x {} +
 
-# Command to run your application (replace with your actual command)
+# Command to run the application 
 CMD ["python3", "formulio-addon.py"]
