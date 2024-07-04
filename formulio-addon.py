@@ -148,8 +148,23 @@ def load_videos(filepath):
 
 def run_scripts_in_loop():
     directories = ['ego', 'smc', 'ssf', 'ssm', 'eg4', 'sm4', 'sms']
-    file_mod_times = {directory: os.path.getmtime(os.path.join(directory, '5processed.txt')) for directory in directories}
-    
+    file_mod_times = {}
+    for directory in directories:
+        filepath = os.path.join(directory, '5processed.txt')
+        if os.path.exists(filepath):
+            file_mod_times[directory] = os.path.getmtime(filepath)
+        else:
+            logging.warning(f"{filepath} not found. Attempting to run script to generate it.")
+            script_path = os.path.join(directory, '0run_scripts.py')
+            try:
+                subprocess.run(['python3', script_path], check=True)
+                if os.path.exists(filepath):
+                    file_mod_times[directory] = os.path.getmtime(filepath)
+                else:
+                    logging.error(f"Script at {script_path} did not generate the expected file.")
+            except subprocess.CalledProcessError as e:
+                logging.error(f"Error running {script_path}: {e}")
+
     while True:
         for directory in directories:
             script_path = os.path.join(directory, '0run_scripts.py')
@@ -157,12 +172,14 @@ def run_scripts_in_loop():
             try:
                 subprocess.run(['python3', script_path], check=True)
                 new_mod_time = os.path.getmtime(os.path.join(directory, '5processed.txt'))
-                if new_mod_time != file_mod_times[directory]:
+                if new_mod_time != file_mod_times.get(directory, 0):
                     file_mod_times[directory] = new_mod_time
                     restart_server()
             except subprocess.CalledProcessError as e:
                 logging.error(f"Error running {script_path}: {e}")
-        time.sleep(540)  # Wait for 5 minutes before running the scripts again
+            except FileNotFoundError:
+                logging.error(f"File not found: {os.path.join(directory, '5processed.txt')}")
+        time.sleep(40)  # Wait for 9 minutes before running the scripts again
 
 def restart_server():
     global app
