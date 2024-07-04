@@ -9,7 +9,7 @@ import threading
 quality = 'FHD'
 
 # Function to convert magnet link to torrent info with a timeout
-def magnet_to_torrent_info(magnet_uri, output_dir, timeout=10):
+def magnet_to_torrent_info(magnet_uri, output_dir, timeout=20):
     def download_metadata(ses, handle, result):
         try:
             start_time = time.time()

@@ -179,7 +179,7 @@ def run_scripts_in_loop():
                 logging.error(f"Error running {script_path}: {e}")
             except FileNotFoundError:
                 logging.error(f"File not found: {os.path.join(directory, '5processed.txt')}")
-        time.sleep(40)  # Wait for 9 minutes before running the scripts again
+        time.sleep(300)  # Wait for 9 minutes before running the scripts again
 
 def restart_server():
     global app
