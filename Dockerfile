@@ -3,8 +3,8 @@ FROM python:3.10.12
 # Add a non-root user
 RUN groupadd -r appuser && useradd -r -g appuser -s /bin/bash -d /home/appuser appuser
 
-# Set the working directory
-WORKDIR /usr/src/app
+# Set the working directory to /tmp/app
+WORKDIR /tmp/app
 
 # Copy requirements.txt first for Docker cache optimization
 COPY requirements.txt ./
@@ -22,8 +22,8 @@ RUN pip install --upgrade pip setuptools wheel && \
 # Copy the rest of the application code
 COPY . .
 
-# Change ownership of the application directory
-RUN chown -R appuser:appuser /usr/src/app
+# Make the /tmp/app directory writable by all users
+RUN chmod -R 777 /tmp/app
 
 # Make all 0run_scripts.py scripts and their dependencies executable
 RUN find . -name "0run_scripts.py" -exec chmod +x {} + && \
