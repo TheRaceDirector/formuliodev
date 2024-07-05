@@ -33,7 +33,7 @@ CATALOG = {
         {
             'id': 'hpytt0202401',
             'name': 'SkyF1 UK1',
-            'description': 'SkyF1 2024 F1 Season - 1080p 50fps (egortech) \n \n Tip: for optimal playback, ensure your TV streaming device is in 50Hz mode',
+            'description': 'SkyF1 2024 F1 Season - 1080p 50fps (egortech) \n \nTip: for optimal playback, ensure your TV streaming device is in 50Hz mode',
             'releaseInfo': '2024',
             'poster': 'https://i.postimg.cc/g2d9tyXS/sky1.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -44,7 +44,7 @@ CATALOG = {
         {
             'id': 'hpytt0202402',
             'name': 'SkyF1 UK2',
-            'description': 'SkyF1 2024 F1 Season - 1080p 50fps (smcgill1969) \n \n Tip: for optimal playback, ensure your TV streaming device is in 50Hz mode',
+            'description': 'SkyF1 2024 F1 Season - 1080p 50fps (smcgill1969) \n \nTip: for optimal playback, ensure your TV streaming device is in 50Hz mode',
             'releaseInfo': '2024',
             'poster': 'https://i.postimg.cc/KYMnKTQb/sky2.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -55,7 +55,7 @@ CATALOG = {
         {
             'id': 'hpytt0202403',
             'name': 'F1TV English',
-            'description': 'F1TV 2024 F1 Season - English - 1080p 50fps (showstopper) \n \n Tip: for optimal playback, ensure your TV streaming device is in 50Hz mode',
+            'description': 'F1TV 2024 F1 Season - English - 1080p 50fps (showstopper) \n \nTip: for optimal playback, ensure your TV streaming device is in 50Hz mode',
             'releaseInfo': '2024',
             'poster': 'https://i.postimg.cc/pXf4j9GD/f1tveng.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -66,7 +66,7 @@ CATALOG = {
         {
             'id': 'hpytt0202404',
             'name': 'F1TV International',
-            'description': 'F1TV 2024 F1 Season - Multiple languages selectable - 1080p 50fps (showstopper) \n \n Audio track can be changed during playback \n \n Tip: for optimal playback, ensure your TV streaming device is in 50Hz mode',
+            'description': 'F1TV 2024 F1 Season - Multiple languages selectable - 1080p 50fps (showstopper) \n Audio track can be changed during playback \nTip: for optimal playback, ensure your TV streaming device is in 50Hz mode',
             'releaseInfo': '2024',
             'poster': 'https://i.postimg.cc/1zjjSDXZ/f1tvint.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -77,7 +77,7 @@ CATALOG = {
         {
             'id': 'hpytt0202405',
             'name': 'SkyF1 4K1',
-            'description': 'SkyF1 2024 F1 Season - 2160p 50fps (egortech) \n \n Tip: for optimal playback, ensure your TV streaming device is in 50Hz mode & supports 4K',
+            'description': 'SkyF1 2024 F1 Season - 2160p 50fps (egortech) \n \nTip: for optimal playback, ensure your TV streaming device is in 50Hz mode & supports 4K',
             'releaseInfo': '2024',
             'poster': 'https://i.postimg.cc/zfPNXN1H/sky14k.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -88,7 +88,7 @@ CATALOG = {
         {
             'id': 'hpytt0202406',
             'name': 'SkyF1 4K2',
-            'description': 'SkyF1 2024 F1 Season - 2160p 50fps (smcgill1969) \n \n Tip: for optimal playback, ensure your TV streaming device is in 50Hz mode & supports 4K',
+            'description': 'SkyF1 2024 F1 Season - 2160p 50fps (smcgill1969) \n \nTip: for optimal playback, ensure your TV streaming device is in 50Hz mode & supports 4K',
             'releaseInfo': '2024',
             'poster': 'https://i.postimg.cc/ry4Tc7Zz/sky24k.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -99,7 +99,7 @@ CATALOG = {
         {
             'id': 'hpytt0202407',
             'name': 'SkyF1 SD',
-            'description': 'SkyF1 2024 F1 Season - 576p 25fps (smcgill1969) \n \n Note: This is not high definition, please use the standard series or the 4K one',
+            'description': 'SkyF1 2024 F1 Season - 576p 25fps (smcgill1969) \n \nNote: This is not high definition, please use the standard series or the 4K one',
             'releaseInfo': '2024',
             'poster': 'https://i.postimg.cc/WbXTfgf7/sky2sd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
