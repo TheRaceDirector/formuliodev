@@ -40,3 +40,6 @@ USER appuser
 
 # Command to run the application
 CMD ["gunicorn", "-b", "0.0.0.0:8000", "--config", "gunicorn_config.py", "formulio_addon:app"]
+
+# Expose port 8000
+EXPOSE 8000
