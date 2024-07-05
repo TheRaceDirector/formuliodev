@@ -9,7 +9,7 @@ Also in static/index.html, change "127.0.0.1" to be your IP or domain of choice.
 
 Very open to changes
 
-## You can build the docker image with
+## You can build & run the docker image locally with
 ```
 docker build -t formulio-addon .
 ```
@@ -18,6 +18,17 @@ docker run -p 8000:8000 formulio-addon
 ```
 
 The Dockerfile will create a user called "appuser" and this will be used to run the container as non-root
+
+## You can build & run the docker image externally loclly with
+```
+docker build -t formulio-addon .
+```
+```
+docker run --rm --user nobody -it formulio-addon
+```
+
+(Still confirming if the above command is working, got it running in zeabur with the docker)
+
 
 ## How this funky script works
 formulio-addon.py will run the several 0run_scripts.py scripts, that 0run_scripts.py file will execute the following scripts in it's respective directory.
