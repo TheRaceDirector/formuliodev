@@ -66,7 +66,7 @@ CATALOG = {
         {
             'id': 'hpytt0202404',
             'name': 'F1TV International',
-            'description': 'F1TV 2024 F1 Season - Multiple languages selectable - 1080p 50fps (showstopper) \n Audio track can be changed during playback \nTip: for optimal playback, ensure your TV streaming device is in 50Hz mode',
+            'description': 'F1TV 2024 F1 Season - Multiple languages selectable - 1080p 50fps (showstopper) \nAudio track can be changed during playback \nTip: for optimal playback, ensure your TV streaming device is in 50Hz mode',
             'releaseInfo': '2024',
             'poster': 'https://i.postimg.cc/1zjjSDXZ/f1tvint.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
