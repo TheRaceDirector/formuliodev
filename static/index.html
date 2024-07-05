@@ -47,7 +47,8 @@
     <script>
         window.addEventListener('DOMContentLoaded', (event) => {
             const currentUrl = window.location.href;
-            const stremioUrl = 'stremio://' + currentUrl + 'manifest.json';
+            const url = new URL(currentUrl);
+            const stremioUrl = `stremio://${url.host}/manifest.json`;
             document.getElementById('stremio-link').href = stremioUrl;
         });
     </script>
