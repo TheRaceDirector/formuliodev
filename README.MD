@@ -14,7 +14,7 @@ Very open to changes
 docker build -t formulio-addon .
 ```
 ```
-docker run -p 7000:7000 formulio-addon
+docker run -p 8000:8000 formulio-addon
 ```
 
 The Dockerfile will create a user called "appuser" and this will be used to run the container as non-root
