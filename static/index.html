@@ -44,12 +44,19 @@
             text-decoration: none;
         }
     </style>
+    <script>
+        window.addEventListener('DOMContentLoaded', (event) => {
+            const currentUrl = window.location.href;
+            const stremioUrl = 'stremio://' + currentUrl + 'manifest.json';
+            document.getElementById('stremio-link').href = stremioUrl;
+        });
+    </script>
 </head>
 <body>
     <div class="container">
         <h1>Formulio Addon</h1>
         <p>Welcome to the Formulio Addon for Stremio. Click the button below to import the addon manifest into Stremio.</p>
-        <a href="stremio://127.0.0.1:7000/manifest.json">
+        <a id="stremio-link" href="#">
             <button>Import to Stremio</button>
         </a>
     </div>
