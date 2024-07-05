@@ -25,6 +25,9 @@ COPY . .
 # Make the /tmp/app directory writable by all users
 RUN chmod -R 777 /tmp/app
 
+# Ensure the library is accessible
+RUN ldconfig
+
 # Make all 0run_scripts.py scripts and their dependencies executable
 RUN find . -name "0run_scripts.py" -exec chmod +x {} + && \
     find . -name "*.py" -exec chmod +x {} +
