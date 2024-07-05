@@ -22,6 +22,9 @@ RUN pip install --upgrade pip setuptools wheel && \
 # Copy the rest of the application code
 COPY . .
 
+# Set the PYTHONPATH
+ENV PYTHONPATH=/tmp/app
+
 # Make the /tmp/app directory writable by all users
 RUN chmod -R 777 /tmp/app
 
@@ -36,4 +39,4 @@ RUN find . -name "0run_scripts.py" -exec chmod +x {} + && \
 USER appuser
 
 # Command to run the application
-CMD ["python3", "formulio-addon.py"]
+CMD ["gunicorn", "-b", "0.0.0.0:8000", "--config", "gunicorn_config.py", "formulio_addon:app"]
