@@ -1,21 +1,20 @@
 import re
 import csv
-import os
 
 # Compile the regular expression for matching round numbers and extracting parts of the filename
 round_regex = re.compile(r'Round\.(\d+)', re.IGNORECASE)
-grand_prix_regex = re.compile(r'Round\.\d+\.([^.]+GP)', re.IGNORECASE)
+grand_prix_regex = re.compile(r'Round\.\d+\.([^.]+)GP', re.IGNORECASE)
 session_regex = re.compile(r'GP\.(.+?)\.F1\.Live', re.IGNORECASE)
 valid_extension_regex = re.compile(r'\.(mkv|mp4)$', re.IGNORECASE)
 
 # Function to format the title based on specific rules
 def format_title(session_name, grand_prix_name):
-    # Normalize session name by replacing periods and adjusting common terms
-    session_name = session_name.replace('.', ' ').title()
+    # Normalize session name by replacing underscores and adjusting common terms
+    session_name = session_name.replace('_', ' ').replace('.', ' ').title().strip()
 
     # Ensure the Grand Prix name does not redundantly include the session name
     grand_prix_name = grand_prix_name.replace(session_name.replace("GP", ""), '').strip()
-    return f"{session_name} - {grand_prix_name}"
+    return f"{session_name} - {grand_prix_name}GP"
 
 # Process the CSV file
 def process_csv(file_path, output_file_path):
@@ -25,7 +24,7 @@ def process_csv(file_path, output_file_path):
     with open(file_path, 'r') as file:
         reader = csv.reader(file)
         next(reader)  # Skip the header row
-        for row in reader:
+        for index, row in enumerate(reader):
             filename = row[1].split('/')[-1]
             
             # Ignore files without valid extensions
@@ -70,26 +69,23 @@ def process_csv(file_path, output_file_path):
                 'fileIdx': file_index
             }]))
 
-    # Generate new content
-    new_content = ""
+    # Read existing data from the output file
+    try:
+        with open(output_file_path, 'r') as output_file:
+            existing_data = output_file.read()
+    except FileNotFoundError:
+        existing_data = ""
+
+    # Generate new data string
+    new_data = ""
     for round_number in sorted(output_data.keys(), key=int):
         for key, value in output_data[round_number]:
-            new_content += f"        '{key}': {value},\n"
+            new_data += f"        '{key}': {value},\n"
 
-    # Check if the file exists and read its content
-    if os.path.exists(output_file_path):
-        with open(output_file_path, 'r') as file:
-            existing_content = file.read()
-    else:
-        existing_content = ""
-
-    # Write the output data to the file only if there is new or updated content
-    if new_content.strip() != existing_content.strip():
+    # Write the output data to the file only if it's different from the existing data
+    if new_data.strip() != existing_data.strip():
         with open(output_file_path, 'w') as output_file:
-            output_file.write(new_content)
-        print("File updated with new content.")
-    else:
-        print("No new content to update.")
+            output_file.write(new_data)
 
 # Example usage
 file_path = 'content.csv'
