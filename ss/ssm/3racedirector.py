@@ -27,9 +27,11 @@ def process_csv_files():
             with open(filename, mode='r', newline='', encoding='utf-8') as csvfile:
                 reader = csv.reader(csvfile)
                 for row in reader:
-                    date_str = row[3]  # Assuming the date is in the fourth column
-                    date_obj = parse_date(date_str)
-                    rows.append((date_obj, row))
+                    torrent_name = row[0]  # Assuming the torrent name is in the first column
+                    if "international" in torrent_name.lower():
+                        date_str = row[3]  # Assuming the date is in the fourth column
+                        date_obj = parse_date(date_str)
+                        rows.append((date_obj, row))
                 rows.sort(key=lambda x: x[0])  # Sort by the datetime object
             
             # Write sorted rows to numbered CSV files
