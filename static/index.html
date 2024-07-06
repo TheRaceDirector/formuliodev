@@ -7,41 +7,85 @@
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #f4f4f4;
+            background-color: #1a1a1a;
             margin: 0;
+            padding: 0;
+            color: #fff;
+        }
+        .hero {
+            background: url('https://i.postimg.cc/JzYsCntg/background.jpg') no-repeat center center;
+            background-size: cover;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 20px;
+            position: relative;
+        }
+        .dark-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.486); /* Dark overlay */
+            z-index: 1;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            background: rgba(29, 29, 29, 0.5); /* Darker semi-transparent background */
             padding: 20px;
-            color: #333;
+            border-radius: 30px;
         }
-        .container {
-            max-width: 600px;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            border-radius: 8px;
+        .hero h1 {
+            font-size: 4em;
+            margin: 0;
         }
-        h1 {
-            color: #5c67f2;
+        .hero p {
+            font-size: 1.5em;
+            margin: 20px 0;
         }
-        p {
-            font-size: 16px;
+        .hero .content {
+            max-width: 800px;
+            margin-bottom: 20px;
+        }
+        .hero .content p {
+            font-size: 1.2em;
             line-height: 1.6;
         }
-        button {
-            background-color: #5c67f2;
+        .cta-button {
+            background-color: #ff3333;
             color: white;
             border: none;
-            padding: 10px 20px;
-            font-size: 16px;
+            padding: 15px 30px;
+            font-size: 18px;
             cursor: pointer;
             border-radius: 5px;
             text-transform: uppercase;
+            transition: background-color 0.3s ease;
         }
-        button:hover {
-            background-color: #4a54e1;
+        .cta-button:hover {
+            background-color: #cc0000;
         }
-        a {
-            text-decoration: none;
+        .disclaimer {
+            font-size: 0.8em;
+            text-align: center;
+            margin-top: 20px;
+        }
+        @media (max-width: 600px) {
+            .hero h1 {
+                font-size: 2.5em;
+            }
+            .hero p, .hero .content p {
+                font-size: 1.2em;
+            }
+            .cta-button {
+                padding: 10px 20px;
+                font-size: 16px;
+            }
         }
     </style>
     <script>
@@ -54,12 +98,19 @@
     </script>
 </head>
 <body>
-    <div class="container">
-        <h1>Formulio Addon</h1>
-        <p>Welcome to the Formulio Addon for Stremio. Click the button below to import the addon manifest into Stremio.</p>
-        <a id="stremio-link" href="#">
-            <button>Import to Stremio</button>
-        </a>
+    <div class="hero">
+        <div class="dark-overlay"></div>
+        <div class="hero-content">
+            <h1>Formulio Addon</h1>
+            <p>Formula racing on Stremio</p>
+            <div class="content">
+                <p>Click the button below to add the Formulio Addon to your Stremio<br>No debrid or config reqired</p>
+            </div>
+            <a id="stremio-link" href="#"><button class="cta-button">Import to Stremio</button></a>
+            <div class="disclaimer">
+                Disclaimer: This addon does not host any content. It simply suggests pointers to content that is publicly available on the internet.
+            </div>
+        </div>
     </div>
 </body>
 </html>
