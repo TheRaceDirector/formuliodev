@@ -148,7 +148,7 @@ def load_videos(filepath):
     return videos
 
 def run_scripts_in_loop():
-    directories = ['ego', 'smc', 'ssf', 'ssm', 'eg4', 'sm4', 'sms']
+    directories = ['egor', 'egor/ego', 'smcg', 'smcg/smc', 'ss', 'ss/ssf', 'ss/ssm', 'egor/eg4', 'smcg/sm4', 'smcg/sms']
     file_mod_times = {}
     for directory in directories:
         filepath = os.path.join(directory, '5processed.txt')
@@ -156,7 +156,7 @@ def run_scripts_in_loop():
             file_mod_times[directory] = os.path.getmtime(filepath)
         else:
             logging.warning(f"{filepath} not found. Attempting to run script to generate it.")
-            script_path = os.path.join(directory, '0run_scripts.py')
+            script_path = os.path.join(directory, '1formationlap.py')
             try:
                 subprocess.run(['python3', script_path], check=True)
                 if os.path.exists(filepath):
@@ -168,7 +168,7 @@ def run_scripts_in_loop():
 
     while True:
         for directory in directories:
-            script_path = os.path.join(directory, '0run_scripts.py')
+            script_path = os.path.join(directory, '1formationlap.py')
             logging.info(f"Running {script_path}")
             try:
                 subprocess.run(['python3', script_path], check=True)
@@ -185,13 +185,13 @@ def run_scripts_in_loop():
 def restart_server():
     global app
     with app.app_context():
-        ego_videos = load_videos('./ego/5processed.txt')
-        smc_videos = load_videos('./smc/5processed.txt')
-        ssf_videos = load_videos('./ssf/5processed.txt')
-        ssm_videos = load_videos('./ssm/5processed.txt')
-        eg4_videos = load_videos('./eg4/5processed.txt')
-        sm4_videos = load_videos('./sm4/5processed.txt')
-        sms_videos = load_videos('./sms/5processed.txt')
+        ego_videos = load_videos('./egor/ego/5processed.txt')
+        smc_videos = load_videos('./smcg/smc/5processed.txt')
+        ssf_videos = load_videos('./ss/ssf/5processed.txt')
+        ssm_videos = load_videos('./ss/ssm/5processed.txt')
+        eg4_videos = load_videos('./egor/eg4/5processed.txt')
+        sm4_videos = load_videos('./smcg/sm4/5processed.txt')
+        sms_videos = load_videos('./smcg/sms/5processed.txt')
         CATALOG['series'][0]['videos'] = ego_videos
         CATALOG['series'][1]['videos'] = smc_videos
         CATALOG['series'][2]['videos'] = ssf_videos
@@ -276,13 +276,13 @@ if __name__ == '__main__':
     Thread(target=run_scripts_in_loop).start()
 
     # Load initial video data and start the Flask server
-    ego_videos = load_videos('./ego/5processed.txt')
-    smc_videos = load_videos('./smc/5processed.txt')
-    ssf_videos = load_videos('./ssf/5processed.txt')
-    ssm_videos = load_videos('./ssm/5processed.txt')
-    eg4_videos = load_videos('./eg4/5processed.txt')
-    sm4_videos = load_videos('./sm4/5processed.txt')
-    sms_videos = load_videos('./sms/5processed.txt')
+    ego_videos = load_videos('./egor/ego/5processed.txt')
+    smc_videos = load_videos('./smcg/smc/5processed.txt')
+    ssf_videos = load_videos('./ss/ssf/5processed.txt')
+    ssm_videos = load_videos('./ss/ssm/5processed.txt')
+    eg4_videos = load_videos('./egor/eg4/5processed.txt')
+    sm4_videos = load_videos('./smcg/sm4/5processed.txt')
+    sms_videos = load_videos('./smcg/sms/5processed.txt')
     CATALOG['series'][0]['videos'] = ego_videos
     CATALOG['series'][1]['videos'] = smc_videos
     CATALOG['series'][2]['videos'] = ssf_videos
