@@ -5,8 +5,6 @@ import logging
 from formulio_addon import run_scripts_in_loop
 
 # Gunicorn config variables
-#workers = multiprocessing.cpu_count() * 2 + 1
-#worker_class = 'sync'
 bind = "0.0.0.0:8000"
 timeout = 120
 keepalive = 5
@@ -35,19 +33,19 @@ def post_request(worker, req, environ, resp):
     worker.log.debug(f"Completed request: {req.method} {req.path} - Status: {resp.status}")
 
 def worker_abort(worker):
-    logger.error(f"Worker {worker.id} aborted")
+    logger.error(f"Worker {worker.pid} aborted")
 
 def post_fork(server, worker):
-    logger.info(f"Worker {worker.id} forked")
+    logger.info(f"Worker {worker.pid} forked")
     try:
         thread = Thread(target=run_scripts_in_loop, daemon=True)
         thread.start()
-        logger.info(f"Background script thread started in worker {worker.id}")
+        logger.info(f"Background script thread started in worker {worker.pid}")
     except Exception as e:
-        logger.error(f"Failed to start background script in worker {worker.id}: {str(e)}")
+        logger.error(f"Failed to start background script in worker {worker.pid}: {str(e)}")
 
 def worker_exit(server, worker):
-    logger.info(f"Worker {worker.id} exited")
+    logger.info(f"Worker {worker.pid} exited")
 
 # Ensure log directory exists
 os.makedirs('/var/log/gunicorn', exist_ok=True)
