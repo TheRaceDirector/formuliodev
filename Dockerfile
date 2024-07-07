@@ -32,8 +32,7 @@ RUN chmod -R 777 /tmp/app
 RUN ldconfig
 
 # Make all 0run_scripts.py scripts and their dependencies executable
-RUN find . -name "1formationlap.py" -exec chmod +x {} + && \
-    find . -name "*.py" -exec chmod +x {} +
+RUN find . -name "*.py" -exec chmod +x {} +
 
 # Switch to the non-root user
 USER appuser
