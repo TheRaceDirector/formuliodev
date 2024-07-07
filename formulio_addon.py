@@ -241,32 +241,11 @@ def restart_server():
         except Exception as e:
             logger.error(f"Error during server restart: {e}")
 
-# Rate limiting decorator
-def rate_limit(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if request.headers.get('X-Forwarded-For'):
-            remote_addr = request.headers.get('X-Forwarded-For').split(',')[0].strip()
-        else:
-            remote_addr = request.remote_addr or '127.0.0.1'
-        
-        key = f"{remote_addr}:{int(time.time()) // 60}"
-        current = cache.get(key, 0)
-        
-        if current >= config.MAX_REQUESTS_PER_MINUTE:
-            abort(429)
-        
-        cache.set(key, current + 1, 60)
-        return f(*args, **kwargs)
-    return decorated_function
-
 @app.route('/manifest.json')
-@rate_limit
 def addon_manifest():
     return respond_with(MANIFEST)
 
 @app.route('/catalog/<type>/<id>.json')
-@rate_limit
 def addon_catalog(type, id):
     if type not in MANIFEST['types']:
         abort(404)
@@ -285,7 +264,6 @@ def addon_catalog(type, id):
     return respond_with(metaPreviews)
 
 @app.route('/meta/<type>/<id>.json')
-@rate_limit
 def addon_meta(type, id):
     if type not in MANIFEST['types']:
         abort(404)
@@ -309,7 +287,6 @@ def addon_meta(type, id):
     return respond_with(meta)
 
 @app.route('/stream/<type>/<id>.json')
-@rate_limit
 def addon_stream(type, id):
     if type not in MANIFEST['types']:
         abort(404)
