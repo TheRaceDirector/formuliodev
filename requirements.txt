@@ -5,3 +5,4 @@ schedule==1.2.2
 lbry-libtorrent==1.2.4
 gunicorn==21.2.0
 Werkzeug==3.0.1
+requests==2.25.1
