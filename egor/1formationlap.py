@@ -3,6 +3,7 @@ import csv
 import os
 import base64
 from datetime import datetime
+import requests
 
 # Define the keywords to search for in the item titles, non case sensitive
 keywords = ["Formula 1", "Formula1", "Formula.1", "Formula+1"]
@@ -55,22 +56,31 @@ with open(rss_magnets_path, 'r') as file:
 # Decode each RSS feed URL
 rss_urls = [base64.b64decode(encoded_url).decode('utf-8') for encoded_url in encoded_rss_urls]
 
+# Function to fetch and parse RSS feed
+def fetch_and_parse_rss(url, timeout=20):
+    try:
+        response = requests.get(url, timeout=timeout)
+        response.raise_for_status()  # Raise an HTTPError for bad responses
+        return feedparser.parse(response.content)
+    except (requests.RequestException, feedparser.NonXMLContentType):
+        return None
+
 # Process each RSS feed URL
 for url in rss_urls:
-    # Parse the RSS feed
-    feed = feedparser.parse(url)
-    
-    # Process each item in the feed
-    for entry in feed.entries:
-        # Check if the title contains any of the keywords and the year "2024"
-        if any(keyword.lower() in entry.title.lower() for keyword in keywords) and year in entry.title:
-            # Format the publication date
-            formatted_pubDate = format_pubdate(entry.published)
-            # Check for duplicates based on GUID
-            if not is_duplicate(entry.guid, existing_guids):
-                # Append the relevant data to the CSV file
-                append_to_csv([entry.title, entry.link, entry.guid, formatted_pubDate], csv_file_path)
-                # Add the GUID to the set of existing GUIDs
-                existing_guids.add(entry.guid)
+    feed = fetch_and_parse_rss(url)
+    if feed:
+        # Process each item in the feed
+        for entry in feed.entries:
+            # Check if the title contains any of the keywords and the year "2024"
+            if any(keyword.lower() in entry.title.lower() for keyword in keywords) and year in entry.title:
+                # Format the publication date
+                formatted_pubDate = format_pubdate(entry.published)
+                # Check for duplicates based on GUID
+                if not is_duplicate(entry.guid, existing_guids):
+                    # Append the relevant data to the CSV file
+                    append_to_csv([entry.title, entry.link, entry.guid, formatted_pubDate], csv_file_path)
+                    # Add the GUID to the set of existing GUIDs
+                    existing_guids.add(entry.guid)
+        break  # Exit the loop if we successfully processed a feed
 
 print("RSS feeds processed and relevant data appended to f1db.csv.")
