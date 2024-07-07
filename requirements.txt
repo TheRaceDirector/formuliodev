@@ -2,5 +2,6 @@ Flask==3.0.2
 feedparser==6.0.11
 watchdog==4.0.1
 schedule==1.2.2
-lbry-libtorrent
-gunicorn
+lbry-libtorrent==1.2.4
+gunicorn==21.2.0
+Werkzeug==3.0.1
