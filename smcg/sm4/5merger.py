@@ -5,7 +5,7 @@ import json
 # Compile the regular expression for matching round numbers and extracting parts of the filename
 round_regex = re.compile(r'2024x(\d+)', re.IGNORECASE)
 title_regex = re.compile(r'(\d+)\.(.+?)\.(mp4|mkv)', re.IGNORECASE)
-grand_prix_regex = re.compile(r'2024x\d+\.(\w+)', re.IGNORECASE)
+grand_prix_regex = re.compile(r'2024x\d+\.(.+?)\.(Qualifying|Race|Sprint|Sky|4K)', re.IGNORECASE)
 
 # Function to format the title based on specific rules
 def format_title(filename, grand_prix_name):
@@ -30,7 +30,7 @@ def process_csv(file_path, output_file_path):
             gp_match = grand_prix_regex.search(row[0])
             if round_match and gp_match:
                 round_number = round_match.group(1)
-                grand_prix_name = gp_match.group(1)
+                grand_prix_name = gp_match.group(1).replace('.', ' ')  # Replace dots with spaces
             else:
                 round_number = 'Unknown'
                 grand_prix_name = 'Unknown'
