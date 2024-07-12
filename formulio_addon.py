@@ -170,7 +170,7 @@ def run_scripts_in_loop():
     logger.info("Starting run_scripts_in_loop")
 
     for directory in directories:
-        filepath = os.path.join(directory, '5processed.txt')
+        filepath = os.path.join(directory, '6processed.txt')
         if os.path.exists(filepath):
             file_mod_times[directory] = os.path.getmtime(filepath)
             logger.info(f"Existing file found: {filepath}")
@@ -206,7 +206,7 @@ def run_scripts_in_loop():
                     for line in result.stderr.splitlines():
                         logger.warning(line)
 
-                filepath = os.path.join(directory, '5processed.txt')
+                filepath = os.path.join(directory, '6processed.txt')
                 if os.path.exists(filepath):
                     new_mod_time = os.path.getmtime(filepath)
                     if new_mod_time != file_mod_times.get(directory, 0):
@@ -230,13 +230,13 @@ def run_scripts_in_loop():
 def restart_server():
     with app.app_context():
         try:
-            CATALOG['series'][0]['videos'] = load_videos('./egor/ego/5processed.txt')
-            CATALOG['series'][1]['videos'] = load_videos('./smcg/smc/5processed.txt')
-            CATALOG['series'][2]['videos'] = load_videos('./ss/ssf/5processed.txt')
-            CATALOG['series'][3]['videos'] = load_videos('./ss/ssm/5processed.txt')
-            CATALOG['series'][4]['videos'] = load_videos('./egor/eg4/5processed.txt')
-            CATALOG['series'][5]['videos'] = load_videos('./smcg/sm4/5processed.txt')
-            CATALOG['series'][6]['videos'] = load_videos('./smcg/sms/5processed.txt')
+            CATALOG['series'][0]['videos'] = load_videos('./egor/ego/6processed.txt')
+            CATALOG['series'][1]['videos'] = load_videos('./smcg/smc/6processed.txt')
+            CATALOG['series'][2]['videos'] = load_videos('./ss/ssf/6processed.txt')
+            CATALOG['series'][3]['videos'] = load_videos('./ss/ssm/6processed.txt')
+            CATALOG['series'][4]['videos'] = load_videos('./egor/eg4/6processed.txt')
+            CATALOG['series'][5]['videos'] = load_videos('./smcg/sm4/6processed.txt')
+            CATALOG['series'][6]['videos'] = load_videos('./smcg/sms/6processed.txt')
             logger.info("Server restarted with new content.")
         except Exception as e:
             logger.error(f"Error during server restart: {e}")
@@ -333,13 +333,13 @@ if __name__ == '__main__':
 
     # Load initial video data
     try:
-        CATALOG['series'][0]['videos'] = load_videos('./egor/ego/5processed.txt')
-        CATALOG['series'][1]['videos'] = load_videos('./smcg/smc/5processed.txt')
-        CATALOG['series'][2]['videos'] = load_videos('./ss/ssf/5processed.txt')
-        CATALOG['series'][3]['videos'] = load_videos('./ss/ssm/5processed.txt')
-        CATALOG['series'][4]['videos'] = load_videos('./egor/eg4/5processed.txt')
-        CATALOG['series'][5]['videos'] = load_videos('./smcg/sm4/5processed.txt')
-        CATALOG['series'][6]['videos'] = load_videos('./smcg/sms/5processed.txt')
+        CATALOG['series'][0]['videos'] = load_videos('./egor/ego/6processed.txt')
+        CATALOG['series'][1]['videos'] = load_videos('./smcg/smc/6processed.txt')
+        CATALOG['series'][2]['videos'] = load_videos('./ss/ssf/6processed.txt')
+        CATALOG['series'][3]['videos'] = load_videos('./ss/ssm/6processed.txt')
+        CATALOG['series'][4]['videos'] = load_videos('./egor/eg4/6processed.txt')
+        CATALOG['series'][5]['videos'] = load_videos('./smcg/sm4/6processed.txt')
+        CATALOG['series'][6]['videos'] = load_videos('./smcg/sms/6processed.txt')
     except Exception as e:
         logger.error(f"Error loading initial video data: {e}")
 

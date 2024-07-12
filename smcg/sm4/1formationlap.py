@@ -8,11 +8,12 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 # Paths to the scripts (adjust these paths as per your directory structure)
 script_directory = os.path.dirname(os.path.abspath(__file__))
 scripts = [
-#    '1rsstocsv.py',
+#   '1rsstocsv.py',
     '2dbsorter.py',
     '3racedirector.py',
-    '4torrenttocontent.py',
-    '5merger.py'
+    '4retire.py',
+    '5torrenttocontent.py',
+    '6merger.py'
 ]
 
 # Function to run the scripts sequentially

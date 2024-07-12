@@ -41,11 +41,13 @@ def process_csv_files():
                 # Construct the CSV file name using a sequential number
                 csv_filename = f"{i}.csv"
                 archive_filename = f"{i}.archive"
+                old_filename = f"{i}.old"
                 csv_filepath = os.path.join(directory_name, csv_filename)
                 archive_filepath = os.path.join(directory_name, archive_filename)
+                old_filepath = os.path.join(directory_name, old_filename)
                 
-                # Check if the .csv or .archive file already exists
-                if not os.path.exists(csv_filepath) and not os.path.exists(archive_filepath):
+                # Check if the .csv, .archive, or .old file already exists
+                if not os.path.exists(csv_filepath) and not os.path.exists(archive_filepath) and not os.path.exists(old_filepath):
                     # Write the torrent name, infohash, and magnet link to the CSV file
                     if infohash:  # Only write if the infohash was successfully extracted
                         with open(csv_filepath, mode='w', newline='', encoding='utf-8') as output_csvfile:

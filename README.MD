@@ -30,11 +30,12 @@ docker run --rm --user nobody -it formulio-addon
 
 
 ## How this funky script works
-formulio-addon.py will run the several 0run_scripts.py scripts, that 0run_scripts.py file will execute the following scripts in it's respective directory.
-1rsstocsv.py
+formulio-addon.py will run the several 1formationlap.py scripts, that will execute the following scripts in it's respective directory.
+1formationlap.py
 2dbsorter.py
 3racedirector.py
-4torrenttocontent.py
-5merger.py
+4retire.py
+5torrenttocontent.py
+6merger.py
 
-It'll then watch each 5processed.txt file for modification, and if there is a change, it'll quickly restart the webserver, to host new content. 
+It'll then watch each 6processed.txt file for modification, and if there is a change, it'll quickly restart the webserver, to host new content. 
