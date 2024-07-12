@@ -70,7 +70,7 @@ def process_csv(file_path, output_file_path):
     # Convert output data to string for comparison
     new_data = ""
     for key, value in output_data.items():
-        new_data += f"        '{key}': {json.dumps(value)},\n"
+        new_data += f"'{key}': {json.dumps(value)},\n"
 
     # Write the output data to the file only if it's different
     if new_data.strip() != existing_data.strip():

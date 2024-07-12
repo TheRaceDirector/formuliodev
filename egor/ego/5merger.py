@@ -3,7 +3,7 @@ import csv
 
 # Compile the regular expression for matching round numbers and extracting parts of the filename
 round_regex = re.compile(r'R(\d+)|Round\.(\d+)', re.IGNORECASE)
-title_regex = re.compile(r'Prix\.(.+?)\.(?:1080P|SkyF1HD)', re.IGNORECASE)
+title_regex = re.compile(r'Prix\.(.+?)\.(?:1080P|Sky)', re.IGNORECASE)
 grand_prix_regex = re.compile(r'R\d+\.(.+?)\.Grand\.Prix', re.IGNORECASE)
 
 # Function to extract the session number from the start of the filename
@@ -55,11 +55,11 @@ def process_csv(file_path, output_file_path):
             infohash = row[2]
             file_index = int(row[3])
             
-            # Create the key for the output dictionary
-            key = f'hpytt0202401:{round_number}:{session_number}'
-            
             # Format the title
             formatted_title = format_title(filename, round_part)
+            
+            # Create the key for the output dictionary excluding the title
+            key = f'hpytt0202401:{round_number}:{session_number}'
             
             # Append the data to the output dictionary only if the key doesn't exist
             if key not in output_data:
@@ -79,7 +79,7 @@ def process_csv(file_path, output_file_path):
     # Manually format the output data as a string
     new_data = ""
     for key, value in output_data.items():
-        new_data += f"        '{key}': {value},\n"
+        new_data += f"'{key}': {value},\n"
 
     # Write the output data to the file only if it's different from the existing data
     if new_data.strip() != existing_data.strip():

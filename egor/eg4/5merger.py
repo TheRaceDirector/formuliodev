@@ -38,9 +38,6 @@ def process_csv(file_path, output_file_path):
         reader = csv.reader(file)
         next(reader)  # Skip the header row
         for row in reader:
-
-
-
             # Extract the round number using the regular expression
             round_match = round_regex.search(row[1])
             if round_match:
@@ -82,7 +79,7 @@ def process_csv(file_path, output_file_path):
     # Manually format the output data as a string
     new_data = ""
     for key, value in output_data.items():
-        new_data += f"        '{key}': {value},\n"
+        new_data += f"'{key}': {value},\n"
 
     # Write the output data to the file only if it's different from the existing data
     if new_data.strip() != existing_data.strip():

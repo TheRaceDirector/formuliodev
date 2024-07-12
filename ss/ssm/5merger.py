@@ -80,7 +80,7 @@ def process_csv(file_path, output_file_path):
     new_data = ""
     for round_number in sorted(output_data.keys(), key=int):
         for key, value in output_data[round_number]:
-            new_data += f"        '{key}': {value},\n"
+            new_data += f"'{key}': {value},\n"
 
     # Write the output data to the file only if it's different from the existing data
     if new_data.strip() != existing_data.strip():
