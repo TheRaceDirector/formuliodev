@@ -2,7 +2,7 @@ import os
 import re
 
 def get_round_number(dir_name):
-    match = re.match(r'2024r(\d+)FHD', dir_name)
+    match = re.match(r'2024r(\d+)4K', dir_name)
     return int(match.group(1)) if match else None
 
 def rename_files_in_directory(directory):
