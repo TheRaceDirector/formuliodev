@@ -6,8 +6,6 @@ That's it!
 
 Please make sure you have all the required requirements.txt
 
-Very open to changes
-
 ## You can build & run the docker image locally with
 ```
 docker build -t formulio-addon .
@@ -18,17 +16,6 @@ docker run -p 8000:8000 formulio-addon
 
 The Dockerfile will create a user called "appuser" and this will be used to run the container as non-root
 
-## You can build & run the docker image externally loclly with
-```
-docker build -t formulio-addon .
-```
-```
-docker run --rm --user nobody -it formulio-addon
-```
-
-(Still confirming if the above command is working, got it running in zeabur with the docker)
-
-
 ## How this funky script works
 formulio-addon.py will run the several 1formationlap.py scripts, that will execute the following scripts in it's respective directory.
 1formationlap.py
@@ -38,4 +25,6 @@ formulio-addon.py will run the several 1formationlap.py scripts, that will execu
 5torrenttocontent.py
 6merger.py
 
-It'll then watch each 6processed.txt file for modification, and if there is a change, it'll quickly restart the webserver, to host new content. 
+It'll then watch each 6processed.txt file for modification, and if there is a change, it'll quickly restart the webserver, to host new content.
+
+Feel free to propose changes
