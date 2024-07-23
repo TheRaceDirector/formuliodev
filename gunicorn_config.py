@@ -12,8 +12,8 @@ bind = "0.0.0.0:8000"
 #max_requests_jitter = 50
 
 # Logging
-loglevel = 'info'
-accesslog = '/var/log/gunicorn/access.log'
+loglevel = 'warning'
+# accesslog = '/var/log/gunicorn/access.log'
 errorlog = '/var/log/gunicorn/error.log'
 
 # Configure logging
