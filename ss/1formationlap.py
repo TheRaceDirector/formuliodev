@@ -4,8 +4,9 @@ import os
 import base64
 from datetime import datetime
 import requests
+import re
 
-# Define the keywords to search for in the item titles, non case sensitive
+# Define the keywords to search for in the item titles, non-case sensitive
 keywords = ["Formula 1", "Formula1", "Formula.1", "Formula+1"]
 year = "2024"  # Define the year to search for in the item titles
 
@@ -39,7 +40,105 @@ def get_existing_guids(csv_file_path):
                     existing_guids.add(row['guid'])
     return existing_guids
 
-# Read existing GUIDs from the CSV file
+# Function to fetch and parse RSS feed
+def fetch_and_parse_rss(url, timeout=20):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+    }
+    try:
+        response = requests.get(url, headers=headers, timeout=timeout)
+        response.raise_for_status()
+        return feedparser.parse(response.content)
+    except Exception:
+        return None
+
+# Function to process TGX RSS feed
+def process_tgx_feed(feed, existing_guids):
+    new_entries = []
+    for entry in feed.entries:
+        if any(keyword.lower() in entry.title.lower() for keyword in keywords) and year in entry.title:
+            formatted_pubDate = format_pubdate(entry.published)
+            if not is_duplicate(entry.guid, existing_guids):
+                new_entries.append([entry.title, entry.link, entry.guid, formatted_pubDate])
+                existing_guids.add(entry.guid)
+    return new_entries
+
+# Function to process BT4G RSS feed English
+def process_bt1_feed(feed, existing_guids):
+    new_entries = []
+    for entry in feed.entries:
+        if any(keyword.lower() in entry.title.lower() for keyword in keywords) and year in entry.title:
+            try:
+                formatted_pubDate = format_pubdate(entry.published)
+            except Exception as e:
+                formatted_pubDate = "01 Jan 2024 00:00:00 +0000"
+
+            guid = entry.get('id', entry.get('guid', ''))
+            if isinstance(guid, dict):
+                guid = guid.get('', '')
+            if guid.startswith("http"):
+                guid = guid.split("/")[-1]
+
+            if not is_duplicate(guid, existing_guids):
+                new_entries.append([entry.title, entry.link, guid, formatted_pubDate])
+                existing_guids.add(guid)
+    return new_entries
+
+# Function to process BT4G RSS feed Multi
+def process_bt2_feed(feed, existing_guids):
+    new_entries = []
+    for entry in feed.entries:
+        if any(keyword.lower() in entry.title.lower() for keyword in keywords) and year in entry.title:
+            try:
+                formatted_pubDate = format_pubdate(entry.published)
+            except Exception as e:
+                formatted_pubDate = "01 Jan 2024 00:00:00 +0000"
+
+            guid = entry.get('id', entry.get('guid', ''))
+            if isinstance(guid, dict):
+                guid = guid.get('', '')
+            if guid.startswith("http"):
+                guid = guid.split("/")[-1]
+
+            if not is_duplicate(guid, existing_guids):
+                new_entries.append([entry.title, entry.link, guid, formatted_pubDate])
+                existing_guids.add(guid)
+    return new_entries
+
+# Function to process Reddit RSS feed
+#def process_reddit_feed(feed, existing_guids):
+#    new_entries = []
+#    for entry in feed.entries:
+#        if any(keyword.lower() in entry.title.lower() for keyword in keywords) and year in entry.title:
+#            content = entry.content[0].value
+#            magnet_link_match = re.search(r'(magnet:\?xt=urn:btih:[^"]+)', content)
+#            if magnet_link_match:
+#                link = magnet_link_match.group(1)
+#                link = link.replace('&amp;', '&')
+#                link = re.sub(r'</p>.*$', '', link)
+#                guid = link.split(':')[-1].split('&')[0]
+
+#                input_date = datetime.strptime(entry.updated, "%Y-%m-%dT%H:%M:%S%z")
+#                pubDate = input_date.strftime("%d %b %Y %H:%M:%S +0000")
+
+#                if not is_duplicate(guid, existing_guids):
+#                    new_entries.append([entry.title, link, guid, pubDate])
+#                    existing_guids.add(guid)
+#    return new_entries
+
+# Mapping of groups to their corresponding processing functions
+group_to_function_mapping = {
+    'Source A': process_tgx_feed,
+    'Source B': process_bt1_feed,
+    'Source C': process_bt2_feed,
+    # Add other mappings here as needed
+}
+
+# Main script logic
 existing_guids = get_existing_guids(csv_file_path)
 
 # Check if the CSV file exists, if not create it with the header
@@ -48,39 +147,35 @@ if not os.path.isfile(csv_file_path):
         writer = csv.writer(csvfile)
         writer.writerow(['title', 'link', 'guid', 'pubDate'])
 
-# Read the list of base64 encoded RSS feed URLs from the file
+# Read and group the RSS URLs from feed.txt
 rss_magnets_path = os.path.join(script_dir, 'feed.txt')
 with open(rss_magnets_path, 'r') as file:
-    encoded_rss_urls = file.read().splitlines()
+    lines = file.read().splitlines()
 
-# Decode each RSS feed URL
-rss_urls = [base64.b64decode(encoded_url).decode('utf-8') for encoded_url in encoded_rss_urls]
+groups = {}
+current_group = None
 
-# Function to fetch and parse RSS feed
-def fetch_and_parse_rss(url, timeout=20):
-    try:
-        response = requests.get(url, timeout=timeout)
-        response.raise_for_status()  # Raise an HTTPError for bad responses
-        return feedparser.parse(response.content)
-    except (requests.RequestException, feedparser.NonXMLContentType):
-        return None
+for line in lines:
+    if line.startswith("Source"):
+        current_group = line.strip()
+        groups[current_group] = []
+    elif current_group:
+        groups[current_group].append(base64.b64decode(line).decode('utf-8'))
 
-# Process each RSS feed URL
-for url in rss_urls:
-    feed = fetch_and_parse_rss(url)
-    if feed:
-        # Process each item in the feed
-        for entry in feed.entries:
-            # Check if the title contains any of the keywords and the year "2024"
-            if any(keyword.lower() in entry.title.lower() for keyword in keywords) and year in entry.title:
-                # Format the publication date
-                formatted_pubDate = format_pubdate(entry.published)
-                # Check for duplicates based on GUID
-                if not is_duplicate(entry.guid, existing_guids):
-                    # Append the relevant data to the CSV file
-                    append_to_csv([entry.title, entry.link, entry.guid, formatted_pubDate], csv_file_path)
-                    # Add the GUID to the set of existing GUIDs
-                    existing_guids.add(entry.guid)
-        break  # Exit the loop if we successfully processed a feed
+# Process each group using its associated function
+for group_name, urls in groups.items():
+    processing_function = group_to_function_mapping.get(group_name)
+    
+    if processing_function is None:
+        print(f"No processing function defined for {group_name}. Skipping.")
+        continue
+    
+    for url in urls:
+        feed = fetch_and_parse_rss(url)
+        if feed:
+            new_entries = processing_function(feed, existing_guids)
+            for entry in new_entries:
+                append_to_csv(entry, csv_file_path)
+            break  # Stop trying other URLs in this group once one is successful
 
 print("RSS feeds processed and relevant data appended to f1db.csv.")

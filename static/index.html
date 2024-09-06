@@ -88,14 +88,25 @@
             }
         }
     </style>
-    <script>
-        window.addEventListener('DOMContentLoaded', (event) => {
+<script>
+    window.onload = () => {
+        try {
             const currentUrl = window.location.href;
             const url = new URL(currentUrl);
             const stremioUrl = `stremio://${url.host}/manifest.json`;
-            document.getElementById('stremio-link').href = stremioUrl;
-        });
-    </script>
+            
+            const stremioLink = document.getElementById('stremio-link');
+            if (stremioLink) {
+                stremioLink.href = stremioUrl;
+            } else {
+                console.error('Element with ID "stremio-link" not found.');
+            }
+        } catch (error) {
+            console.error('An error occurred:', error);
+        }
+    };
+</script>
+
 </head>
 <body>
     <div class="hero">
@@ -106,7 +117,7 @@
             <div class="content">
                 <p>Click the button below to add the Formulio Addon to your Stremio<br>No debrid or config reqired</p>
             </div>
-            <a id="stremio-link" href="#"><button class="cta-button">Import to Stremio</button></a>
+            <a id="stremio-link" href="#"><button class="cta-button">Install to Stremio</button></a>
             <div class="disclaimer">
                 Disclaimer: This addon does not host any content. It simply suggests pointers to content that is publicly available on the internet.
             </div>
