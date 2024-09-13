@@ -151,7 +151,8 @@ def load_videos(filepath):
                     'id': series_id,
                     'season': int(season),
                     'episode': int(episode),
-                    'title': video_info[0]['title'],
+                    'name': video_info[0]['name'],
+                    'thumbnail': video_info[0]['thumbnail'],
                     'infoHash': video_info[0]['infoHash'],
                     'fileIdx': video_info[0]['fileIdx']
                 })
@@ -277,7 +278,8 @@ def addon_meta(type, id):
         meta['logo'] = item['logo']
         meta['background'] = item['background']
         meta['videos'] = [{'id': f"{item['id']}:{video['season']}:{video['episode']}",
-                           'title': video['title'],
+                           'name': video['name'],
+                           'thumbnail': video['thumbnail'],
                            'season': video['season'],
                            'episode': video['episode']} for video in item['videos']]
         return meta
@@ -301,7 +303,8 @@ def addon_stream(type, id):
             for video in series['videos']:
                 if video['season'] == season and video['episode'] == episode:
                     streams['streams'].append({
-                        'title': video['title'],
+                        'name': video['name'],
+                        'thumbnail': video['thumbnail'],                       
                         'infoHash': video['infoHash'],
                         'fileIdx': video['fileIdx']
                     })

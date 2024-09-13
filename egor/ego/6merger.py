@@ -1,5 +1,18 @@
 import re
 import csv
+import json
+import os
+
+# Load countries and calendar from JSON file
+config_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'f1_config.json')
+with open(config_path, 'r') as json_file:
+    config = json.load(json_file)
+
+countries = config["countries"]
+round_to_country = config["calendar"]
+
+# Generate round_thumbnails dictionary
+round_thumbnails = {round_num: countries.get(country, '') for round_num, country in round_to_country.items()}
 
 # Compile the regular expression for matching round numbers and extracting parts of the filename
 round_regex = re.compile(r'R(\d+)|Round\.(\d+)', re.IGNORECASE)
@@ -58,13 +71,17 @@ def process_csv(file_path, output_file_path):
             # Format the title
             formatted_title = format_title(filename, round_part)
             
-            # Create the key for the output dictionary excluding the title
+            # Get the thumbnail URL for the round, defaulting to an empty string if not found
+            thumbnail = round_thumbnails.get(round_number, '')
+
+            # Create the key for the output dictionary
             key = f'hpytt0202401:{round_number}:{session_number}'
             
             # Append the data to the output dictionary only if the key doesn't exist
             if key not in output_data:
                 output_data[key] = [{
-                    'title': formatted_title,
+                    'name': formatted_title,
+                    'thumbnail': thumbnail,
                     'infoHash': infohash,
                     'fileIdx': file_index
                 }]
