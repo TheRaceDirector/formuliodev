@@ -199,7 +199,7 @@ def load_videos(filepath):
     return videos
 
 def run_scripts_in_loop():
-    directories = ['egor', 'egor/ego', 'smcg', 'smcg/smc', 'ss', 'ss/ssf', 'ss/ssm', 'egor/eg4', 'smcg/sm4', 'smcg/sms', 'smcm/sm4', 'smcm/smc', 'smcm/sms']
+    directories = ['egor', 'egor/ego', 'smcg', 'smcg/smc', 'ss', 'ss/ssf', 'ss/ssm', 'egor/eg4', 'smcg/sm4', 'smcg/sms', 'smcm', 'smcm/sm4', 'smcm/smc', 'smcm/sms']
     file_mod_times = {}
 
     logger.info("Starting run_scripts_in_loop")
