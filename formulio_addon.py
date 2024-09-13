@@ -118,7 +118,41 @@ CATALOG = {
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing'],
             'videos': []
+        },
+        {
+            'id': 'hpytt0202411',
+            'name': 'MotoGP UK',
+            'description': 'TNT 2024 MotoGP Season - 1080p 50fps (smcgill1969) \n \nTip: for optimal playback, ensure your TV streaming device is in 50Hz mode',
+            'releaseInfo': '2024',
+            'poster': 'https://i.postimg.cc/3Rpyv1D8/motogphd.jpg',
+            'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
+            'background': 'https://i.postimg.cc/fR252zq3/motobackground.jpg',
+            'genres': ['Moto Racing'],
+            'videos': []
+        },
+        {
+            'id': 'hpytt0202412',
+            'name': 'MotoGP 4K',
+            'description': 'TNT 2024 MotoGP Season - 2160p 50fps (smcgill1969) \n \nTip: for optimal playback, ensure your TV streaming device is in 50Hz mode & supports 4K',
+            'releaseInfo': '2024',
+            'poster': 'https://i.postimg.cc/MHmvsGDg/motogp4k.jpg',
+            'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
+            'background': 'https://i.postimg.cc/fR252zq3/motobackground.jpg',
+            'genres': ['Moto Racing'],
+            'videos': []
+        },
+        {
+            'id': 'hpytt0202413',
+            'name': 'MotoGP SD',
+            'description': 'TNT 2024 MotoGP Season - 576p 25fps (smcgill1969) \n \nNote: This is not high definition, please use the standard series or the 4K one',
+            'releaseInfo': '2024',
+            'poster': 'https://i.postimg.cc/qqTNXK88/motogpsd.jpg',
+            'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
+            'background': 'https://i.postimg.cc/fR252zq3/motobackground.jpg',
+            'genres': ['Moto Racing'],
+            'videos': []
         }
+
     ]
 }
 
@@ -165,7 +199,7 @@ def load_videos(filepath):
     return videos
 
 def run_scripts_in_loop():
-    directories = ['egor', 'egor/ego', 'smcg', 'smcg/smc', 'ss', 'ss/ssf', 'ss/ssm', 'egor/eg4', 'smcg/sm4', 'smcg/sms']
+    directories = ['egor', 'egor/ego', 'smcg', 'smcg/smc', 'ss', 'ss/ssf', 'ss/ssm', 'egor/eg4', 'smcg/sm4', 'smcg/sms', 'smcm/sm4', 'smcm/smc', 'smcm/sms']
     file_mod_times = {}
 
     logger.info("Starting run_scripts_in_loop")
@@ -238,6 +272,9 @@ def restart_server():
             CATALOG['series'][4]['videos'] = load_videos('./egor/eg4/6processed.txt')
             CATALOG['series'][5]['videos'] = load_videos('./smcg/sm4/6processed.txt')
             CATALOG['series'][6]['videos'] = load_videos('./smcg/sms/6processed.txt')
+            CATALOG['series'][7]['videos'] = load_videos('./smcm/smc/6processed.txt')
+            CATALOG['series'][8]['videos'] = load_videos('./smcm/sm4/6processed.txt')
+            CATALOG['series'][9]['videos'] = load_videos('./smcm/sms/6processed.txt')
             logger.info("Server restarted with new content.")
         except Exception as e:
             logger.error(f"Error during server restart: {e}")
@@ -343,6 +380,9 @@ if __name__ == '__main__':
         CATALOG['series'][4]['videos'] = load_videos('./egor/eg4/6processed.txt')
         CATALOG['series'][5]['videos'] = load_videos('./smcg/sm4/6processed.txt')
         CATALOG['series'][6]['videos'] = load_videos('./smcg/sms/6processed.txt')
+        CATALOG['series'][7]['videos'] = load_videos('./smcm/smc/6processed.txt')
+        CATALOG['series'][8]['videos'] = load_videos('./smcm/sm4/6processed.txt')
+        CATALOG['series'][9]['videos'] = load_videos('./smcm/sms/6processed.txt')
     except Exception as e:
         logger.error(f"Error loading initial video data: {e}")
 
