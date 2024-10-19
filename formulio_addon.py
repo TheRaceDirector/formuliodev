@@ -156,15 +156,9 @@ CATALOG = {
     ]
 }
 
-# Remove this line if it's not used elsewhere in your project
-# METAHUB_URL = 'https://images.metahub.space/poster/medium/{}/img'
-
 # Keep this as it's used in the addon_meta function
 OPTIONAL_META = ["posterShape", "background", "logo", "videos", "description", "releaseInfo", "imdbRating", "director", "cast",
                  "dvdRelease", "released", "inTheaters", "certification", "runtime", "language", "country", "awards", "website", "isPeered"]
-
-# Remove this line as it's redundant
-# app = Flask(__name__)
 
 def respond_with(data):
     resp = jsonify(data)
@@ -185,7 +179,7 @@ def load_videos(filepath):
                     'id': series_id,
                     'season': int(season),
                     'episode': int(episode),
-                    'name': video_info[0]['name'],
+                    'title': video_info[0]['title'],
                     'thumbnail': video_info[0]['thumbnail'],
                     'infoHash': video_info[0]['infoHash'],
                     'fileIdx': video_info[0]['fileIdx']
@@ -315,7 +309,7 @@ def addon_meta(type, id):
         meta['logo'] = item['logo']
         meta['background'] = item['background']
         meta['videos'] = [{'id': f"{item['id']}:{video['season']}:{video['episode']}",
-                           'name': video['name'],
+                           'title': video['title'],
                            'thumbnail': video['thumbnail'],
                            'season': video['season'],
                            'episode': video['episode']} for video in item['videos']]
@@ -340,7 +334,7 @@ def addon_stream(type, id):
             for video in series['videos']:
                 if video['season'] == season and video['episode'] == episode:
                     streams['streams'].append({
-                        'name': video['name'],
+                        'title': video['title'],
                         'thumbnail': video['thumbnail'],                       
                         'infoHash': video['infoHash'],
                         'fileIdx': video['fileIdx']

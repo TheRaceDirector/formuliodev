@@ -63,7 +63,7 @@ def process_csv(file_path, output_file_path):
             
             if key not in output_data:
                 output_data[key] = [{
-                    'name': formatted_title,
+                    'title': formatted_title,
                     'thumbnail': thumbnail,
                     'infoHash': infohash,
                     'fileIdx': file_index

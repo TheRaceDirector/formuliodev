@@ -70,7 +70,7 @@ def process_csv(file_path, output_file_path):
             
             # Append the data to the output dictionary
             output_data[key] = [{
-                'name': formatted_title,
+                'title': formatted_title,
                 'thumbnail': thumbnail,
                 'infoHash': infohash,
                 'fileIdx': file_index
