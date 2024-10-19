@@ -66,7 +66,7 @@ def process_csv(file_path, output_file_path):
             if round_number not in output_data:
                 output_data[round_number] = []
             output_data[round_number].append((key, [{
-                'name': formatted_title,
+                'title': formatted_title,
                 'thumbnail': thumbnail,
                 'infoHash': infohash,
                 'fileIdx': file_index
