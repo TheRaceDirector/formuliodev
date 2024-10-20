@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 # Configuration management
 class Config:
-    SCRIPT_INTERVAL = 909  # 15 minutes 9 seconds
+    SCRIPT_INTERVAL = 909  # 15 minutes & 9 seconds
     MAX_REQUESTS_PER_MINUTE = 60
 
 config = Config()
