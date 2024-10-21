@@ -62,9 +62,17 @@ def get_existing_guids(csv_file_path):
 
 # Function to fetch and parse RSS feed
 def fetch_and_parse_rss(url, timeout=20):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'DNT': '1',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+    }
     try:
-        response = requests.get(url, timeout=timeout)
-        response.raise_for_status()  # Raise an HTTPError for bad responses
+        response = requests.get(url, headers=headers, timeout=timeout)
+        response.raise_for_status()
         return feedparser.parse(response.content)
     except requests.Timeout:
         print(f"Timeout error for URL: {url}")
