@@ -8,10 +8,17 @@ from flask import Flask, jsonify, abort, send_from_directory, request
 from werkzeug.middleware.proxy_fix import ProxyFix
 from functools import wraps
 import signal
+from logging.handlers import RotatingFileHandler
 
 # Enhanced logging setup
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+log_file = '/var/log/app/app.log'
+os.makedirs(os.path.dirname(log_file), exist_ok=True)
+handler = RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=5)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
 logger = logging.getLogger(__name__)
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 # Configuration management
 class Config:
@@ -335,7 +342,7 @@ def addon_stream(type, id):
                 if video['season'] == season and video['episode'] == episode:
                     streams['streams'].append({
                         'title': video['title'],
-                        'thumbnail': video['thumbnail'],                       
+                        'thumbnail': video['thumbnail'],
                         'infoHash': video['infoHash'],
                         'fileIdx': video['fileIdx']
                     })

@@ -2,6 +2,7 @@ import multiprocessing
 import os
 from threading import Thread
 import logging
+from logging.handlers import RotatingFileHandler
 from formulio_addon import run_scripts_in_loop
 
 # Gunicorn config variables
@@ -19,6 +20,22 @@ errorlog = '/var/log/gunicorn/error.log'
 # Configure logging
 logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# Ensure log directory exists
+os.makedirs('/var/log/gunicorn', exist_ok=True)
+
+# Set up rotating file handlers for access and error logs
+access_handler = RotatingFileHandler(accesslog, maxBytes=10*1024*1024, backupCount=5)
+error_handler = RotatingFileHandler(errorlog, maxBytes=10*1024*1024, backupCount=5)
+
+# Create formatters and add them to the handlers
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+access_handler.setFormatter(formatter)
+error_handler.setFormatter(formatter)
+
+# Add the handlers to the logger
+logger.addHandler(access_handler)
+logger.addHandler(error_handler)
 
 def on_starting(server):
     logger.warning("Gunicorn server is starting")
@@ -46,6 +63,3 @@ def post_fork(server, worker):
 
 def worker_exit(server, worker):
     logger.warning(f"Worker {worker.pid} exited")
-
-# Ensure log directory exists
-os.makedirs('/var/log/gunicorn', exist_ok=True)
