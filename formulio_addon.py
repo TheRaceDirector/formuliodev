@@ -11,8 +11,18 @@ import signal
 from logging.handlers import RotatingFileHandler
 
 # Enhanced logging setup
-log_file = '/var/log/app/app.log'
-os.makedirs(os.path.dirname(log_file), exist_ok=True)
+log_dir = os.path.expanduser('~/.formulio_logs')
+log_file = os.path.join(log_dir, 'app.log')
+
+# Ensure the log directory exists
+if not os.path.exists(log_dir):
+    try:
+        os.makedirs(log_dir, exist_ok=True)
+    except PermissionError:
+        log_dir = '/tmp/formulio_logs'
+        log_file = os.path.join(log_dir, 'app.log')
+        os.makedirs(log_dir, exist_ok=True)
+
 handler = RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=5)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
