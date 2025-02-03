@@ -8,7 +8,7 @@ import re
 
 # Define the keywords to search for in the item titles, non-case sensitive
 keywords = ["Moto GP", "MotoGP", "Moto.GP", "Moto+GP"]
-year = "2024"  # Define the year to search for in the item titles
+year = "2025"  # Define the year to search for in the item titles
 
 # Define the path to the CSV file
 script_dir = os.path.dirname(os.path.abspath(__file__))
