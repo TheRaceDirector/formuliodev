@@ -25,10 +25,10 @@ def extract_session_number(filename):
     return match.group(1) if match else None
 
 # Function to format the title based on specific rules
-def format_title(filename, round_part):
+def format_title(filename, round_part, torrent_name):
     # Initialize title_part with a default value
     title_part = "Unknown Session"
-    
+
     # Extract the part after "Prix"
     match = title_regex.search(filename)
     if match:
@@ -41,12 +41,21 @@ def format_title(filename, round_part):
     gp_match = grand_prix_regex.search(filename)
     grand_prix_name = gp_match.group(1).replace('.', ' ') if gp_match else "Unknown"
 
+    # If both session and Grand Prix are unknown, use the torrent name
+    if title_part == "Unknown Session" and grand_prix_name == "Unknown":
+        title_part = torrent_name.split("2025.")[1].split("Sky")[0].strip().replace('.', ' ')
+
     # Combine with the round part and return
-    return f"{title_part} - {grand_prix_name} Grand Prix".strip()
+    if grand_prix_name == "Unknown":
+        return title_part.strip()
+    else:
+        return f"{title_part} - {grand_prix_name} Grand Prix".strip()
 
 # Process the CSV file
 def process_csv(file_path, output_file_path):
     output_data = {}
+    session_counter = 1  # Initialize session counter
+
     with open(file_path, 'r') as file:
         reader = csv.reader(file)
         next(reader)  # Skip the header row
@@ -57,26 +66,31 @@ def process_csv(file_path, output_file_path):
                 round_number = round_match.group(1) or round_match.group(2)
                 round_part = row[1].split('R' + round_number)[1].split('.')[0]  # Extract part after round number
             else:
-                round_number = 'Unknown'
+                round_number = '00'  # Default to '00' if no round number is found
                 round_part = ''
-            
+
             # Extract the session number from the start of the filename
             filename = row[1].split('/')[-1]
             session_number = extract_session_number(filename)
-            
+
+            # If session_number is None, use the session counter
+            if session_number is None:
+                session_number = f"{session_counter:02d}"
+                session_counter += 1
+
             # Extract the infohash and file index number
             infohash = row[2]
             file_index = int(row[3])
-            
+
             # Format the title
-            formatted_title = format_title(filename, round_part)
-            
+            formatted_title = format_title(filename, round_part, row[0])
+
             # Get the thumbnail URL for the round, defaulting to an empty string if not found
             thumbnail = round_thumbnails.get(round_number, '')
 
             # Create the key for the output dictionary
             key = f'hpytt0202501:{round_number}:{session_number}'
-            
+
             # Append the data to the output dictionary only if the key doesn't exist
             if key not in output_data:
                 output_data[key] = [{
