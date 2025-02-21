@@ -4,8 +4,7 @@ import os
 
 # Define the pattern to match the round and resolution
 round_pattern = re.compile(r'(R\d+|x\d+|Round\s?\d+)', re.IGNORECASE)
-resolution_pattern = re.compile(r'(1080[Pp]|SD|4K|2160[Pp])', re.IGNORECASE)
-
+resolution_pattern = re.compile(r'(1080[Pp]|SD|4K|2160[Pp]| HD)', re.IGNORECASE)
 
 # Function to normalize the round format
 def normalize_round(round_str):
@@ -13,21 +12,20 @@ def normalize_round(round_str):
     if match:
         round_num = re.sub(r'\D', '', match.group())  # Remove non-digit characters
         return f"r{int(round_num):02d}"  # Format with leading zero
-    return None
+    return "r00"  # Default to round 00 if no round number is found
 
 # Function to normalize the resolution format
 def normalize_resolution(res_str):
     match = resolution_pattern.search(res_str)
     if match:
         res_str = match.group().upper()
-        if '1080P' in res_str or 'FHD' in res_str:
+        if '1080P' in res_str or 'FHD' in res_str or ' HD' in res_str:
             return 'FHD'
         elif 'SD' in res_str:
             return 'SD'
         elif '2160P' in res_str or '4K' in res_str:
             return '4K'
     return None
-
 
 # Function to read existing GUIDs from a file
 def read_existing_guids(filename):
@@ -53,9 +51,9 @@ def process_records(input_file):
             round_match = round_pattern.search(event_description)
             resolution_match = resolution_pattern.search(event_description)
 
-            if year_match and round_match and resolution_match:
+            if year_match and resolution_match:
                 year = year_match.group(1)
-                normalized_round = normalize_round(round_match.group())
+                normalized_round = normalize_round(event_description)
                 normalized_resolution = normalize_resolution(resolution_match.group())
 
                 # Construct the filename
