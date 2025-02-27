@@ -3,23 +3,23 @@ import re
 import os
 
 # Define the pattern to match the round and resolution
-round_pattern = re.compile(r'\.Round\.(\d+)', re.IGNORECASE)
-resolution_pattern = re.compile(r'(1080[Pp]|SD|4K|2160[Pp])', re.IGNORECASE)
+round_pattern = re.compile(r'\b(R\d+|x\d+|Round\s?\d+)\b', re.IGNORECASE)
+resolution_pattern = re.compile(r'(1080[Pp]|SD|4K|2160[Pp]| HD)', re.IGNORECASE)
 
 # Function to normalize the round format
-def normalize_round(event_description):
-    match = round_pattern.search(event_description)
+def normalize_round(round_str):
+    match = round_pattern.search(round_str)
     if match:
-        round_num = match.group(1)  # Extract the round number part
+        round_num = re.sub(r'\D', '', match.group())  # Remove non-digit characters
         return f"r{int(round_num):02d}"  # Format with leading zero
-    return None
+    return "r00"  # Default to round 00 if no round is found
 
 # Function to normalize the resolution format
 def normalize_resolution(res_str):
     match = resolution_pattern.search(res_str)
     if match:
         res_str = match.group().upper()
-        if '1080P' in res_str or 'FHD' in res_str:
+        if '1080P' in res_str or 'FHD' in res_str or ' HD' in res_str:
             return 'FHD'
         elif 'SD' in res_str:
             return 'SD'
@@ -48,23 +48,15 @@ def process_records(input_file):
             event_description = row[0]
             guid = row[1]  # Assuming the GUID is in the second column
             year_match = re.search(r'(\d{4})', event_description)
-            round_match = normalize_round(event_description)
             resolution_match = resolution_pattern.search(event_description)
 
-            # Debug prints
-            # print(f"Processing: {event_description}")
-            # print(f"Year: {year_match.group(1) if year_match else 'None'}")
-            # print(f"Round: {round_match}")
-            # print(f"Resolution: {resolution_match.group() if resolution_match else 'None'}")
-
-            if year_match and round_match and resolution_match:
+            if year_match and resolution_match:
                 year = year_match.group(1)
-                normalized_round = round_match
+                normalized_round = normalize_round(event_description)
                 normalized_resolution = normalize_resolution(resolution_match.group())
 
                 # Construct the filename
                 filename = f"{year}{normalized_round}{normalized_resolution}.csv"
-                # print(f"Filename: {filename}")
 
                 # Read existing GUIDs for the file if not already done
                 if filename not in existing_guids:
@@ -77,10 +69,4 @@ def process_records(input_file):
                         writer = csv.writer(outfile)
                         writer.writerow(row)
                         existing_guids[filename].add(guid)  # Add the new GUID to the set
-                    # print(f"Appended: {row}")
-                else:
-                    # print(f"Duplicate GUID: {guid}")
-                    pass
-
-# Replace 'f1db.csv' with the path to your actual CSV file
 process_records('../f1db.csv')
