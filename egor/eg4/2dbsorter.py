@@ -71,5 +71,4 @@ def process_records(input_file):
                         writer.writerow(row)
                         existing_guids[filename].add(guid)  # Add the new GUID to the set
 
-# Replace 'f1db.csv' with the path to your actual CSV file
 process_records('../f1db.csv')
