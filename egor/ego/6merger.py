@@ -12,110 +12,101 @@ countries = config["countries"]
 round_to_country = config["calendar"]
 
 # Generate round_thumbnails dictionary
-round_thumbnails = {round_num: countries.get(country, '') for round_num, country in round_to_country.items()}
+round_thumbnails = {round_num: countries.get(country, 'https://i.ibb.co/yc9mg54D/un.png') for round_num, country in round_to_country.items()}
+# Default thumbnail if not found
+default_thumbnail = 'https://i.ibb.co/yc9mg54D/un.png'
 
-# Compile the regular expression for matching round numbers and extracting parts of the filename
+# Compile the regular expression for matching round numbers
 round_regex = re.compile(r'R(\d+)|Round\.(\d+)', re.IGNORECASE)
-title_regex = re.compile(r'Prix\.(.+?)\.(?:1080P|Sky)', re.IGNORECASE)
-grand_prix_regex = re.compile(r'R\d+\.(.+?)\.Grand\.Prix', re.IGNORECASE)
-
-# Function to extract the session number from the start of the filename
-def extract_session_number(filename):
-    match = re.match(r'(\d+)', filename)
-    return match.group(1) if match else None
 
 # Function to format the title based on specific rules
-def format_title(filename, round_part, torrent_name):
-    # Initialize title_part with a default value
-    title_part = "Unknown Session"
-
-    # Extract the part after "Prix"
-    match = title_regex.search(filename)
-    if match:
-        title_part = match.group(1)
-        # Remove unwanted parts and format
-        title_part = re.sub(r'\.(mkv|mp4)$', '', title_part, flags=re.IGNORECASE)  # Remove file extension
-        title_part = title_part.replace('.', ' ')  # Replace dots with spaces
-
-    # Extract the Grand Prix name
-    gp_match = grand_prix_regex.search(filename)
-    grand_prix_name = gp_match.group(1).replace('.', ' ') if gp_match else "Unknown"
-
-    # If both session and Grand Prix are unknown, use the torrent name
-    if title_part == "Unknown Session" and grand_prix_name == "Unknown":
-        title_part = torrent_name.split("2025.")[1].split("Sky")[0].strip().replace('.', ' ')
-
-    # Combine with the round part and return
-    if grand_prix_name == "Unknown":
-        return title_part.strip()
-    else:
-        return f"{title_part} - {grand_prix_name} Grand Prix".strip()
+def format_title(filename):
+    # Remove file extension and path
+    basename = os.path.basename(filename)
+    basename = re.sub(r'\.(mkv|mp4)$', '', basename, flags=re.IGNORECASE)
+    
+    # Split the filename into parts
+    parts = basename.split('.')
+    
+    # Extract meaningful parts, dropping SkyF1HD, 1080P, etc.
+    filtered_parts = []
+    for part in parts:
+        if part not in ['SkyF1HD', '1080P', 'F1', '2025', 'mkv', 'mp4'] and not re.match(r'^\d+$', part):
+            filtered_parts.append(part)
+    
+    # Join parts with spaces for better readability
+    return ' '.join(filtered_parts).strip()
 
 # Process the CSV file
 def process_csv(file_path, output_file_path):
     output_data = {}
-    session_counter = 1  # Initialize session counter
+    global_session_counter = 1
+    processed_files = set()  # Track unique files to avoid duplicates
+    title_tracker = {}  # Track titles in the '00' round to avoid duplicates
 
     with open(file_path, 'r') as file:
         reader = csv.reader(file)
         next(reader)  # Skip the header row
+        
         for row in reader:
-            # Extract the round number using the regular expression
-            round_match = round_regex.search(row[1])
-            if round_match:
-                round_number = round_match.group(1) or round_match.group(2)
-                round_part = row[1].split('R' + round_number)[1].split('.')[0]  # Extract part after round number
-            else:
-                round_number = '00'  # Default to '00' if no round number is found
-                round_part = ''
-
-            # Extract the session number from the start of the filename
-            filename = row[1].split('/')[-1]
-            session_number = extract_session_number(filename)
-
-            # If session_number is None, use the session counter
-            if session_number is None:
-                session_number = f"{session_counter:02d}"
-                session_counter += 1
-
-            # Extract the infohash and file index number
+            torrent_name = row[0]
+            filename = row[1]
             infohash = row[2]
             file_index = int(row[3])
-
-            # Format the title
-            formatted_title = format_title(filename, round_part, row[0])
-
-            # Get the thumbnail URL for the round, defaulting to an empty string if not found
-            thumbnail = round_thumbnails.get(round_number, '')
-
+            
+            # Create a unique identifier for this file
+            file_key = f"{infohash}:{file_index}"
+            
+            # Skip duplicates
+            if file_key in processed_files:
+                continue
+            
+            processed_files.add(file_key)
+            
+            # Extract the round number
+            round_match = round_regex.search(filename)
+            if round_match:
+                round_number = round_match.group(1) or round_match.group(2)
+            else:
+                round_number = '00'  # Default for non-race content
+                
+            # Clean and format the title
+            clean_title = format_title(filename)
+            
+            # Skip if we've already processed a file with this title in round '00'
+            if round_number == '00' and clean_title in title_tracker:
+                continue
+                
+            # Add title to tracker if it's in round '00'
+            if round_number == '00':
+                title_tracker[clean_title] = True
+                
+            # Format session number
+            session_number = f"{global_session_counter:02d}"
+            global_session_counter += 1
+            
+            # Get thumbnail URL
+            thumbnail = round_thumbnails.get(round_number, default_thumbnail)
+            
             # Create the key for the output dictionary
             key = f'hpytt0202501:{round_number}:{session_number}'
-
-            # Append the data to the output dictionary only if the key doesn't exist
-            if key not in output_data:
-                output_data[key] = [{
-                    'title': formatted_title,
-                    'thumbnail': thumbnail,
-                    'infoHash': infohash,
-                    'fileIdx': file_index
-                }]
-
-    # Read existing data from the output file
-    try:
-        with open(output_file_path, 'r') as output_file:
-            existing_data = output_file.read()
-    except FileNotFoundError:
-        existing_data = ""
-
+            
+            # Add to output data
+            output_data[key] = [{
+                'title': clean_title,
+                'thumbnail': thumbnail,
+                'infoHash': infohash,
+                'fileIdx': file_index
+            }]
+    
     # Manually format the output data as a string
     new_data = ""
     for key, value in output_data.items():
         new_data += f"'{key}': {value},\n"
 
-    # Write the output data to the file only if it's different from the existing data
-    if new_data.strip() != existing_data.strip():
-        with open(output_file_path, 'w') as output_file:
-            output_file.write(new_data)
+    # Write the output data to the file
+    with open(output_file_path, 'w') as output_file:
+        output_file.write(new_data)
 
 # Example usage
 file_path = 'content.csv'
