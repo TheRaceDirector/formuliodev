@@ -48,7 +48,7 @@ MANIFEST = {
     'description': 'An Addon for Formula One & MotoGP Replay Content.  (This addon only displays content from external sources. Use this Stremio torrent addon only where legally permitted. Users are responsible for complying with all applicable laws in their jurisdiction)',
     'types': ['series'],
     'catalogs': [
-        {'type': 'series', 'id': 'formulio-series'}
+        {'type': 'series', 'id': 'formulio-series', 'name': 'Motor racing'},
     ],
     'resources': [
         'catalog',
