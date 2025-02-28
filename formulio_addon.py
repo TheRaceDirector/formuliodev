@@ -43,9 +43,10 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 MANIFEST = {
     'id': 'org.stremio.formulio',
-    'version': '1.0.0',
+    'version': '2.0.0',
     'name': 'Formulio',
-    'description': 'An Addon for Formula One & MotoGP Replay Content.  (This addon only displays content from external sources. Use this Stremio torrent addon only where legally permitted. Users are responsible for complying with all applicable laws in their jurisdiction)',
+    'description': 'An Addon for Motor Racing Replay Content.  (This addon only displays content from external sources. Use this Stremio torrent addon only where legally permitted. Users are responsible for complying with all applicable laws in their jurisdiction)',
+    'logo': 'https://i.postimg.cc/5tTmz4jb/formulio1.png',
     'types': ['series'],
     'catalogs': [
         {'type': 'series', 'id': 'formulio-series', 'name': 'Motor racing'},
