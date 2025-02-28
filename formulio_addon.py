@@ -63,7 +63,7 @@ CATALOG = {
         {
             'id': 'hpytt0202501',
             'name': 'SkyF1 UK1',
-            'description': 'SkyF1 F1 Season - 1080p 50fps (egortech) \n \nEnsure your TV streaming device is in 50Hz mode',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/g2d9tyXS/sky1.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -74,7 +74,7 @@ CATALOG = {
         {
             'id': 'hpytt0202502',
             'name': 'SkyF1 UK2',
-            'description': 'SkyF1 F1 Season - 1080p 50fps (smcgill1969) \n \nEnsure your TV streaming device is in 50Hz mode',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/KYMnKTQb/sky2.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -85,7 +85,7 @@ CATALOG = {
         {
             'id': 'hpytt0202503',
             'name': 'F1TV English',
-            'description': 'F1TV F1 Season - English - 1080p 50fps (showstopper) \n \nEnsure your TV streaming device is in 50Hz mode',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/pXf4j9GD/f1tveng.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -96,7 +96,7 @@ CATALOG = {
         {
             'id': 'hpytt0202504',
             'name': 'F1TV International',
-            'description': 'F1TV F1 Season - Multi language - 1080p 50fps (showstopper) \nAudio track can be changed during playback \nEnsure your TV streaming device is in 50Hz mode',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/1zjjSDXZ/f1tvint.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -107,7 +107,7 @@ CATALOG = {
         {
             'id': 'hpytt0202505',
             'name': 'SkyF1 4K1',
-            'description': 'SkyF1 F1 Season - 2160p 50fps (egortech) \n  \nEnsure your TV streaming device supports 4K and is in 50Hz mode',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/zfPNXN1H/sky14k.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -118,7 +118,7 @@ CATALOG = {
         {
             'id': 'hpytt0202506',
             'name': 'SkyF1 4K2',
-            'description': 'SkyF1 F1 Season - 2160p 50fps (smcgill1969) \n \nEnsure your TV streaming device supports 4K and is in 50Hz mode',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/ry4Tc7Zz/sky24k.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -129,7 +129,7 @@ CATALOG = {
         {
             'id': 'hpytt0202507',
             'name': 'SkyF1 SD',
-            'description': 'SkyF1 F1 Season - 576p 25fps (smcgill1969) \n \nNote: This is not HD, please use the standard series or the 4K one',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/Pqcn5Vvx/sky2sd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -140,7 +140,7 @@ CATALOG = {
         {
             'id': 'hpytt0202511',
             'name': 'MotoGP UK',
-            'description': 'TNT MotoGP Season - 1080p 50fps (smcgill1969) \n \nEnsure your TV streaming device is in 50Hz mode',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/3Rpyv1D8/motogphd.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
@@ -151,7 +151,7 @@ CATALOG = {
         {
             'id': 'hpytt0202512',
             'name': 'MotoGP 4K',
-            'description': 'TNT MotoGP Season - 2160p 50fps (smcgill1969) \n \nEnsure your TV streaming device supports 4K and is in 50Hz mode',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/MHmvsGDg/motogp4k.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
@@ -162,7 +162,7 @@ CATALOG = {
         {
             'id': 'hpytt0202513',
             'name': 'MotoGP SD',
-            'description': 'TNT MotoGP Season - 576p 25fps (smcgill1969) \n \nNote: This is not HD, please use the standard series or the 4K one',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/qqTNXK88/motogpsd.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
