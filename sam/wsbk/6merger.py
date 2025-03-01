@@ -60,15 +60,16 @@ def format_title(filename):
     # Join parts with spaces for better readability
     title = ' '.join(filtered_parts).strip()
     
-    # Include resolution but remove everything after it
+    # Remove resolution and everything after it
     resolution_pattern = r'(1080[pP]|720[pP]|4[kK]|FHD|fhd|2160[pP])'
     resolution_match = re.search(resolution_pattern, title)
     if resolution_match:
-        # Keep the title up to and including the resolution
-        resolution_end = resolution_match.end()
-        title = title[:resolution_end]
+        # Keep only the title before the resolution
+        resolution_start = resolution_match.start()
+        title = title[:resolution_start].strip()
     
     return title.strip()
+
 
 # Process the CSV file
 def process_csv(file_path, output_file_path):
