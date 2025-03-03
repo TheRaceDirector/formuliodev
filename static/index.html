@@ -529,10 +529,16 @@
                 baseUrl = baseUrls[stremthruProviderValue];
             }
             
-            // Create the configuration object
+            // Get current domain for the manifest URL
+            const currentUrl = window.location.href;
+            const url = new URL(currentUrl);
+            const protocol = url.protocol;
+            const host = url.host;
+            
+            // Create the configuration object with dynamic manifest URL
             const config = {
                 upstreams: [{
-                    u: "https://formulio.hayd.uk/manifest.json"
+                    u: `${protocol}//${host}/manifest.json`
                 }],
                 stores: [{
                     c: debridProvider,
