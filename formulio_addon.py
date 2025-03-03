@@ -43,23 +43,35 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 MANIFEST = {
     'id': 'org.stremio.formulio',
-    'version': '2.0.0',
+    'version': '2.0.1',
     'name': 'Formulio',
     'description': 'An Addon for Motor Racing Replay Content.  (This addon only displays content from external sources. Use this Stremio torrent addon only where legally permitted. Users are responsible for complying with all applicable laws in their jurisdiction)',
     'logo': 'https://i.postimg.cc/5tTmz4jb/formulio1.png',
-    'types': ['series'],
+    'behaviorHints' : 
+        {
+        "configurable": True,
+        },
+    'types': ['Formulio'],
     'catalogs': [
-        {'type': 'series', 'id': 'formulio-series', 'name': 'Motor racing'},
+        {
+            'type': 'Formulio', 
+            'id': 'formulio-series', 
+            'name': 'Motor Racing',
+            'extra': [
+                {'name': 'search', 'isRequired': False},
+                {'name': 'genre', 'options': ['Formula Racing', 'Moto Racing'], 'isRequired': False}
+            ]
+        }
     ],
     'resources': [
         'catalog',
-        {'name': "meta", 'types': ["series"], 'idPrefixes': ["hpy"]},
-        {'name': 'stream', 'types': ['series'], 'idPrefixes': ['tt', 'hpy']}
+        {'name': "meta", 'types': ["Formulio"], 'idPrefixes': ["hpy"]},
+        {'name': 'stream', 'types': ['Formulio'], 'idPrefixes': ['tt', 'hpy']}
     ]
 }
 
 CATALOG = {
-    'series': [
+    'Formulio': [
         {
             'id': 'hpytt0202501',
             'name': 'SkyF1 UK1',
@@ -68,6 +80,7 @@ CATALOG = {
             'poster': 'https://i.postimg.cc/g2d9tyXS/sky1.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
+            'type': 'movie',
             'genres': ['Formula Racing'],
             'videos': []
         },
@@ -288,17 +301,17 @@ def run_scripts_in_loop():
 def restart_server():
     with app.app_context():
         try:
-            CATALOG['series'][0]['videos'] = load_videos('./egor/ego/6processed.txt')
-            CATALOG['series'][1]['videos'] = load_videos('./smcg/smc/6processed.txt')
-            CATALOG['series'][2]['videos'] = load_videos('./ss/ssf/6processed.txt')
-            CATALOG['series'][3]['videos'] = load_videos('./ss/ssm/6processed.txt')
-            CATALOG['series'][4]['videos'] = load_videos('./egor/eg4/6processed.txt')
-            CATALOG['series'][5]['videos'] = load_videos('./smcg/sm4/6processed.txt')
-            CATALOG['series'][6]['videos'] = load_videos('./smcg/sms/6processed.txt')
-            CATALOG['series'][7]['videos'] = load_videos('./smcm/smc/6processed.txt')
-            CATALOG['series'][8]['videos'] = load_videos('./smcm/sm4/6processed.txt')
-            CATALOG['series'][9]['videos'] = load_videos('./smcm/sms/6processed.txt')
-            CATALOG['series'][10]['videos'] = load_videos('./sam/wsbk/6processed.txt')
+            CATALOG['Formulio'][0]['videos'] = load_videos('./egor/ego/6processed.txt')
+            CATALOG['Formulio'][1]['videos'] = load_videos('./smcg/smc/6processed.txt')
+            CATALOG['Formulio'][2]['videos'] = load_videos('./ss/ssf/6processed.txt')
+            CATALOG['Formulio'][3]['videos'] = load_videos('./ss/ssm/6processed.txt')
+            CATALOG['Formulio'][4]['videos'] = load_videos('./egor/eg4/6processed.txt')
+            CATALOG['Formulio'][5]['videos'] = load_videos('./smcg/sm4/6processed.txt')
+            CATALOG['Formulio'][6]['videos'] = load_videos('./smcg/sms/6processed.txt')
+            CATALOG['Formulio'][7]['videos'] = load_videos('./smcm/smc/6processed.txt')
+            CATALOG['Formulio'][8]['videos'] = load_videos('./smcm/sm4/6processed.txt')
+            CATALOG['Formulio'][9]['videos'] = load_videos('./smcm/sms/6processed.txt')
+            CATALOG['Formulio'][10]['videos'] = load_videos('./sam/wsbk/6processed.txt')
             logger.info("Server restarted with new content.")
         except Exception as e:
             logger.error(f"Error during server restart: {e}")
@@ -311,6 +324,14 @@ def addon_manifest():
 def addon_catalog(type, id):
     if type not in MANIFEST['types']:
         abort(404)
+    
+    # Check if there are any query parameters that need special handling
+    if request.query_string:
+        # If there's genre filtering or other parameters in the query string,
+        # you might want to parse and handle them here
+        pass
+        
+    # Default behavior - return all items in the catalog
     catalog = CATALOG.get(type, [])
     metaPreviews = {
         'metas': [
@@ -321,6 +342,31 @@ def addon_catalog(type, id):
                 'genres': item['genres'],
                 'poster': item['poster']
             } for item in catalog
+        ]
+    }
+    return respond_with(metaPreviews)
+
+@app.route('/catalog/<type>/<id>/genre=<genre>.json')
+def addon_catalog_filtered(type, id, genre):
+    if type not in MANIFEST['types']:
+        abort(404)
+    
+    # URL decode the genre parameter
+    import urllib.parse
+    genre = urllib.parse.unquote(genre)
+    
+    # Filter catalog items by the requested genre
+    filtered_items = [item for item in CATALOG.get(type, []) if genre in item['genres']]
+    
+    metaPreviews = {
+        'metas': [
+            {
+                'id': item['id'],
+                'type': type,
+                'name': item['name'],
+                'genres': item['genres'],
+                'poster': item['poster']
+            } for item in filtered_items
         ]
     }
     return respond_with(metaPreviews)
@@ -374,6 +420,43 @@ def addon_stream(type, id):
         abort(404)
     return respond_with(streams)
 
+@app.route('/catalog/<type>/<id>/search=<query>.json')
+def addon_catalog_search(type, id, query):
+    if type not in MANIFEST['types']:
+        abort(404)
+    
+    # URL decode the search query
+    import urllib.parse
+    query = urllib.parse.unquote(query).lower()
+    
+    # Find items that match the search query in name, description, or other relevant fields
+    search_results = []
+    for item in CATALOG.get(type, []):
+        # Check if query appears in the name or description
+        if (query in item['name'].lower() or 
+            (item.get('description') and query in item['description'].lower())):
+            search_results.append(item)
+        
+        # Also search in video titles for series content
+        elif 'videos' in item:
+            for video in item['videos']:
+                if 'title' in video and query in video['title'].lower():
+                    search_results.append(item)
+                    break
+    
+    metaPreviews = {
+        'metas': [
+            {
+                'id': item['id'],
+                'type': type,
+                'name': item['name'],
+                'genres': item['genres'],
+                'poster': item['poster']
+            } for item in search_results
+        ]
+    }
+    return respond_with(metaPreviews)
+
 @app.route('/images/<path:filename>')
 def static_files(filename):
     return send_from_directory('images', filename)
@@ -397,17 +480,17 @@ if __name__ == '__main__':
 
     # Load initial video data
     try:
-        CATALOG['series'][0]['videos'] = load_videos('./egor/ego/6processed.txt')
-        CATALOG['series'][1]['videos'] = load_videos('./smcg/smc/6processed.txt')
-        CATALOG['series'][2]['videos'] = load_videos('./ss/ssf/6processed.txt')
-        CATALOG['series'][3]['videos'] = load_videos('./ss/ssm/6processed.txt')
-        CATALOG['series'][4]['videos'] = load_videos('./egor/eg4/6processed.txt')
-        CATALOG['series'][5]['videos'] = load_videos('./smcg/sm4/6processed.txt')
-        CATALOG['series'][6]['videos'] = load_videos('./smcg/sms/6processed.txt')
-        CATALOG['series'][7]['videos'] = load_videos('./smcm/smc/6processed.txt')
-        CATALOG['series'][8]['videos'] = load_videos('./smcm/sm4/6processed.txt')
-        CATALOG['series'][9]['videos'] = load_videos('./smcm/sms/6processed.txt')
-        CATALOG['series'][10]['videos'] = load_videos('./sam/wsbk/6processed.txt')
+        CATALOG['Formulio'][0]['videos'] = load_videos('./egor/ego/6processed.txt')
+        CATALOG['Formulio'][1]['videos'] = load_videos('./smcg/smc/6processed.txt')
+        CATALOG['Formulio'][2]['videos'] = load_videos('./ss/ssf/6processed.txt')
+        CATALOG['Formulio'][3]['videos'] = load_videos('./ss/ssm/6processed.txt')
+        CATALOG['Formulio'][4]['videos'] = load_videos('./egor/eg4/6processed.txt')
+        CATALOG['Formulio'][5]['videos'] = load_videos('./smcg/sm4/6processed.txt')
+        CATALOG['Formulio'][6]['videos'] = load_videos('./smcg/sms/6processed.txt')
+        CATALOG['Formulio'][7]['videos'] = load_videos('./smcm/smc/6processed.txt')
+        CATALOG['Formulio'][8]['videos'] = load_videos('./smcm/sm4/6processed.txt')
+        CATALOG['Formulio'][9]['videos'] = load_videos('./smcm/sms/6processed.txt')
+        CATALOG['Formulio'][10]['videos'] = load_videos('./sam/wsbk/6processed.txt')
 
     except Exception as e:
         logger.error(f"Error loading initial video data: {e}")
