@@ -43,20 +43,20 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 MANIFEST = {
     'id': 'org.stremio.formulio',
-    'version': '2.0.1',
+    'version': '2.0.2',
     'name': 'Formulio',
-    'description': 'An Addon for Motor Racing Replay Content.  (This addon only displays content from external sources. Use this Stremio torrent addon only where legally permitted. Users are responsible for complying with all applicable laws in their jurisdiction)',
+    'description': 'An Addon for Motor Racing Replay Content. (This addon only displays content from external sources. Use this Stremio torrent addon only where legally permitted. Users are responsible for complying with all applicable laws in their jurisdiction)',
     'logo': 'https://i.postimg.cc/5tTmz4jb/formulio1.png',
-    'behaviorHints' : 
-        {
-        "configurable": True,
-        },
-    'types': ['Formulio'],
+    'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
+    'behaviorHints': {
+        'configurable': True,
+    },
+    'types': ['series'],
     'catalogs': [
         {
-            'type': 'Formulio', 
+            'type': 'series', 
             'id': 'formulio-series', 
-            'name': 'Motor Racing',
+            'name': 'Formulio',
             'extra': [
                 {'name': 'search', 'isRequired': False},
                 {'name': 'genre', 'options': ['Formula Racing', 'Moto Racing'], 'isRequired': False}
@@ -65,13 +65,14 @@ MANIFEST = {
     ],
     'resources': [
         'catalog',
-        {'name': "meta", 'types': ["Formulio"], 'idPrefixes': ["hpy"]},
-        {'name': 'stream', 'types': ['Formulio'], 'idPrefixes': ['tt', 'hpy']}
+        {'name': 'meta', 'types': ['series'], 'idPrefixes': ['hpy']},
+        {'name': 'stream', 'types': ['series'], 'idPrefixes': ['hpy']}
     ]
 }
 
+
 CATALOG = {
-    'Formulio': [
+    'series': [
         {
             'id': 'hpytt0202501',
             'name': 'SkyF1 UK1',
@@ -301,20 +302,21 @@ def run_scripts_in_loop():
 def restart_server():
     with app.app_context():
         try:
-            CATALOG['Formulio'][0]['videos'] = load_videos('./egor/ego/6processed.txt')
-            CATALOG['Formulio'][1]['videos'] = load_videos('./smcg/smc/6processed.txt')
-            CATALOG['Formulio'][2]['videos'] = load_videos('./ss/ssf/6processed.txt')
-            CATALOG['Formulio'][3]['videos'] = load_videos('./ss/ssm/6processed.txt')
-            CATALOG['Formulio'][4]['videos'] = load_videos('./egor/eg4/6processed.txt')
-            CATALOG['Formulio'][5]['videos'] = load_videos('./smcg/sm4/6processed.txt')
-            CATALOG['Formulio'][6]['videos'] = load_videos('./smcg/sms/6processed.txt')
-            CATALOG['Formulio'][7]['videos'] = load_videos('./smcm/smc/6processed.txt')
-            CATALOG['Formulio'][8]['videos'] = load_videos('./smcm/sm4/6processed.txt')
-            CATALOG['Formulio'][9]['videos'] = load_videos('./smcm/sms/6processed.txt')
-            CATALOG['Formulio'][10]['videos'] = load_videos('./sam/wsbk/6processed.txt')
+            CATALOG['series'][0]['videos'] = load_videos('./egor/ego/6processed.txt')
+            CATALOG['series'][1]['videos'] = load_videos('./smcg/smc/6processed.txt')
+            CATALOG['series'][2]['videos'] = load_videos('./ss/ssf/6processed.txt')
+            CATALOG['series'][3]['videos'] = load_videos('./ss/ssm/6processed.txt')
+            CATALOG['series'][4]['videos'] = load_videos('./egor/eg4/6processed.txt')
+            CATALOG['series'][5]['videos'] = load_videos('./smcg/sm4/6processed.txt')
+            CATALOG['series'][6]['videos'] = load_videos('./smcg/sms/6processed.txt')
+            CATALOG['series'][7]['videos'] = load_videos('./smcm/smc/6processed.txt')
+            CATALOG['series'][8]['videos'] = load_videos('./smcm/sm4/6processed.txt')
+            CATALOG['series'][9]['videos'] = load_videos('./smcm/sms/6processed.txt')
+            CATALOG['series'][10]['videos'] = load_videos('./sam/wsbk/6processed.txt')
             logger.info("Server restarted with new content.")
         except Exception as e:
             logger.error(f"Error during server restart: {e}")
+
 
 @app.route('/manifest.json')
 def addon_manifest():
@@ -480,18 +482,17 @@ if __name__ == '__main__':
 
     # Load initial video data
     try:
-        CATALOG['Formulio'][0]['videos'] = load_videos('./egor/ego/6processed.txt')
-        CATALOG['Formulio'][1]['videos'] = load_videos('./smcg/smc/6processed.txt')
-        CATALOG['Formulio'][2]['videos'] = load_videos('./ss/ssf/6processed.txt')
-        CATALOG['Formulio'][3]['videos'] = load_videos('./ss/ssm/6processed.txt')
-        CATALOG['Formulio'][4]['videos'] = load_videos('./egor/eg4/6processed.txt')
-        CATALOG['Formulio'][5]['videos'] = load_videos('./smcg/sm4/6processed.txt')
-        CATALOG['Formulio'][6]['videos'] = load_videos('./smcg/sms/6processed.txt')
-        CATALOG['Formulio'][7]['videos'] = load_videos('./smcm/smc/6processed.txt')
-        CATALOG['Formulio'][8]['videos'] = load_videos('./smcm/sm4/6processed.txt')
-        CATALOG['Formulio'][9]['videos'] = load_videos('./smcm/sms/6processed.txt')
-        CATALOG['Formulio'][10]['videos'] = load_videos('./sam/wsbk/6processed.txt')
-
+        CATALOG['series'][0]['videos'] = load_videos('./egor/ego/6processed.txt')
+        CATALOG['series'][1]['videos'] = load_videos('./smcg/smc/6processed.txt')
+        CATALOG['series'][2]['videos'] = load_videos('./ss/ssf/6processed.txt')
+        CATALOG['series'][3]['videos'] = load_videos('./ss/ssm/6processed.txt')
+        CATALOG['series'][4]['videos'] = load_videos('./egor/eg4/6processed.txt')
+        CATALOG['series'][5]['videos'] = load_videos('./smcg/sm4/6processed.txt')
+        CATALOG['series'][6]['videos'] = load_videos('./smcg/sms/6processed.txt')
+        CATALOG['series'][7]['videos'] = load_videos('./smcm/smc/6processed.txt')
+        CATALOG['series'][8]['videos'] = load_videos('./smcm/sm4/6processed.txt')
+        CATALOG['series'][9]['videos'] = load_videos('./smcm/sms/6processed.txt')
+        CATALOG['series'][10]['videos'] = load_videos('./sam/wsbk/6processed.txt')
     except Exception as e:
         logger.error(f"Error loading initial video data: {e}")
 
