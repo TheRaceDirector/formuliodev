@@ -9,6 +9,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from functools import wraps
 import signal
 from logging.handlers import RotatingFileHandler
+import urllib.parse
 
 # Enhanced logging setup
 log_dir = os.path.expanduser('~/.formulio_logs')
@@ -43,7 +44,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 MANIFEST = {
     'id': 'org.stremio.formulio',
-    'version': '2.0.2',
+    'version': '2.0.3',
     'name': 'Formulio',
     'description': 'An Addon for Motor Racing Replay Content. (This addon only displays content from external sources. Use this Stremio torrent addon only where legally permitted. Users are responsible for complying with all applicable laws in their jurisdiction)',
     'logo': 'https://i.postimg.cc/5tTmz4jb/formulio1.png',
@@ -75,7 +76,7 @@ CATALOG = {
     'series': [
         {
             'id': 'hpytt0202501',
-            'name': 'SkyF1 UK1',
+            'name': 'Sky F1 - FHD',
             'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/g2d9tyXS/sky1.jpg',
@@ -87,7 +88,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202502',
-            'name': 'SkyF1 UK2',
+            'name': 'Sky F1 - FHD-2',
             'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/KYMnKTQb/sky2.jpg',
@@ -98,7 +99,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202503',
-            'name': 'F1TV English',
+            'name': 'F1TV - English',
             'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/pXf4j9GD/f1tveng.jpg',
@@ -109,7 +110,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202504',
-            'name': 'F1TV International',
+            'name': 'F1TV - International',
             'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/1zjjSDXZ/f1tvint.jpg',
@@ -120,7 +121,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202505',
-            'name': 'SkyF1 4K1',
+            'name': 'Sky F1 - 4K',
             'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/zfPNXN1H/sky14k.jpg',
@@ -131,7 +132,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202506',
-            'name': 'SkyF1 4K2',
+            'name': 'Sky F1 - 4K-2',
             'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/ry4Tc7Zz/sky24k.jpg',
@@ -142,7 +143,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202507',
-            'name': 'SkyF1 SD',
+            'name': 'SkyF1 - SD',
             'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/Pqcn5Vvx/sky2sd.jpg',
@@ -153,7 +154,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202511',
-            'name': 'MotoGP UK',
+            'name': 'MotoGP - FHD',
             'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/3Rpyv1D8/motogphd.jpg',
@@ -164,7 +165,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202512',
-            'name': 'MotoGP 4K',
+            'name': 'MotoGP - 4K',
             'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/MHmvsGDg/motogp4k.jpg',
@@ -175,7 +176,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202513',
-            'name': 'MotoGP SD',
+            'name': 'MotoGP - SD',
             'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/qqTNXK88/motogpsd.jpg',
@@ -186,7 +187,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202514',
-            'name': 'WSBK HD',
+            'name': 'WSBK - FHD',
             'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': '',
@@ -195,7 +196,6 @@ CATALOG = {
             'genres': ['Moto Racing'],
             'videos': []
         }
-
     ]
 }
 
@@ -327,38 +327,39 @@ def addon_catalog(type, id):
     if type not in MANIFEST['types']:
         abort(404)
     
-    # Check if there are any query parameters that need special handling
-    if request.query_string:
-        # If there's genre filtering or other parameters in the query string,
-        # you might want to parse and handle them here
-        pass
-        
-    # Default behavior - return all items in the catalog
+    # Get genre from query parameters if it exists
+    genre = request.args.get('genre')
+    
+    # Filter by genre if provided
     catalog = CATALOG.get(type, [])
+    if genre:
+        catalog = [item for item in catalog if genre in item.get('genres', [])]
+    
     metaPreviews = {
         'metas': [
             {
                 'id': item['id'],
                 'type': type,
                 'name': item['name'],
-                'genres': item['genres'],
+                'genres': item.get('genres', []),
                 'poster': item['poster']
             } for item in catalog
         ]
     }
     return respond_with(metaPreviews)
 
+# This route needs to be restored to handle Stremio's direct genre filtering paths
 @app.route('/catalog/<type>/<id>/genre=<genre>.json')
 def addon_catalog_filtered(type, id, genre):
     if type not in MANIFEST['types']:
         abort(404)
     
     # URL decode the genre parameter
-    import urllib.parse
     genre = urllib.parse.unquote(genre)
     
     # Filter catalog items by the requested genre
-    filtered_items = [item for item in CATALOG.get(type, []) if genre in item['genres']]
+    catalog = CATALOG.get(type, [])
+    filtered_items = [item for item in catalog if genre in item.get('genres', [])]
     
     metaPreviews = {
         'metas': [
@@ -366,7 +367,7 @@ def addon_catalog_filtered(type, id, genre):
                 'id': item['id'],
                 'type': type,
                 'name': item['name'],
-                'genres': item['genres'],
+                'genres': item.get('genres', []),
                 'poster': item['poster']
             } for item in filtered_items
         ]
@@ -428,7 +429,6 @@ def addon_catalog_search(type, id, query):
         abort(404)
     
     # URL decode the search query
-    import urllib.parse
     query = urllib.parse.unquote(query).lower()
     
     # Find items that match the search query in name, description, or other relevant fields
@@ -452,7 +452,7 @@ def addon_catalog_search(type, id, query):
                 'id': item['id'],
                 'type': type,
                 'name': item['name'],
-                'genres': item['genres'],
+                'genres': item.get('genres', []),
                 'poster': item['poster']
             } for item in search_results
         ]
