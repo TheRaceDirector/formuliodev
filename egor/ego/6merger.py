@@ -32,7 +32,13 @@ def format_title(filename):
     filtered_parts = []
     for part in parts:
         if part not in ['SkyF1HD', '1080P', 'F1', '2025', 'mkv', 'mp4'] and not re.match(r'^\d+$', part):
-            filtered_parts.append(part)
+            # Remove the round number from the title
+            round_part_match = re.match(r'^R\d+\s*(.*)', part, re.IGNORECASE)
+            if round_part_match:
+                filtered_part = round_part_match.group(1)
+                filtered_parts.append(filtered_part)
+            else:
+                filtered_parts.append(part)
     
     # Join parts with spaces for better readability
     return ' '.join(filtered_parts).strip()
@@ -40,7 +46,7 @@ def format_title(filename):
 # Process the CSV file
 def process_csv(file_path, output_file_path):
     output_data = {}
-    global_session_counter = 1
+    round_session_counters = {}  # Track session counters per round
     processed_files = set()  # Track unique files to avoid duplicates
     title_tracker = {}  # Track titles in the '00' round to avoid duplicates
 
@@ -81,9 +87,13 @@ def process_csv(file_path, output_file_path):
             if round_number == '00':
                 title_tracker[clean_title] = True
                 
-            # Format session number
-            session_number = f"{global_session_counter:02d}"
-            global_session_counter += 1
+            # Initialize counter for this round if not already set
+            if round_number not in round_session_counters:
+                round_session_counters[round_number] = 1
+                
+            # Get the session number for this round and increment it
+            session_number = f"{round_session_counters[round_number]:02d}"
+            round_session_counters[round_number] += 1
             
             # Get thumbnail URL
             thumbnail = round_thumbnails.get(round_number, default_thumbnail)
