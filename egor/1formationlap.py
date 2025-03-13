@@ -164,8 +164,13 @@ def process_reddit_feed(feed, existing_guids):
             if magnet_link_match:
                 link = magnet_link_match.group(1)
                 link = link.replace('&amp;', '&')
-                guid = link.split(':')[-1].split('&')[0]
-                
+                btih_match = re.search(r'xt=urn:btih:([a-fA-F0-9]+)', link)
+                if btih_match:
+                    guid = btih_match.group(1)
+                else:
+                    # Fallback to the old method if regex doesn't match
+                    guid = link.split(':')[-1].split('&')[0]
+
                 # Handle different date formats
                 input_date = None
                 if hasattr(entry, 'updated'):
