@@ -50,12 +50,21 @@ def magnet_to_torrent_info(magnet_uri, output_dir, timeout=30):
 # Function to process CSV files and write to content.csv
 def process_csv_files():
     content_file_path = 'content.csv'
+    existing_files = set()
 
     # Ensure content.csv is created with header if it doesn't exist
     if not os.path.isfile(content_file_path):
         with open(content_file_path, 'w', newline='') as content_file:
             content_writer = csv.writer(content_file)
             content_writer.writerow(['torrent file name', 'filename within torrent', 'infohash', 'file index'])
+    else:
+        # Read existing entries to avoid duplicates
+        with open(content_file_path, 'r', newline='') as content_file:
+            content_reader = csv.reader(content_file)
+            next(content_reader)  # Skip header
+            for row in content_reader:
+                if len(row) >= 2:
+                    existing_files.add(row[1])  # Add filename within torrent to set
 
     # Search for directories starting with "2" and ending with the specified quality
     for subdir in filter(lambda d: os.path.isdir(d) and d.startswith('2') and d.endswith(quality), os.listdir('.')):
@@ -63,9 +72,10 @@ def process_csv_files():
         csv_files = sorted(glob.glob(os.path.join(subdir, '[0-9]*.csv')), key=lambda f: int(os.path.splitext(os.path.basename(f))[0]))
         for csv_file in csv_files:
             all_magnets_successful = True  # Flag to track if all magnets were processed successfully
+            new_entries = []  # Store new entries to write all at once
+            
             # Process each CSV file
-            with open(csv_file, 'r') as file, open(content_file_path, 'a', newline='') as content_file:
-                content_writer = csv.writer(content_file)
+            with open(csv_file, 'r') as file:
                 for line in file:
                     # Manually split the line into torrent name, infohash, and magnet link
                     parts = line.rsplit(',', 2)
@@ -86,11 +96,23 @@ def process_csv_files():
                     file_storage = torrent_info.files()
                     num_files = file_storage.num_files()
 
-                    # Write the required information to content.csv
+                    # Check each file and add to new_entries if not a duplicate
                     for file_index in range(num_files):
                         file_entry = file_storage.file_path(file_index)
-                        content_writer.writerow([torrent_name, file_entry, infohash, file_index])
-                        print(f'Added file {file_entry} from torrent {torrent_name} with index {file_index} to content.csv')
+                        if file_entry not in existing_files:
+                            new_entries.append([torrent_name, file_entry, infohash, file_index])
+                            existing_files.add(file_entry)  # Add to set to prevent duplicates within this run
+                            print(f'New file found: {file_entry} from torrent {torrent_name}')
+                        else:
+                            print(f'Skipping duplicate: {file_entry} from torrent {torrent_name}')
+            
+            # Write all new entries at once
+            if new_entries:
+                with open(content_file_path, 'a', newline='') as content_file:
+                    content_writer = csv.writer(content_file)
+                    for entry in new_entries:
+                        content_writer.writerow(entry)
+                        print(f'Added file {entry[1]} from torrent {entry[0]} with index {entry[3]} to content.csv')
 
             # Rename the CSV file to .archive only if all magnets were successful
             if all_magnets_successful:
