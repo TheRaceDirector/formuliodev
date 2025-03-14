@@ -19,13 +19,17 @@ default_thumbnail = 'https://i.ibb.co/yc9mg54D/un.png'
 # Compile the regular expression for matching round numbers
 round_regex = re.compile(r'R(\d+)|Round\.(\d+)', re.IGNORECASE)
 
-# Function to format the title based on specific rules
 def format_title(filename):
     # Remove file extension and path
     basename = os.path.basename(filename)
     basename = re.sub(r'\.(mkv|mp4)$', '', basename, flags=re.IGNORECASE)
     
-    # Split the filename into parts
+    # print(f"Processing: {basename}")  # Debug print
+    
+    # Try a more direct approach to find the Grand Prix name pattern
+    # Directly look for "Australian Grand Prix" in the final title
+    
+    # First get the basic title
     parts = basename.split('.')
     
     # Extract meaningful parts, dropping SkyF1HD, 1080P, etc.
@@ -41,7 +45,29 @@ def format_title(filename):
                 filtered_parts.append(part)
     
     # Join parts with spaces for better readability
-    return ' '.join(filtered_parts).strip()
+    title = ' '.join(filtered_parts).strip()
+    
+    # print(f"Initial title: {title}")  # Debug print
+    
+    # Now check if the title contains "XXX Grand Prix"
+    grand_prix_match = re.search(r'(\w+)\s+Grand\s+Prix', title, re.IGNORECASE)
+    
+    if grand_prix_match:
+        # print(f"Found Grand Prix in title: {grand_prix_match.group(0)}")
+        grand_prix_text = grand_prix_match.group(0)
+        
+        # Remove the Grand Prix from the beginning of the title
+        title = re.sub(r'^' + re.escape(grand_prix_text) + r'\s+', '', title)
+        
+        # Add it to the end
+        title = f"{title} - {grand_prix_text}"
+        
+    # Clean up any double spaces
+    title = re.sub(r'\s+', ' ', title).strip()
+    
+    # print(f"Final title: {title}")  # Debug print
+    return title
+
 
 # Process the CSV file
 def process_csv(file_path, output_file_path):
