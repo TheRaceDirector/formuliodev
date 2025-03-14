@@ -24,6 +24,8 @@ def format_title(filename, round_part, torrent_name):
     # Remove file extension and path
     basename = os.path.basename(filename)
     basename = re.sub(r'\.(mkv|mp4)$', '', basename, flags=re.IGNORECASE)
+    
+    # print(f"Processing: {basename}")  # Debug print
 
     # Split the filename into parts
     parts = basename.split('.')
@@ -43,11 +45,30 @@ def format_title(filename, round_part, torrent_name):
     # Join parts with spaces for better readability
     title = ' '.join(filtered_parts).strip()
     
+    # print(f"Initial title: {title}")  # Debug print
+    
     # Specifically remove "Sky Sports UHD 2160p"
     title = title.replace('Sky Sports UHD 2160p', '')
     # Clean up any double spaces that might result from the removal
     title = re.sub(r'\s+', ' ', title).strip()
     
+    # Now check if the title contains "XXX Grand Prix"
+    grand_prix_match = re.search(r'(\w+)\s+Grand\s+Prix', title, re.IGNORECASE)
+    
+    if grand_prix_match:
+        # print(f"Found Grand Prix in title: {grand_prix_match.group(0)}")
+        grand_prix_text = grand_prix_match.group(0)
+        
+        # Remove the Grand Prix from the beginning of the title
+        title = re.sub(r'^' + re.escape(grand_prix_text) + r'\s+', '', title)
+        
+        # Add it to the end
+        title = f"{title} - {grand_prix_text}"
+    
+    # Clean up any double spaces
+    title = re.sub(r'\s+', ' ', title).strip()
+    
+    # print(f"Final title: {title}")  # Debug print
     return title
 
 # Process the CSV file
