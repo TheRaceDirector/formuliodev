@@ -150,9 +150,21 @@ def process_csv(file_path, output_file_path):
     for key, value in output_data.items():
         new_data += f"'{key}': {value},\n"
 
-    # Write the output data to the file
-    with open(output_file_path, 'w') as output_file:
-        output_file.write(new_data)
+    # Get absolute path to the output file
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    absolute_output_path = os.path.join(script_dir, output_file_path)
+    
+    # Read existing data if file exists
+    try:
+        with open(absolute_output_path, 'r') as output_file:
+            existing_data = output_file.read()
+    except FileNotFoundError:
+        existing_data = ""
+    
+    # Only write if the data has changed
+    if new_data.strip() != existing_data.strip():
+        with open(absolute_output_path, 'w') as output_file:
+            output_file.write(new_data)
 
 # Example usage
 file_path = 'content.csv'
