@@ -215,20 +215,39 @@ def load_videos(filepath):
         with open(filepath, 'r') as file:
             content = file.read()
             content = f"{{{content}}}"
+            logger.info(f"Processing content from {filepath}")
             videos_dict = ast.literal_eval(content)
+            
+            # Log the first few entries to inspect
+            sample_entries = list(videos_dict.items())[:3]
+            logger.info(f"Sample entries from {filepath}: {sample_entries}")
+            
             for full_id, video_info in videos_dict.items():
                 series_id, season, episode = full_id.split(':')
-                # Store both fileIdx and filename when available
-                videos.append({
+                
+                # Log the raw video info
+                logger.info(f"Video info for {full_id}: {video_info}")
+                
+                # Create the video object with detailed logging
+                video_obj = {
                     'id': series_id,
                     'season': int(season),
                     'episode': int(episode),
                     'title': video_info[0]['title'],
                     'thumbnail': video_info[0]['thumbnail'],
                     'infoHash': video_info[0]['infoHash'],
-                    'fileIdx': video_info[0]['fileIdx'],  # Keep fileIdx for Stremio compatibility
-                    'filename': video_info[0].get('filename', '')  # Get filename if it exists
-                })
+                    'fileIdx': video_info[0]['fileIdx'],
+                }
+                
+                # Add filename if it exists
+                if 'filename' in video_info[0]:
+                    video_obj['filename'] = video_info[0]['filename']
+                    logger.info(f"Added filename: {video_obj['filename']}")
+                else:
+                    logger.info(f"No filename found for {full_id}")
+                
+                videos.append(video_obj)
+                
     except FileNotFoundError:
         logger.error(f"File {filepath} not found.")
     except (ValueError, KeyError, IndexError) as e:
@@ -236,6 +255,7 @@ def load_videos(filepath):
     except Exception as e:
         logger.error(f"Unexpected error reading {filepath}: {e}")
     return videos
+
 
 def run_scripts_in_loop():
     directories = ['egor', 'egor/ego', 'smcg', 'smcg/smc', 'ss', 'ss/ssf', 'ss/ssm', 'egor/eg4', 'smcg/sm4', 'smcg/sms', 'smcm', 'smcm/sm4', 'smcm/smc', 'smcm/sms', 'sam', 'sam/wsbk']
@@ -405,13 +425,17 @@ def addon_stream(type, id):
     if type not in MANIFEST['types']:
         abort(404)
     
+    logger.info(f"Stream request for {type}/{id}")
+    
     # Handle both formats: with or without season/episode
     if ':' in id:
         # Format: series_id:season:episode
         try:
             series_id, season, episode = id.split(':')
             season, episode = int(season), int(episode)
+            logger.info(f"Looking for series={series_id}, season={season}, episode={episode}")
         except ValueError:
+            logger.error(f"Invalid ID format: {id}")
             abort(400)
     else:
         # Format: just the series_id without season/episode
@@ -419,15 +443,23 @@ def addon_stream(type, id):
         # The first video might be requested by default
         season = 1
         episode = 1
+        logger.info(f"Looking for series={series_id} (default season/episode)")
     
     streams = {'streams': []}
     for series in CATALOG.get(type, []):
         if series['id'] == series_id:
+            logger.info(f"Found matching series: {series['name']} ({series_id})")
+            
             # If we're looking for a specific episode
             if ':' in id:
                 for video in series['videos']:
+                    logger.info(f"Checking video: season={video['season']}, episode={video['episode']}")
+                    
                     if video['season'] == season and video['episode'] == episode:
-                        # Create the base stream object
+                        logger.info(f"Found matching video: {video['title']}")
+                        logger.info(f"Full video object: {video}")
+                        
+                        # Create the stream object step by step
                         stream = {
                             'title': video['title'],
                             'thumbnail': video['thumbnail'],
@@ -438,17 +470,24 @@ def addon_stream(type, id):
                             }
                         }
                         
-                        # Add filename to behaviorHints if it exists
-                        if 'filename' in video and video['filename']:
+                        # Check if filename exists and add to behaviorHints
+                        if 'filename' in video:
+                            logger.info(f"Adding filename to behaviorHints: {video['filename']}")
                             stream['behaviorHints']['filename'] = video['filename']
+                        else:
+                            logger.warning(f"No filename found in video object for {id}")
                         
                         streams['streams'].append(stream)
-                        logger.info(f"Returning stream for {id}: {stream}")
+                        logger.info(f"Added stream: {stream}")
                         break
+                    
+                if not streams['streams']:
+                    logger.warning(f"No matching episode found for series={series_id}, season={season}, episode={episode}")
             # If just the series was requested, return all videos as streams
             else:
                 for video in series['videos']:
-                    # Create the base stream object
+                    logger.info(f"Adding video: season={video['season']}, episode={video['episode']}")
+                    
                     stream = {
                         'title': video['title'],
                         'thumbnail': video['thumbnail'],
@@ -459,17 +498,19 @@ def addon_stream(type, id):
                         }
                     }
                     
-                    # Add filename to behaviorHints if it exists
-                    if 'filename' in video and video['filename']:
+                    if 'filename' in video:
+                        logger.info(f"Adding filename to behaviorHints: {video['filename']}")
                         stream['behaviorHints']['filename'] = video['filename']
+                    else:
+                        logger.warning(f"No filename found in video object")
                     
                     streams['streams'].append(stream)
     
     if not streams['streams']:
+        logger.warning(f"No streams found for {id}")
         abort(404)
     
-    # Log the full response for debugging
-    logger.info(f"Stream response for {id}: {streams}")
+    logger.info(f"Returning {len(streams['streams'])} streams for {id}")
     return respond_with(streams)
 
 @app.route('/catalog/<type>/<id>/search=<query>.json')
