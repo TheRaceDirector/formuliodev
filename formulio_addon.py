@@ -220,8 +220,8 @@ def load_videos(filepath):
             for full_id, video_info in videos_dict.items():
                 series_id, season, episode = full_id.split(':')
                 
-                # Debug log to check the structure
-                logger.info(f"Processing video from {filepath}: id={full_id}, info={video_info}")
+                # Debug log
+                logger.info(f"Processing video from {filepath}: id={full_id}")
                 
                 video_obj = {
                     'id': series_id,
@@ -229,8 +229,8 @@ def load_videos(filepath):
                     'episode': int(episode),
                     'title': video_info[0]['title'],
                     'thumbnail': video_info[0]['thumbnail'],
-                    'infoHash': video_info[0]['infoHash'],
-                    'fileIdx': video_info[0]['fileIdx'],  # Keep as is from source
+                    'infoHash': video_info[0]['infoHash']
+                    # NO fileIdx here
                 }
                 
                 # Only add filename if it exists and is not empty
@@ -445,12 +445,11 @@ def addon_stream(type, id):
                     if video['season'] == season and video['episode'] == episode:
                         logger.info(f"Found matching video: {video['title']}")
                         
-                        # Keep fileIdx as a number for compatibility
+                        # Create stream WITHOUT fileIdx
                         stream = {
                             'title': video['title'],
                             'thumbnail': video['thumbnail'],
                             'infoHash': video['infoHash'],
-                            'fileIdx': video['fileIdx'],  # Keep as numeric for compatibility
                             'behaviorHints': {
                                 'bingeGroup': f"{series['id']}-{season}"
                             }
@@ -458,7 +457,6 @@ def addon_stream(type, id):
                         
                         # Make sure we have the filename in behaviorHints
                         if 'filename' in video and video['filename']:
-                            # Use the original filename without modification
                             stream['behaviorHints']['filename'] = video['filename']
                             logger.info(f"Added filename to behaviorHints: {video['filename']}")
                         
@@ -471,7 +469,6 @@ def addon_stream(type, id):
                         'title': video['title'],
                         'thumbnail': video['thumbnail'],
                         'infoHash': video['infoHash'],
-                        'fileIdx': video['fileIdx'],  # Keep as numeric
                         'behaviorHints': {
                             'bingeGroup': f"{series['id']}-{video['season']}"
                         }
@@ -488,7 +485,6 @@ def addon_stream(type, id):
     
     logger.info(f"Returning {len(streams['streams'])} streams for {id}")
     return respond_with(streams)
-
 
 @app.route('/catalog/<type>/<id>/search=<query>.json')
 def addon_catalog_search(type, id, query):
