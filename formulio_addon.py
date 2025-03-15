@@ -77,7 +77,7 @@ CATALOG = {
         {
             'id': 'hpytt0202501',
             'name': 'Sky F1 - FHD',
-            'description': 'IMPORTANT: DEBRID NOW REQUIRED! \nPlease uninstall addon, then install from: \n--> formulio.hayd.uk <--',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/g2d9tyXS/sky1.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -89,7 +89,7 @@ CATALOG = {
         {
             'id': 'hpytt0202502',
             'name': 'Sky F1 - FHD-2',
-            'description': 'IMPORTANT: DEBRID NOW REQUIRED! \nPlease uninstall addon, then install from: \n--> formulio.hayd.uk <--',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/KYMnKTQb/sky2.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -100,7 +100,7 @@ CATALOG = {
         {
             'id': 'hpytt0202503',
             'name': 'F1TV - English',
-            'description': 'IMPORTANT: DEBRID NOW REQUIRED! \nPlease uninstall addon, then install from: \n--> formulio.hayd.uk <--',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/pXf4j9GD/f1tveng.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -111,7 +111,7 @@ CATALOG = {
         {
             'id': 'hpytt0202504',
             'name': 'F1TV - International',
-            'description': 'IMPORTANT: DEBRID NOW REQUIRED! \nPlease uninstall addon, then install from: \n--> formulio.hayd.uk <--',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/1zjjSDXZ/f1tvint.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -122,7 +122,7 @@ CATALOG = {
         {
             'id': 'hpytt0202505',
             'name': 'Sky F1 - 4K',
-            'description': 'IMPORTANT: DEBRID NOW REQUIRED! \nPlease uninstall addon, then install from: \n--> formulio.hayd.uk <--',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/zfPNXN1H/sky14k.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -133,7 +133,7 @@ CATALOG = {
         {
             'id': 'hpytt0202506',
             'name': 'Sky F1 - 4K-2',
-            'description': 'IMPORTANT: DEBRID NOW REQUIRED! \nPlease uninstall addon, then install from: \n--> formulio.hayd.uk <--',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/ry4Tc7Zz/sky24k.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -143,8 +143,8 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202507',
-            'name': 'Sky F1 - SD',
-            'description': 'IMPORTANT: DEBRID NOW REQUIRED! \nPlease uninstall addon, then install from: \n--> formulio.hayd.uk <--',
+            'name': 'SkyF1 - SD',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/Pqcn5Vvx/sky2sd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -155,7 +155,7 @@ CATALOG = {
         {
             'id': 'hpytt0202511',
             'name': 'MotoGP - FHD',
-            'description': 'IMPORTANT: DEBRID NOW REQUIRED! \nPlease uninstall addon, then install from: \n--> formulio.hayd.uk <--',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/3Rpyv1D8/motogphd.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
@@ -166,7 +166,7 @@ CATALOG = {
         {
             'id': 'hpytt0202512',
             'name': 'MotoGP - 4K',
-            'description': 'IMPORTANT: DEBRID NOW REQUIRED! \nPlease uninstall addon, then install from: \n--> formulio.hayd.uk <--',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/MHmvsGDg/motogp4k.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
@@ -177,7 +177,7 @@ CATALOG = {
         {
             'id': 'hpytt0202513',
             'name': 'MotoGP - SD',
-            'description': 'IMPORTANT: DEBRID NOW REQUIRED! \nPlease uninstall addon, then install from: \n--> formulio.hayd.uk <--',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/qqTNXK88/motogpsd.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
@@ -188,7 +188,7 @@ CATALOG = {
         {
             'id': 'hpytt0202514',
             'name': 'WSBK - FHD',
-            'description': 'IMPORTANT: DEBRID NOW REQUIRED! \nPlease uninstall addon, then install from: \n--> formulio.hayd.uk <--',
+            'description': 'IMPORTANT: DEBRID NOW AVAILABLE! \nPlease uninstall addon, then install from: \n-> formulio.hayd.uk <-',
             'releaseInfo': '2025',
             'poster': '',
             'logo': '',
@@ -218,6 +218,7 @@ def load_videos(filepath):
             videos_dict = ast.literal_eval(content)
             for full_id, video_info in videos_dict.items():
                 series_id, season, episode = full_id.split(':')
+                # Store both fileIdx and filename when available
                 videos.append({
                     'id': series_id,
                     'season': int(season),
@@ -225,7 +226,8 @@ def load_videos(filepath):
                     'title': video_info[0]['title'],
                     'thumbnail': video_info[0]['thumbnail'],
                     'infoHash': video_info[0]['infoHash'],
-                    'fileIdx': video_info[0]['fileIdx']
+                    'fileIdx': video_info[0]['fileIdx'],  # Keep fileIdx for Stremio compatibility
+                    'filename': video_info[0].get('filename', '')  # Get filename if it exists
                 })
     except FileNotFoundError:
         logger.error(f"File {filepath} not found.")
@@ -402,26 +404,74 @@ def addon_meta(type, id):
 def addon_stream(type, id):
     if type not in MANIFEST['types']:
         abort(404)
-    try:
-        series_id, season, episode = id.split(':')
-        season, episode = int(season), int(episode)
-    except ValueError:
-        abort(400)
+    
+    # Handle both formats: with or without season/episode
+    if ':' in id:
+        # Format: series_id:season:episode
+        try:
+            series_id, season, episode = id.split(':')
+            season, episode = int(season), int(episode)
+        except ValueError:
+            abort(400)
+    else:
+        # Format: just the series_id without season/episode
+        series_id = id
+        # The first video might be requested by default
+        season = 1
+        episode = 1
+    
     streams = {'streams': []}
     for series in CATALOG.get(type, []):
         if series['id'] == series_id:
-            for video in series['videos']:
-                if video['season'] == season and video['episode'] == episode:
-                    streams['streams'].append({
+            # If we're looking for a specific episode
+            if ':' in id:
+                for video in series['videos']:
+                    if video['season'] == season and video['episode'] == episode:
+                        stream = {
+                            'title': video['title'],
+                            'thumbnail': video['thumbnail'],
+                            'infoHash': video['infoHash'],
+                            'fileIdx': video['fileIdx']  # Keep fileIdx for compatibility
+                        }
+                        
+                        # Only add behaviorHints if we have a real filename
+                        if video.get('filename') and video['filename'].strip():
+                            stream['behaviorHints'] = {
+                                'bingeGroup': f"{series['id']}-{season}",
+                                'filename': video['filename']
+                            }
+                            
+                        streams['streams'].append(stream)
+                        
+                        # Log what we're returning for debugging
+                        logger.info(f"Returning stream for {id}: {stream}")
+                        break
+            # If just the series was requested, return all videos as streams
+            else:
+                for video in series['videos']:
+                    stream = {
                         'title': video['title'],
                         'thumbnail': video['thumbnail'],
                         'infoHash': video['infoHash'],
-                        'fileIdx': video['fileIdx']
-                    })
-                    break
+                        'fileIdx': video['fileIdx']  # Keep fileIdx for compatibility
+                    }
+                    
+                    # Only add behaviorHints if we have a real filename
+                    if video.get('filename') and video['filename'].strip():
+                        stream['behaviorHints'] = {
+                            'bingeGroup': f"{series['id']}-{video['season']}",
+                            'filename': video['filename']
+                        }
+                        
+                    streams['streams'].append(stream)
+    
     if not streams['streams']:
         abort(404)
+    
+    # Log the full response for debugging
+    logger.info(f"Stream response for {id}: {streams}")
     return respond_with(streams)
+
 
 @app.route('/catalog/<type>/<id>/search=<query>.json')
 def addon_catalog_search(type, id, query):
