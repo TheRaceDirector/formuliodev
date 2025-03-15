@@ -429,7 +429,6 @@ def addon_stream(type, id):
     
     # Handle both formats: with or without season/episode
     if ':' in id:
-        # Format: series_id:season:episode
         try:
             series_id, season, episode = id.split(':')
             season, episode = int(season), int(episode)
@@ -438,9 +437,7 @@ def addon_stream(type, id):
             logger.error(f"Invalid ID format: {id}")
             abort(400)
     else:
-        # Format: just the series_id without season/episode
         series_id = id
-        # The first video might be requested by default
         season = 1
         episode = 1
         logger.info(f"Looking for series={series_id} (default season/episode)")
@@ -450,30 +447,30 @@ def addon_stream(type, id):
         if series['id'] == series_id:
             logger.info(f"Found matching series: {series['name']} ({series_id})")
             
-            # If we're looking for a specific episode
             if ':' in id:
                 for video in series['videos']:
                     logger.info(f"Checking video: season={video['season']}, episode={video['episode']}")
                     
                     if video['season'] == season and video['episode'] == episode:
                         logger.info(f"Found matching video: {video['title']}")
-                        logger.info(f"Full video object: {video}")
                         
-                        # Create the stream object step by step
+                        # Create the stream object with fileIdx as STRING (Solution 1)
                         stream = {
                             'title': video['title'],
                             'thumbnail': video['thumbnail'],
                             'infoHash': video['infoHash'],
-                            'fileIdx': video['fileIdx'],
+                            'fileIdx': str(video['fileIdx']),  # Convert fileIdx to string
                             'behaviorHints': {
                                 'bingeGroup': f"{series['id']}-{season}"
                             }
                         }
                         
-                        # Check if filename exists and add to behaviorHints
-                        if 'filename' in video:
-                            logger.info(f"Adding filename to behaviorHints: {video['filename']}")
-                            stream['behaviorHints']['filename'] = video['filename']
+                        # Add file index to the filename (Solution 2)
+                        if 'filename' in video and video['filename']:
+                            # Prefix the filename with the file index for better identification
+                            indexed_filename = f"[{video['fileIdx']}] {video['filename']}"
+                            stream['behaviorHints']['filename'] = indexed_filename
+                            logger.info(f"Added modified filename to behaviorHints: {indexed_filename}")
                         else:
                             logger.warning(f"No filename found in video object for {id}")
                         
@@ -481,28 +478,23 @@ def addon_stream(type, id):
                         logger.info(f"Added stream: {stream}")
                         break
                     
-                if not streams['streams']:
-                    logger.warning(f"No matching episode found for series={series_id}, season={season}, episode={episode}")
-            # If just the series was requested, return all videos as streams
             else:
                 for video in series['videos']:
-                    logger.info(f"Adding video: season={video['season']}, episode={video['episode']}")
-                    
+                    # Create stream with fileIdx as STRING (Solution 1)
                     stream = {
                         'title': video['title'],
                         'thumbnail': video['thumbnail'],
                         'infoHash': video['infoHash'],
-                        'fileIdx': video['fileIdx'],
+                        'fileIdx': str(video['fileIdx']),  # Convert fileIdx to string
                         'behaviorHints': {
                             'bingeGroup': f"{series['id']}-{video['season']}"
                         }
                     }
                     
-                    if 'filename' in video:
-                        logger.info(f"Adding filename to behaviorHints: {video['filename']}")
-                        stream['behaviorHints']['filename'] = video['filename']
-                    else:
-                        logger.warning(f"No filename found in video object")
+                    # Add file index to the filename (Solution 2)
+                    if 'filename' in video and video['filename']:
+                        indexed_filename = f"[{video['fileIdx']}] {video['filename']}"
+                        stream['behaviorHints']['filename'] = indexed_filename
                     
                     streams['streams'].append(stream)
     
