@@ -427,42 +427,42 @@ def addon_stream(type, id):
             if ':' in id:
                 for video in series['videos']:
                     if video['season'] == season and video['episode'] == episode:
+                        # Create the base stream object
                         stream = {
                             'title': video['title'],
                             'thumbnail': video['thumbnail'],
                             'infoHash': video['infoHash'],
-                            'fileIdx': video['fileIdx']  # Keep fileIdx for compatibility
+                            'fileIdx': video['fileIdx'],
+                            'behaviorHints': {
+                                'bingeGroup': f"{series['id']}-{season}"
+                            }
                         }
                         
-                        # Only add behaviorHints if we have a real filename
-                        if video.get('filename') and video['filename'].strip():
-                            stream['behaviorHints'] = {
-                                'bingeGroup': f"{series['id']}-{season}",
-                                'filename': video['filename']
-                            }
-                            
-                        streams['streams'].append(stream)
+                        # Add filename to behaviorHints if it exists
+                        if 'filename' in video and video['filename']:
+                            stream['behaviorHints']['filename'] = video['filename']
                         
-                        # Log what we're returning for debugging
+                        streams['streams'].append(stream)
                         logger.info(f"Returning stream for {id}: {stream}")
                         break
             # If just the series was requested, return all videos as streams
             else:
                 for video in series['videos']:
+                    # Create the base stream object
                     stream = {
                         'title': video['title'],
                         'thumbnail': video['thumbnail'],
                         'infoHash': video['infoHash'],
-                        'fileIdx': video['fileIdx']  # Keep fileIdx for compatibility
+                        'fileIdx': video['fileIdx'],
+                        'behaviorHints': {
+                            'bingeGroup': f"{series['id']}-{video['season']}"
+                        }
                     }
                     
-                    # Only add behaviorHints if we have a real filename
-                    if video.get('filename') and video['filename'].strip():
-                        stream['behaviorHints'] = {
-                            'bingeGroup': f"{series['id']}-{video['season']}",
-                            'filename': video['filename']
-                        }
-                        
+                    # Add filename to behaviorHints if it exists
+                    if 'filename' in video and video['filename']:
+                        stream['behaviorHints']['filename'] = video['filename']
+                    
                     streams['streams'].append(stream)
     
     if not streams['streams']:
@@ -471,7 +471,6 @@ def addon_stream(type, id):
     # Log the full response for debugging
     logger.info(f"Stream response for {id}: {streams}")
     return respond_with(streams)
-
 
 @app.route('/catalog/<type>/<id>/search=<query>.json')
 def addon_catalog_search(type, id, query):
