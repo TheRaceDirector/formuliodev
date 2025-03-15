@@ -44,15 +44,22 @@ def process_csv(file_path, output_file_path):
         next(reader)  # Skip the header row
         for row in reader:
             torrent_name = row[0]
-            filename = row[1].split('/')[-1]
+            filename = row[1]
             
-            if not valid_extension_regex.search(filename):
+            # Extract just the filename without the path
+            actual_filename = filename
+            if '/' in filename:
+                actual_filename = filename.split('/')[-1]
+            elif '\\' in filename:
+                actual_filename = filename.split('\\')[-1]
+                
+            if not valid_extension_regex.search(actual_filename):
                 continue
 
-            round_match = round_regex.search(filename)
+            round_match = round_regex.search(actual_filename)
             
             # Handle pre-season testing or other special cases
-            if pre_season_regex.search(torrent_name) or pre_season_regex.search(filename):
+            if pre_season_regex.search(torrent_name) or pre_season_regex.search(actual_filename):
                 round_number = '00'  # Use '00' for pre-season testing
                 thumbnail = round_thumbnails.get(round_number, '')
             else:
@@ -62,24 +69,24 @@ def process_csv(file_path, output_file_path):
             if round_number not in episode_counters:
                 episode_counters[round_number] = 0
 
-            gp_match = grand_prix_regex.search(filename)
+            gp_match = grand_prix_regex.search(actual_filename)
             grand_prix_name = gp_match.group(1) if gp_match else "Unknown Grand Prix"
 
-            session_match = session_regex.search(filename)
+            session_match = session_regex.search(actual_filename)
             session_name = session_match.group(1) if session_match else "Unknown Session"
 
             # For pre-season testing, use a simplified title format
-            if pre_season_regex.search(torrent_name) or pre_season_regex.search(filename):
+            if pre_season_regex.search(torrent_name) or pre_season_regex.search(actual_filename):
                 session_parts = re.findall(r'Session\.(\d+)', torrent_name)
                 if not session_parts:
-                    session_parts = re.findall(r'Session\.(\d+)', filename)
+                    session_parts = re.findall(r'Session\.(\d+)', actual_filename)
                     
                 if session_parts:
                     formatted_title = f"Pre Season Testing Session {session_parts[0]}"
                 else:
                     formatted_title = "Pre Season Testing"
             else:
-                formatted_title = format_title(filename, session_name, grand_prix_name)
+                formatted_title = format_title(actual_filename, session_name, grand_prix_name)
 
             infohash = row[2]
             file_index = int(row[3])
@@ -95,7 +102,8 @@ def process_csv(file_path, output_file_path):
                 'title': formatted_title,
                 'thumbnail': thumbnail,
                 'infoHash': infohash,
-                'fileIdx': file_index
+                'fileIdx': file_index,
+                'filename': actual_filename
             }]))
 
     try:
