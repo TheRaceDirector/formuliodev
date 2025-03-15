@@ -143,12 +143,20 @@ def process_csv(file_path, output_file_path):
             # Create the key for the output dictionary
             key = f'hpytt0202514:{round_number}:{session_number}'
             
+            # Extract just the filename part (removing the folder path)
+            actual_filename = filename
+            if '/' in filename:
+                actual_filename = filename.split('/')[-1]
+            elif '\\' in filename:
+                actual_filename = filename.split('\\')[-1]
+            
             # Add to output data
             output_data[key] = [{
                 'title': clean_title,
                 'thumbnail': thumbnail,
                 'infoHash': infohash,
-                'fileIdx': file_index
+                'fileIdx': file_index,
+                'filename': actual_filename  # Add the actual filename without path
             }]
     
     # Manually format the output data as a string
