@@ -48,7 +48,14 @@ def process_csv(file_path, output_file_path):
                 grand_prix_name = 'Unknown'
             
             # Extract the infohash and file index number
-            filename = row[1].split('/')[-1]
+            filename = row[1]
+            # Extract just the filename without the path
+            actual_filename = filename
+            if '/' in filename:
+                actual_filename = filename.split('/')[-1]
+            elif '\\' in filename:
+                actual_filename = filename.split('\\')[-1]
+                
             infohash = row[2]
             file_index = int(row[3])
             
@@ -63,7 +70,7 @@ def process_csv(file_path, output_file_path):
             key = f'hpytt0202507:{round_number}:{formatted_episode_number}'
             
             # Format the title
-            formatted_title = format_title(filename, grand_prix_name)
+            formatted_title = format_title(actual_filename, grand_prix_name)
             
             # Get the thumbnail URL for the round, defaulting to an empty string if not found
             thumbnail = round_thumbnails.get(round_number, '')
@@ -73,7 +80,8 @@ def process_csv(file_path, output_file_path):
                 'title': formatted_title,
                 'thumbnail': thumbnail,
                 'infoHash': infohash,
-                'fileIdx': file_index
+                'fileIdx': file_index,
+                'filename': actual_filename
             }]
 
     # Read existing data from the output file
