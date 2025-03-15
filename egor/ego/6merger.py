@@ -127,12 +127,13 @@ def process_csv(file_path, output_file_path):
             # Create the key for the output dictionary
             key = f'hpytt0202501:{round_number}:{session_number}'
             
-            # Add to output data
+            # Add to output data with filename included
             output_data[key] = [{
                 'title': clean_title,
                 'thumbnail': thumbnail,
                 'infoHash': infohash,
-                'fileIdx': file_index
+                'fileIdx': file_index,
+                'filename': filename  # Add the filename field
             }]
     
     # Manually format the output data as a string
