@@ -343,6 +343,53 @@
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        /* Retained public-host CSS for provider injection */
+        .public-host {
+            font-size: 0.8em;
+            margin-bottom: 15px;
+            background: rgba(40, 40, 40, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: left;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(120, 120, 120, 0.4);
+            box-shadow: none;
+            backdrop-filter: none;
+        }
+        .public-host h3 {
+            color: rgba(255, 51, 51, 0.9);
+            margin-top: 12px;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+        .public-host a {
+            color: rgba(255, 153, 153, 0.9);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .public-host a:hover {
+            color: #ff3333;
+            text-decoration: underline;
+        }
+        .public-host p {
+            margin: 8px 0;
+        }
+        .feature-list {
+            margin-top: 8px;
+            padding-left: 5px;
+        }
+        .feature-list-item {
+            margin-bottom: 4px;
+            display: flex;
+            align-items: flex-start;
+        }
+        .feature-icon {
+            margin-right: 6px;
+            min-width: 16px;
+            display: inline-block;
+            font-size: 0.9em;
+        }
         .community-link {
             margin-top: 5px;
             font-size: 1.1em;
@@ -501,6 +548,11 @@
                 right: 10px;
                 padding: 6px 12px;
                 font-size: 12px;
+            }
+            .public-host {
+                font-size: 0.75em;
+                padding: 12px;
+                margin-bottom: 15px;
             }
         }
     </style>
@@ -739,6 +791,8 @@
             <div class="community-link">
                 <a href="https://www.reddit.com/r/FormulaStremio/" target="_blank">Important updates: Join the official community r/FormulaStremio</a>
             </div>
+            
+            <!-- No public-host element here, it will be injected by the hosting provider -->
             
             <form onsubmit="return false;">
                 <div class="section-heading">
