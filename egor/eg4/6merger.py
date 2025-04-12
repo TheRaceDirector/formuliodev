@@ -33,7 +33,7 @@ def format_title(filename, round_part, torrent_name):
     # Extract meaningful parts, dropping SkyF1HD, 1080P, etc.
     filtered_parts = []
     for part in parts:
-        if part not in ['SkyF1HD', '1080P', 'F1', '2025', 'mkv', 'mp4'] and not re.match(r'^\d+$', part):
+        if part not in ['SkyF1HD', '1080P', '2025', 'mkv', 'mp4'] and not re.match(r'^\d+$', part):
             # Remove the round number from the title
             round_part_match = re.match(r'^R\d+\s*(.*)', part, re.IGNORECASE)
             if round_part_match:
