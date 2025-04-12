@@ -44,7 +44,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 MANIFEST = {
     'id': 'org.stremio.formulio',
-    'version': '2.0.3',
+    'version': '2.0.4',
     'name': 'Formulio',
     'description': 'An Addon for Motor Racing Replay Content. (This addon only displays content from external sources. Use this Stremio torrent addon only where legally permitted. Users are responsible for complying with all applicable laws in their jurisdiction)',
     'logo': 'https://i.postimg.cc/5tTmz4jb/formulio1.png',
@@ -71,13 +71,52 @@ MANIFEST = {
     ]
 }
 
+# P2P version of the manifest
+MANIFEST_P2P = MANIFEST.copy()
+MANIFEST_P2P.update({
+    'id': 'org.stremio.formulio.p2p',  # Different ID
+    'name': 'Formulio P2P',            # Different name
+    'description': 'An Addon for Motor Racing Replay Content (P2P Version with exclusive content). (This addon only displays content from external sources. Use this Stremio torrent addon only where legally permitted. Users are responsible for complying with all applicable laws in their jurisdiction)',
+})
+
+# Create the P2P exclusive series
+#P2P_EXCLUSIVE_SERIES_1 = {
+#    'id': 'hpytt0202515',
+#    'name': 'BTCC - ',
+#    'description': 'P2P ONLY! This series is exclusively available in the P2P version',
+#    'releaseInfo': '2025',
+#    'poster': 'https://i.postimg.cc/KjQPpvQL/wsbkhd.jpg',
+#    'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
+#    'background': 'https://i.postimg.cc/fR252zq3/motobackground.jpg',
+#    'genres': ['Moto Racing'],
+#    'videos': []
+#}
+
+#P2P_EXCLUSIVE_SERIES_2 = {
+#    'id': 'hpytt0202516',
+#    'name': 'IndyCar - HD',
+#    'description': 'P2P ONLY! IndyCar racing series',
+#    'releaseInfo': '2025',
+#    'poster': 'https://i.postimg.cc/your-indycar-poster.jpg',
+#    'logo': 'https://i.postimg.cc/your-indycar-logo.png',
+#    'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
+#    'genres': ['Formula Racing'],
+#    'videos': []
+#}
+
+# List of all P2P exclusive series
+P2P_EXCLUSIVE_SERIES_LIST = [
+    #P2P_EXCLUSIVE_SERIES_1,
+    #P2P_EXCLUSIVE_SERIES_2
+    # Add more series as needed, separated by commas
+]
 
 CATALOG = {
     'series': [
         {
             'id': 'hpytt0202501',
             'name': 'Sky F1 - FHD',
-            'description': 'DEBRID REQUIRED! Reinstall from: --> formulio.hayd.uk <-- \nStuttering?? Disable hardware-decoding in stremio settings',
+            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/g2d9tyXS/sky1.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -89,7 +128,7 @@ CATALOG = {
         {
             'id': 'hpytt0202502',
             'name': 'Sky F1 - FHD-2',
-            'description': 'DEBRID REQUIRED! Reinstall from: --> formulio.hayd.uk <-- \nStuttering?? Disable hardware-decoding in stremio settings',
+            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/KYMnKTQb/sky2.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -100,7 +139,7 @@ CATALOG = {
         {
             'id': 'hpytt0202503',
             'name': 'F1TV - English',
-            'description': 'DEBRID REQUIRED! Reinstall from: --> formulio.hayd.uk <-- \nStuttering?? Disable hardware-decoding in stremio settings',
+            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/pXf4j9GD/f1tveng.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -111,7 +150,7 @@ CATALOG = {
         {
             'id': 'hpytt0202504',
             'name': 'F1TV - International',
-            'description': 'DEBRID REQUIRED! Reinstall from: --> formulio.hayd.uk <-- \nStuttering?? Disable hardware-decoding in stremio settings',
+            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/1zjjSDXZ/f1tvint.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -122,7 +161,7 @@ CATALOG = {
         {
             'id': 'hpytt0202505',
             'name': 'Sky F1 - 4K',
-            'description': 'DEBRID REQUIRED! Reinstall from: --> formulio.hayd.uk <-- \nStuttering?? Disable hardware-decoding in stremio settings',
+            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/zfPNXN1H/sky14k.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -133,7 +172,7 @@ CATALOG = {
         {
             'id': 'hpytt0202506',
             'name': 'Sky F1 - 4K-2',
-            'description': 'DEBRID REQUIRED! Reinstall from: --> formulio.hayd.uk <-- \nStuttering?? Disable hardware-decoding in stremio settings',
+            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/ry4Tc7Zz/sky24k.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -144,7 +183,7 @@ CATALOG = {
         {
             'id': 'hpytt0202507',
             'name': 'Sky F1 - SD',
-            'description': 'DEBRID REQUIRED! Reinstall from: --> formulio.hayd.uk <-- \nStuttering?? Disable hardware-decoding in stremio settings',
+            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/Pqcn5Vvx/sky2sd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -155,7 +194,7 @@ CATALOG = {
         {
             'id': 'hpytt0202511',
             'name': 'MotoGP - FHD',
-            'description': 'DEBRID REQUIRED! Reinstall from: --> formulio.hayd.uk <-- \nStuttering?? Disable hardware-decoding in stremio settings',
+            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/3Rpyv1D8/motogphd.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
@@ -166,7 +205,7 @@ CATALOG = {
         {
             'id': 'hpytt0202512',
             'name': 'MotoGP - 4K',
-            'description': 'DEBRID REQUIRED! Reinstall from: --> formulio.hayd.uk <-- \nStuttering?? Disable hardware-decoding in stremio settings',
+            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/MHmvsGDg/motogp4k.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
@@ -177,7 +216,7 @@ CATALOG = {
         {
             'id': 'hpytt0202513',
             'name': 'MotoGP - SD',
-            'description': 'DEBRID REQUIRED! Reinstall from: --> formulio.hayd.uk <-- \nStuttering?? Disable hardware-decoding in stremio settings',
+            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/qqTNXK88/motogpsd.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
@@ -188,7 +227,7 @@ CATALOG = {
         {
             'id': 'hpytt0202514',
             'name': 'WSBK - FHD',
-            'description': 'DEBRID REQUIRED! Reinstall from: --> formulio.hayd.uk <-- \nStuttering?? Disable hardware-decoding in stremio settings',
+            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
             'releaseInfo': '2025',
             'poster': '',
             'logo': '',
@@ -326,6 +365,11 @@ def restart_server():
             CATALOG['series'][8]['videos'] = load_videos('./smcm/sm4/6processed.txt')
             CATALOG['series'][9]['videos'] = load_videos('./smcm/sms/6processed.txt')
             CATALOG['series'][10]['videos'] = load_videos('./sam/wsbk/6processed.txt')
+            
+            # Load P2P exclusive content
+#            P2P_EXCLUSIVE_SERIES_1['videos'] = load_videos('./sam/wsbkhd/6processed.txt')
+#            P2P_EXCLUSIVE_SERIES_2['videos'] = load_videos('./indycar/hd/6processed.txt')
+            
             logger.info("Server restarted with new content.")
         except Exception as e:
             logger.error(f"Error during server restart: {e}")
@@ -333,18 +377,30 @@ def restart_server():
 
 @app.route('/manifest.json')
 def addon_manifest():
-    return respond_with(MANIFEST)
+    version = request.args.get('v', 'default')
+    
+    if version == 'p2p':
+        return respond_with(MANIFEST_P2P)
+    else:
+        return respond_with(MANIFEST)
 
 @app.route('/catalog/<type>/<id>.json')
 def addon_catalog(type, id):
     if type not in MANIFEST['types']:
         abort(404)
     
-    # Get genre from query parameters if it exists
+    # Get the version from query parameters
+    version = request.args.get('v', 'default')
     genre = request.args.get('genre')
     
+    # Start with the regular catalog
+    catalog = CATALOG.get(type, []).copy()
+    
+    # Add P2P exclusive content if requesting the P2P version
+    if version == 'p2p':
+        catalog.extend(P2P_EXCLUSIVE_SERIES_LIST)
+    
     # Filter by genre if provided
-    catalog = CATALOG.get(type, [])
     if genre:
         catalog = [item for item in catalog if genre in item.get('genres', [])]
     
@@ -369,9 +425,16 @@ def addon_catalog_filtered(type, id, genre):
     
     # URL decode the genre parameter
     genre = urllib.parse.unquote(genre)
+    version = request.args.get('v', 'default')
+    
+    # Start with the regular catalog
+    catalog = CATALOG.get(type, []).copy()
+    
+    # Add P2P exclusive content if requesting the P2P version
+    if version == 'p2p':
+        catalog.extend(P2P_EXCLUSIVE_SERIES_LIST)
     
     # Filter catalog items by the requested genre
-    catalog = CATALOG.get(type, [])
     filtered_items = [item for item in catalog if genre in item.get('genres', [])]
     
     metaPreviews = {
@@ -391,6 +454,9 @@ def addon_catalog_filtered(type, id, genre):
 def addon_meta(type, id):
     if type not in MANIFEST['types']:
         abort(404)
+    
+    version = request.args.get('v', 'default')
+    
     def mk_item(item):
         meta = {key: item[key] for key in item.keys() if key in OPTIONAL_META}
         meta['id'] = item['id']
@@ -406,9 +472,18 @@ def addon_meta(type, id):
                            'season': video['season'],
                            'episode': video['episode']} for video in item['videos']]
         return meta
-    meta = {'meta': next((mk_item(item) for item in CATALOG[type] if item['id'] == id), None)}
-    if meta['meta'] is None:
+    
+    # Look in regular catalog
+    item = next((item for item in CATALOG[type] if item['id'] == id), None)
+    
+    # If not found and P2P version, check if it's one of the exclusive series
+    if item is None and version == 'p2p':
+        item = next((series for series in P2P_EXCLUSIVE_SERIES_LIST if series['id'] == id), None)
+    
+    if item is None:
         abort(404)
+        
+    meta = {'meta': mk_item(item)}
     return respond_with(meta)
 
 @app.route('/stream/<type>/<id>.json')
@@ -417,6 +492,7 @@ def addon_stream(type, id):
         abort(404)
     
     logger.info(f"Stream request for {type}/{id}")
+    version = request.args.get('v', 'default')
     
     # Handle both formats: with or without season/episode
     if ':' in id:
@@ -434,7 +510,17 @@ def addon_stream(type, id):
         logger.info(f"Looking for series={series_id} (default season/episode)")
     
     streams = {'streams': []}
-    for series in CATALOG.get(type, []):
+    
+    # Look in regular catalog
+    series_list = CATALOG.get(type, [])
+    
+    # Add exclusive P2P series if appropriate
+    if version == 'p2p':
+        p2p_exclusive_ids = [series['id'] for series in P2P_EXCLUSIVE_SERIES_LIST]
+        if series_id in p2p_exclusive_ids:
+            series_list = list(series_list) + P2P_EXCLUSIVE_SERIES_LIST
+    
+    for series in series_list:
         if series['id'] == series_id:
             logger.info(f"Found matching series: {series['name']} ({series_id})")
             
@@ -493,10 +579,18 @@ def addon_catalog_search(type, id, query):
     
     # URL decode the search query
     query = urllib.parse.unquote(query).lower()
+    version = request.args.get('v', 'default')
+    
+    # Start with the regular catalog
+    catalog = CATALOG.get(type, []).copy()
+    
+    # Add P2P exclusive content if requesting the P2P version
+    if version == 'p2p':
+        catalog.extend(P2P_EXCLUSIVE_SERIES_LIST)
     
     # Find items that match the search query in name, description, or other relevant fields
     search_results = []
-    for item in CATALOG.get(type, []):
+    for item in catalog:
         # Check if query appears in the name or description
         if (query in item['name'].lower() or 
             (item.get('description') and query in item['description'].lower())):
@@ -556,6 +650,10 @@ if __name__ == '__main__':
         CATALOG['series'][8]['videos'] = load_videos('./smcm/sm4/6processed.txt')
         CATALOG['series'][9]['videos'] = load_videos('./smcm/sms/6processed.txt')
         CATALOG['series'][10]['videos'] = load_videos('./sam/wsbk/6processed.txt')
+        
+        # Load P2P exclusive content
+#        P2P_EXCLUSIVE_SERIES_1['videos'] = load_videos('./sam/wsbkhd/6processed.txt')
+#        P2P_EXCLUSIVE_SERIES_2['videos'] = load_videos('./indycar/hd/6processed.txt')
     except Exception as e:
         logger.error(f"Error loading initial video data: {e}")
 
