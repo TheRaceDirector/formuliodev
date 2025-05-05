@@ -79,36 +79,9 @@ MANIFEST_P2P.update({
     'description': 'An Addon for Motor Racing Replay Content (P2P Version with exclusive content). (This addon only displays content from external sources. Use this Stremio torrent addon only where legally permitted. Users are responsible for complying with all applicable laws in their jurisdiction)',
 })
 
-# Create the P2P exclusive series
-#P2P_EXCLUSIVE_SERIES_1 = {
-#    'id': 'hpytt0202515',
-#    'name': 'BTCC - ',
-#    'description': 'P2P ONLY! This series is exclusively available in the P2P version',
-#    'releaseInfo': '2025',
-#    'poster': 'https://i.postimg.cc/KjQPpvQL/wsbkhd.jpg',
-#    'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
-#    'background': 'https://i.postimg.cc/fR252zq3/motobackground.jpg',
-#    'genres': ['Moto Racing'],
-#    'videos': []
-#}
-
-#P2P_EXCLUSIVE_SERIES_2 = {
-#    'id': 'hpytt0202516',
-#    'name': 'IndyCar - HD',
-#    'description': 'P2P ONLY! IndyCar racing series',
-#    'releaseInfo': '2025',
-#    'poster': 'https://i.postimg.cc/your-indycar-poster.jpg',
-#    'logo': 'https://i.postimg.cc/your-indycar-logo.png',
-#    'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-#    'genres': ['Formula Racing'],
-#    'videos': []
-#}
-
-# List of all P2P exclusive series
+# P2P exclusive series list
 P2P_EXCLUSIVE_SERIES_LIST = [
-    #P2P_EXCLUSIVE_SERIES_1,
-    #P2P_EXCLUSIVE_SERIES_2
-    # Add more series as needed, separated by commas
+    # Add your exclusive series here if needed
 ]
 
 CATALOG = {
@@ -269,13 +242,14 @@ def load_videos(filepath):
                     'title': video_info[0]['title'],
                     'thumbnail': video_info[0]['thumbnail'],
                     'infoHash': video_info[0]['infoHash']
-                    # NO fileIdx here
                 }
                 
                 # Only add filename if it exists and is not empty
                 if 'filename' in video_info[0] and video_info[0]['filename']:
                     video_obj['filename'] = video_info[0]['filename']
                     logger.info(f"Found filename: {video_obj['filename']}")
+                else:
+                    logger.warning(f"No filename found for {full_id}")
                 
                 videos.append(video_obj)
     except FileNotFoundError:
@@ -366,9 +340,9 @@ def restart_server():
             CATALOG['series'][9]['videos'] = load_videos('./smcm/sms/6processed.txt')
             CATALOG['series'][10]['videos'] = load_videos('./sam/wsbk/6processed.txt')
             
-            # Load P2P exclusive content
-#            P2P_EXCLUSIVE_SERIES_1['videos'] = load_videos('./sam/wsbkhd/6processed.txt')
-#            P2P_EXCLUSIVE_SERIES_2['videos'] = load_videos('./indycar/hd/6processed.txt')
+            # Uncomment if you add P2P exclusive content
+            # for i, series in enumerate(P2P_EXCLUSIVE_SERIES_LIST):
+            #    P2P_EXCLUSIVE_SERIES_LIST[i]['videos'] = load_videos('./path/to/exclusive/content.txt')
             
             logger.info("Server restarted with new content.")
         except Exception as e:
@@ -531,7 +505,7 @@ def addon_stream(type, id):
                     if video['season'] == season and video['episode'] == episode:
                         logger.info(f"Found matching video: {video['title']}")
                         
-                        # Create stream WITHOUT fileIdx
+                        # Create stream with filename
                         stream = {
                             'title': video['title'],
                             'thumbnail': video['thumbnail'],
@@ -541,10 +515,15 @@ def addon_stream(type, id):
                             }
                         }
                         
-                        # Make sure we have the filename in behaviorHints
+                        # Make sure we have the filename both in the stream root and behaviorHints
                         if 'filename' in video and video['filename']:
+                            # Set filename directly in stream object
+                            stream['filename'] = video['filename']
+                            # Also add to behaviorHints for maximum compatibility
                             stream['behaviorHints']['filename'] = video['filename']
-                            logger.info(f"Added filename to behaviorHints: {video['filename']}")
+                            logger.info(f"Added filename: {video['filename']}")
+                        else:
+                            logger.warning(f"No filename found for video {video['title']}")
                         
                         streams['streams'].append(stream)
                         logger.info(f"Added stream: {stream}")
@@ -560,7 +539,11 @@ def addon_stream(type, id):
                         }
                     }
                     
+                    # Make sure we have the filename both in the stream root and behaviorHints
                     if 'filename' in video and video['filename']:
+                        # Set filename directly in stream object
+                        stream['filename'] = video['filename']
+                        # Also add to behaviorHints for maximum compatibility
                         stream['behaviorHints']['filename'] = video['filename']
                     
                     streams['streams'].append(stream)
@@ -651,9 +634,9 @@ if __name__ == '__main__':
         CATALOG['series'][9]['videos'] = load_videos('./smcm/sms/6processed.txt')
         CATALOG['series'][10]['videos'] = load_videos('./sam/wsbk/6processed.txt')
         
-        # Load P2P exclusive content
-#        P2P_EXCLUSIVE_SERIES_1['videos'] = load_videos('./sam/wsbkhd/6processed.txt')
-#        P2P_EXCLUSIVE_SERIES_2['videos'] = load_videos('./indycar/hd/6processed.txt')
+        # Uncomment if you add P2P exclusive content
+        # for i, series in enumerate(P2P_EXCLUSIVE_SERIES_LIST):
+        #    P2P_EXCLUSIVE_SERIES_LIST[i]['videos'] = load_videos('./path/to/exclusive/content.txt')
     except Exception as e:
         logger.error(f"Error loading initial video data: {e}")
 
