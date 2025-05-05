@@ -140,7 +140,7 @@ def process_csv(file_path, output_file_path):
                 'title': clean_title,
                 'thumbnail': thumbnail,
                 'infoHash': infohash,
-                'fileIdx': file_index,
+                #'fileIdx': file_index,
                 'filename': actual_filename  # Just the filename without path
             }]
     
