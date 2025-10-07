@@ -89,7 +89,7 @@ CATALOG = {
         {
             'id': 'hpytt0202501',
             'name': 'Sky F1 - FHD',
-            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
+            'description': 'Optional backup & faster playback via p2P -> formulio.hayd.uk <-\nIf stuttering, change some stremio settings and try LibVLC\nSpare Aus GP ticket? or say thanks Please email formulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/g2d9tyXS/sky1.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -101,7 +101,7 @@ CATALOG = {
         {
             'id': 'hpytt0202502',
             'name': 'Sky F1 - FHD-2',
-            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
+            'description': 'Optional backup & faster playback via p2P -> formulio.hayd.uk <-\nIf stuttering, change some stremio settings and try LibVLC\nSpare Aus GP ticket? or say thanks Please email formulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/KYMnKTQb/sky2.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -112,7 +112,7 @@ CATALOG = {
         {
             'id': 'hpytt0202503',
             'name': 'F1TV - English',
-            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
+            'description': 'Optional backup & faster playback via p2P -> formulio.hayd.uk <-\nIf stuttering, change some stremio settings and try LibVLC\nSpare Aus GP ticket? or say thanks Please email formulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/pXf4j9GD/f1tveng.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -123,7 +123,7 @@ CATALOG = {
         {
             'id': 'hpytt0202504',
             'name': 'F1TV - International',
-            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
+            'description': 'Optional backup & faster playback via p2P -> formulio.hayd.uk <-\nIf stuttering, change some stremio settings and try LibVLC\nSpare Aus GP ticket? or say thanks Please email formulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/1zjjSDXZ/f1tvint.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -134,7 +134,7 @@ CATALOG = {
         {
             'id': 'hpytt0202505',
             'name': 'Sky F1 - 4K',
-            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
+            'description': 'Optional backup & faster playback via p2P -> formulio.hayd.uk <-\nIf stuttering, change some stremio settings and try LibVLC\nSpare Aus GP ticket? or say thanks Please email formulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/zfPNXN1H/sky14k.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -145,7 +145,7 @@ CATALOG = {
         {
             'id': 'hpytt0202506',
             'name': 'Sky F1 - 4K-2',
-            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
+            'description': 'Optional backup & faster playback via p2P -> formulio.hayd.uk <-\nIf stuttering, change some stremio settings and try LibVLC\nSpare Aus GP ticket? or say thanks Please email formulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/ry4Tc7Zz/sky24k.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -156,7 +156,7 @@ CATALOG = {
         {
             'id': 'hpytt0202507',
             'name': 'Sky F1 - SD',
-            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
+            'description': 'Optional backup & faster playback via p2P -> formulio.hayd.uk <-\nIf stuttering, change some stremio settings and try LibVLC\nSpare Aus GP ticket? or say thanks Please email formulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/Pqcn5Vvx/sky2sd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -167,7 +167,7 @@ CATALOG = {
         {
             'id': 'hpytt0202511',
             'name': 'MotoGP - FHD',
-            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
+            'description': 'Optional backup & faster playback via p2P -> formulio.hayd.uk <-\nIf stuttering, change some stremio settings and try LibVLC\nSpare Aus GP ticket? or say thanks Please email formulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/3Rpyv1D8/motogphd.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
@@ -178,7 +178,7 @@ CATALOG = {
         {
             'id': 'hpytt0202512',
             'name': 'MotoGP - 4K',
-            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
+            'description': 'Optional backup & faster playback via p2P -> formulio.hayd.uk <-\nIf stuttering, change some stremio settings and try LibVLC\nSpare Aus GP ticket? or say thanks Please email formulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/MHmvsGDg/motogp4k.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
@@ -189,24 +189,24 @@ CATALOG = {
         {
             'id': 'hpytt0202513',
             'name': 'MotoGP - SD',
-            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
+            'description': 'Optional backup & faster playback via p2P -> formulio.hayd.uk <-\nIf stuttering, change some stremio settings and try LibVLC\nSpare Aus GP ticket? or say thanks Please email formulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/qqTNXK88/motogpsd.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
             'background': 'https://i.postimg.cc/fR252zq3/motobackground.jpg',
             'genres': ['Moto Racing'],
             'videos': []
-        },
-        {
-            'id': 'hpytt0202514',
-            'name': 'WSBK - FHD',
-            'description': 'New optional P2P playback source, install --> formulio.hayd.uk <--\nNo more debrid download wait times... you will enable torrenting\nStuttering? Disable hardware-decoding & use LibVLC in stremio settings',
-            'releaseInfo': '2025',
-            'poster': '',
-            'logo': '',
-            'background': '',
-            'genres': ['Moto Racing'],
-            'videos': []
+#        },
+#        {
+#            'id': 'hpytt0202514',
+#            'name': 'WSBK - FHD',
+#            'description': 'Optional backup & faster playback via p2P -> formulio.hayd.uk <-\nIf stuttering, change some stremio settings and try LibVLC\nSpare Aus GP ticket? or say thanks Please email formulio@tuta.io',
+#            'releaseInfo': '2025',
+#            'poster': '',
+#            'logo': '',
+#            'background': '',
+#            'genres': ['Moto Racing'],
+#            'videos': []
         }
     ]
 }
