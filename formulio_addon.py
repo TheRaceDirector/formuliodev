@@ -200,7 +200,7 @@ CATALOG = {
 #        {
 #            'id': 'hpytt0202514',
 #            'name': 'WSBK - FHD',
-            'description': 'Configure backup & faster playback via P2P > formulio.hayd.uk <\nAus GP ticket? or email me\n> formulio@tuta.io <',
+#            'description': 'Configure backup & faster playback via P2P > formulio.hayd.uk <\nAus GP ticket? or email me\n> formulio@tuta.io <',
 #            'releaseInfo': '2025',
 #            'poster': '',
 #            'logo': '',
