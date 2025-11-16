@@ -24,8 +24,8 @@ def main():
     # Collect rounds to archive
     rounds_to_archive = []
     
-    # Add rounds older than top 3
-    if len(round_dirs) > 3:
+    # Add rounds older than top 7
+    if len(round_dirs) > 7:
         rounds_to_archive.extend(round_dirs[3:])
     
     # Always add round 00 if it exists and isn't already in the list
