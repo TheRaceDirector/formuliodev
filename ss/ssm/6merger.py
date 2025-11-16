@@ -17,7 +17,7 @@ round_thumbnails = {round_num: countries.get(country, '') for round_num, country
 # Compile the regular expressions - FIXED
 round_regex = re.compile(r'\.R(\d+)\.', re.IGNORECASE)
 grand_prix_regex = re.compile(r'R\d+\.([^.]+)GP', re.IGNORECASE)
-session_regex = re.compile(r'GP\.(.+?)\.International', re.IGNORECASE)
+session_regex = re.compile(r'GP\.(.+?)\.MULTi', re.IGNORECASE)  # CHANGED FROM International to MULTi
 valid_extension_regex = re.compile(r'\.(mkv|mp4)$', re.IGNORECASE)
 pre_season_regex = re.compile(r'Pre\.Season', re.IGNORECASE)
 
