@@ -21,11 +21,23 @@ def main():
 
     round_dirs.sort(key=get_round_number, reverse=True)
 
-    if len(round_dirs) <= 3:
-        print('There are 3 or fewer rounds, no files to rename.')
+    # Collect rounds to archive
+    rounds_to_archive = []
+    
+    # Add rounds older than top 3
+    if len(round_dirs) > 3:
+        rounds_to_archive.extend(round_dirs[3:])
+    
+    # Always add round 00 if it exists and isn't already in the list
+    round_00_dir = '2025r00FHD'
+    if round_00_dir in round_dirs and round_00_dir not in rounds_to_archive:
+        rounds_to_archive.append(round_00_dir)
+    
+    if not rounds_to_archive:
+        print('No rounds to archive.')
         return
 
-    for old_round in round_dirs[3:]:
+    for old_round in rounds_to_archive:
         print(f'Processing {old_round}')
         rename_files_in_directory(old_round)
 
