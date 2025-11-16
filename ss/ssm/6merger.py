@@ -14,9 +14,9 @@ round_to_country = config["calendar"]
 # Generate round_thumbnails dictionary
 round_thumbnails = {round_num: countries.get(country, '') for round_num, country in round_to_country.items()}
 
-# Compile the regular expressions
-round_regex = re.compile(r'Round\.(\d+)', re.IGNORECASE)
-grand_prix_regex = re.compile(r'Round\.\d+\.([^.]+)GP', re.IGNORECASE)
+# Compile the regular expressions - FIXED
+round_regex = re.compile(r'\.R(\d+)\.', re.IGNORECASE)
+grand_prix_regex = re.compile(r'R\d+\.([^.]+)GP', re.IGNORECASE)
 session_regex = re.compile(r'GP\.(.+?)\.International', re.IGNORECASE)
 valid_extension_regex = re.compile(r'\.(mkv|mp4)$', re.IGNORECASE)
 pre_season_regex = re.compile(r'Pre\.Season', re.IGNORECASE)
@@ -31,8 +31,7 @@ def format_title(filename, session_name, grand_prix_name):
         return ' '.join(filtered_parts).strip()
     else:
         # Standard race weekend formatting
-        session_name = session_name.replace('_', ' ').replace('.', ' ').title().strip()
-        grand_prix_name = grand_prix_name.replace(session_name.replace("GP", ""), '').strip()
+        session_name = session_name.replace('.', ' ').title().strip()
         return f"{session_name} - {grand_prix_name}GP"
 
 def process_csv(file_path, output_file_path):
