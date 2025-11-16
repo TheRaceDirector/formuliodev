@@ -11,7 +11,7 @@ scripts = [
 #   '1rsstocsv.py',
     '2dbsorter.py',
     '3racedirector.py',
-#   '4retire.py',
+    '4retire.py',
     '5torrenttocontent.py',
     '6merger.py',
 #   '7podium.py'
