@@ -89,7 +89,7 @@ CATALOG = {
         {
             'id': 'hpytt0202501',
             'name': 'Sky F1 - FHD',
-            'description': 'Configure backup & faster playback via P2P > formulio.hayd.uk\nAusGP ticket or email me\nformulio@tuta.io',
+            'description': 'If you receive a StremThru playback error\nUse >Formulio P2P< big addon update happening for 2026\nformulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/g2d9tyXS/sky1.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -101,7 +101,7 @@ CATALOG = {
         {
             'id': 'hpytt0202502',
             'name': 'Sky F1 - FHD-2',
-            'description': 'Configure backup & faster playback via P2P > formulio.hayd.uk\nAusGP ticket or email me\nformulio@tuta.io',
+            'description': 'If you receive a StremThru playback error\nUse >Formulio P2P< big addon update happening for 2026\nformulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/KYMnKTQb/sky2.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -112,7 +112,7 @@ CATALOG = {
         {
             'id': 'hpytt0202503',
             'name': 'F1TV - English',
-            'description': 'Configure backup & faster playback via P2P > formulio.hayd.uk\nAusGP ticket or email me\nformulio@tuta.io',
+            'description': 'If you receive a StremThru playback error\nUse >Formulio P2P< big addon update happening for 2026\nformulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/pXf4j9GD/f1tveng.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -123,7 +123,7 @@ CATALOG = {
         {
             'id': 'hpytt0202504',
             'name': 'F1TV - International',
-            'description': 'Configure backup & faster playback via P2P > formulio.hayd.uk\nAusGP ticket or email me\nformulio@tuta.io',
+            'description': 'If you receive a StremThru playback error\nUse >Formulio P2P< big addon update happening for 2026\nformulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/1zjjSDXZ/f1tvint.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -134,7 +134,7 @@ CATALOG = {
         {
             'id': 'hpytt0202505',
             'name': 'Sky F1 - 4K',
-            'description': 'Configure backup & faster playback via P2P > formulio.hayd.uk\nAusGP ticket or email me\nformulio@tuta.io',
+            'description': 'If you receive a StremThru playback error\nUse >Formulio P2P< big addon update happening for 2026\nformulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/zfPNXN1H/sky14k.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -145,7 +145,7 @@ CATALOG = {
         {
             'id': 'hpytt0202506',
             'name': 'Sky F1 - 4K-2',
-            'description': 'Configure backup & faster playback via P2P > formulio.hayd.uk\nAusGP ticket or email me\nformulio@tuta.io',
+            'description': 'If you receive a StremThru playback error\nUse >Formulio P2P< big addon update happening for 2026\nformulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/ry4Tc7Zz/sky24k.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -156,7 +156,7 @@ CATALOG = {
         {
             'id': 'hpytt0202507',
             'name': 'Sky F1 - SD',
-            'description': 'Configure backup & faster playback via P2P > formulio.hayd.uk\nAusGP ticket or email me\nformulio@tuta.io',
+            'description': 'If you receive a StremThru playback error\nUse >Formulio P2P< big addon update happening for 2026\nformulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/Pqcn5Vvx/sky2sd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -167,7 +167,7 @@ CATALOG = {
         {
             'id': 'hpytt0202511',
             'name': 'MotoGP - FHD',
-            'description': 'Configure backup & faster playback via P2P > formulio.hayd.uk\nAusGP ticket or email me\nformulio@tuta.io',
+            'description': 'If you receive a StremThru playback error\nUse >Formulio P2P< big addon update happening for 2026\nformulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/3Rpyv1D8/motogphd.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
@@ -178,7 +178,7 @@ CATALOG = {
         {
             'id': 'hpytt0202512',
             'name': 'MotoGP - 4K',
-            'description': 'Configure backup & faster playback via P2P > formulio.hayd.uk\nAusGP ticket or email me\nformulio@tuta.io',
+            'description': 'If you receive a StremThru playback error\nUse >Formulio P2P< big addon update happening for 2026\nformulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/MHmvsGDg/motogp4k.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
@@ -189,7 +189,7 @@ CATALOG = {
         {
             'id': 'hpytt0202513',
             'name': 'MotoGP - SD',
-            'description': 'Configure backup & faster playback via P2P > formulio.hayd.uk\nAusGP ticket or email me\nformulio@tuta.io',
+            'description': 'If you receive a StremThru playback error\nUse >Formulio P2P< big addon update happening for 2026\nformulio@tuta.io',
             'releaseInfo': '2025',
             'poster': 'https://i.postimg.cc/qqTNXK88/motogpsd.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
