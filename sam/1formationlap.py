@@ -9,7 +9,7 @@ from dateutil import parser as date_parser
 
 # Define the keywords to search for in the item titles, non-case sensitive
 keywords = ["WSBK", "WorldSBK"]
-year = "2025"  # Define the year to search for in the item titles
+year = "2026"  # Define the year to search for in the item titles
 
 # Define the path to the CSV file
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -33,7 +33,7 @@ def smart_date_parse(date_string):
         return parsed_date
     except ValueError:
         print(f"Warning: Unable to parse date '{date_string}'. Using default.")
-        return datetime(2025, 1, 1, tzinfo=timezone.utc)
+        return datetime(2026, 1, 1, tzinfo=timezone.utc)
 
 def format_pubdate(pubDate):
     parsed_date = smart_date_parse(pubDate)

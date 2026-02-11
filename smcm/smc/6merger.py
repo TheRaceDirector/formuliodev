@@ -15,9 +15,9 @@ round_to_country = config["calendar"]
 round_thumbnails = {round_num: countries.get(country, '') for round_num, country in round_to_country.items()}
 
 # Compile the regular expression for matching round numbers and extracting parts of the filename
-round_regex = re.compile(r'2025x(\d+)', re.IGNORECASE)
+round_regex = re.compile(r'2026x(\d+)', re.IGNORECASE)
 title_regex = re.compile(r'(\d+)\.(.+?)\.(mp4|mkv)', re.IGNORECASE)
-grand_prix_regex = re.compile(r'2025x\d+\.(.+?)\.(Qualifying|Race|Sprint|Sky|1080p)', re.IGNORECASE)
+grand_prix_regex = re.compile(r'2026x\d+\.(.+?)\.(Qualifying|Race|Sprint|Sky|1080p)', re.IGNORECASE)
 
 # Function to format the title based on specific rules
 def format_title(filename, grand_prix_name):
@@ -60,14 +60,14 @@ def process_csv(file_path, output_file_path):
             file_index = int(row[3])
             
             # Manage episode number per round
-            round_key = f'2025:{round_number}'
+            round_key = f'2026:{round_number}'
             if round_key not in episode_counter:
                 episode_counter[round_key] = 0
             episode_counter[round_key] += 1
             
             # Create the key for the output dictionary using round year, round number, and formatted episode number
             formatted_episode_number = f"{episode_counter[round_key]:02}"  # Format with leading zero if needed
-            key = f'hpytt0202511:{round_number}:{formatted_episode_number}'
+            key = f'hpytt0202611:{round_number}:{formatted_episode_number}'
             
             # Format the title
             formatted_title = format_title(actual_filename, grand_prix_name)

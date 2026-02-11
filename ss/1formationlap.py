@@ -10,7 +10,7 @@ from dateutil import parser as date_parser
 
 # Define the keywords to search for in the item titles, non-case sensitive
 keywords = ["Formula 1", "Formula1", "Formula.1", "Formula+1"]
-year = "2025"  # Define the year to search for in the item titles
+year = "2026"  # Define the year to search for in the item titles
 
 # Define the path to the CSV file
 script_dir = os.path.dirname(os.path.abspath(__file__))

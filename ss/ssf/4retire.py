@@ -2,7 +2,7 @@ import os
 import re
 
 def get_round_number(dir_name):
-    match = re.match(r'2025r(\d+)FHD', dir_name)
+    match = re.match(r'2026r(\d+)FHD', dir_name)
     return int(match.group(1)) if match else None
 
 def rename_files_in_directory(directory):
@@ -29,7 +29,7 @@ def main():
         rounds_to_archive.extend(round_dirs[3:])
     
     # Always add round 00 if it exists and isn't already in the list
-    round_00_dir = '2025r00FHD'
+    round_00_dir = '2026r00FHD'
     if round_00_dir in round_dirs and round_00_dir not in rounds_to_archive:
         rounds_to_archive.append(round_00_dir)
     
