@@ -35,7 +35,7 @@ def format_title(filename):
     # Extract meaningful parts, dropping SkyF1HD, 1080P, etc.
     filtered_parts = []
     for part in parts:
-        if part not in ['SkyF1HD', '1080P', 'F1', '2025', 'mkv', 'mp4'] and not re.match(r'^\d+$', part):
+        if part not in ['SkyF1HD', '1080P', 'F1', '2026', 'mkv', 'mp4'] and not re.match(r'^\d+$', part):
             # Remove the round number from the title
             round_part_match = re.match(r'^R\d+\s*(.*)', part, re.IGNORECASE)
             if round_part_match:
@@ -125,7 +125,7 @@ def process_csv(file_path, output_file_path):
             thumbnail = round_thumbnails.get(round_number, default_thumbnail)
             
             # Create the key for the output dictionary
-            key = f'hpytt0202501:{round_number}:{session_number}'
+            key = f'hpytt0202601:{round_number}:{session_number}'
             
             # Extract just the filename part (removing the folder path)
             # This handles both forward slashes and backslashes
