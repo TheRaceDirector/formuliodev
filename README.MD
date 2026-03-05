@@ -17,16 +17,4 @@ docker run -p 8000:8000 formulio-addon
 
 The Dockerfile will create a user called "appuser" and this will be used to run the container as non-root
 
-## How this funky script works
-formulio-addon.py will run the several 1formationlap.py scripts, that will execute the following scripts in their respective directory.
-- 1formationlap.py
-- 2dbsorter.py
-- 3racedirector.py
-- 4retire.py
-- 5torrenttocontent.py
-- 6merger.py
-- 7podium.py
-
-It'll then watch each 6processed.txt file for modification, and if there is a change, it'll quickly restart the webserver, to host new content.
-
 Feel free to propose changes

@@ -1,6 +1,7 @@
 import os
 import subprocess
 import logging
+import sys  # Added import for sys.executable
 
 # Setup logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -11,7 +12,7 @@ scripts = [
 #   '1rsstocsv.py',
     '2dbsorter.py',
     '3racedirector.py',
-    '4retire.py',
+#   '4retire.py',
     '5torrenttocontent.py',
     '6merger.py',
 #   '7podium.py'
@@ -24,7 +25,8 @@ def run_scripts():
         logging.debug(f"Running {script_path}...")
 
         try:
-            result = subprocess.run(['python3', script_path], check=True, cwd=script_directory, capture_output=True, text=True)
+            # Changed 'python3' to sys.executable for cross-platform compatibility
+            result = subprocess.run([sys.executable, script_path], check=True, cwd=script_directory, capture_output=True, text=True)
             logging.debug(f"Completed {script_path}")
             logging.debug(f"Output:\n{result.stdout}")
             if result.stderr:

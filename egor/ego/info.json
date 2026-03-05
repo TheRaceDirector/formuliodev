@@ -1,5 +1,6 @@
 {
   "series_id": "hpytt0202601",
+  "year": 2026,
   "sport": "f1",
   "quality": "FHD",
   
@@ -7,6 +8,21 @@
     "input_file": "../f1db.csv",
     "output_directory": ".",
     "output_filename_template": "{year}{round}{quality}.csv",
+
+    "filters": {
+      "case_insensitive": true,
+      "include": [
+        "\\bF1\\b|Formula.?1|Formula.?One"
+      ],
+      "exclude": [
+        "\\bIndy\\b",
+        "\\bIndyCar\\b",
+        "\\bIndy.NXT\\b",
+        "\\bNASCAR\\b",
+        "\\bMotoGP\\b",
+        "\\bWEC\\b"
+      ]
+    },
     
     "patterns": {
       "round": {
@@ -65,27 +81,27 @@
     "directory_pattern": "{year}r(\\d+){quality}",
     "backup_extension": ".old"
   },
-  
-"parsing": {
-  "torrent_name": {
-    "round_pattern": "R(\\d+)",
-    "grand_prix_pattern": "R\\d+\\.(.+?)\\.Grand\\.Prix",
-    "fallback_gp_pattern": "R\\d+\\.([A-Za-z\\.]+?)\\."
+
+  "parsing": {
+    "torrent_name": {
+      "round_pattern": "R(\\d+)",
+      "grand_prix_pattern": "R\\d+[.\\s]+([A-Za-z\\s]+?Grand Prix)",
+      "fallback_gp_pattern": "R\\d+[.\\s]+([A-Za-z\\s]+?)(?:[.|$])"
+    },
+    "filename": {
+      "title_pattern": "^\\d+\\.F1\\.\\d{4}\\.R\\d+\\..+?\\.Grand\\.Prix\\.(.+?)(?:\\.SkyF1HD|\\.Sky|\\.F1TV|\\.UHD|\\.2160p|\\.1080p|\\.720p|\\.mkv|\\.mp4)",
+      "fallback_title_pattern": "^\\d+\\.(.+?)\\.(mkv|mp4)$"
+    },
+    "session_types": [],
+    "quality_markers": [],
+    "title_format": "{title} - {grand_prix}",
+    "title_cleanup": {
+      "replace_dots": true,
+      "replace_underscores": true,
+      "title_case": false,
+      "remove_common_suffixes": true
+    }
   },
-  "filename": {
-    "title_pattern": "^\\d+\\.F1\\.\\d{4}\\.R\\d+\\..+?\\.Grand\\.Prix\\.(.+?)(?:\\.SkyF1HD|\\.Sky|\\.F1TV|\\.UHD|\\.2160p|\\.1080p|\\.720p|\\.mkv|\\.mp4)",
-    "fallback_title_pattern": "^\\d+\\.(.+?)\\.(mkv|mp4)$"
-  },
-  "session_types": [],
-  "quality_markers": [],
-  "title_format": "{title} - {grand_prix} Grand Prix",
-  "title_cleanup": {
-    "replace_dots": true,
-    "replace_underscores": true,
-    "title_case": false,
-    "remove_common_suffixes": true
-  }
-},
   
   "data_paths": {
     "config_file": "../../data/f1_config.json",
