@@ -1,10 +1,4 @@
 {
-    "keywords": [
-    "Moto GP",
-    "MotoGP", 
-    "Moto.GP", 
-    "Moto+GP"
-  ],
   "countries": {
     "Afghanistan": "https://i.ibb.co/5g7Z6ZTf/af.png",
     "Albania": "https://i.ibb.co/RTDh2hvw/al.png",
@@ -207,7 +201,7 @@
     "Yemen": "https://i.ibb.co/MkxNW1Cy/ws.png",
     "Zambia": "https://i.ibb.co/fzY16tQq/zm.png",
     "Zimbabwe": "https://i.ibb.co/SDFwSPDv/zw.png",
-    "Other": ""
+    "Other": "https://i.ibb.co/yc9mg54D/un.png"
   },
     "calendar": {
         "00": "Other",
