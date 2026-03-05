@@ -1,0 +1,127 @@
+{
+  "series_id": "hpytt0202602",
+  "sport": "f1",
+  "quality": "FHD",
+  
+  "record_processing": {
+    "input_file": "../f1db.csv",
+    "output_directory": ".",
+    "output_filename_template": "{year}{round}{quality}.csv",
+    
+    "patterns": {
+      "round": {
+        "regex": "(R\\d+|x\\d+|Round\\s?\\d+)",
+        "case_insensitive": true,
+        "normalize_format": "r{num:02d}"
+      },
+      "resolution": {
+        "regex": "(1080[Pp]|SD|4K|2160[Pp]|FHD|720[Pp])",
+        "case_insensitive": true,
+        "mappings": {
+          "1080P": "FHD",
+          "FHD": "FHD",
+          "SD": "SD",
+          "720P": "SD",
+          "2160P": "4K",
+          "4K": "4K"
+        }
+      },
+      "year": {
+        "regex": "(\\d{4})",
+        "case_insensitive": false
+      }
+    },
+    
+    "columns": {
+      "description_index": 0,
+      "guid_index": 1
+    },
+    
+    "deduplication": {
+      "enabled": true,
+      "key_column_index": 1
+    }
+  },
+  
+  "csv_processing": {
+    "input_file_pattern": "^2.*\\.csv$",
+    "date_column_index": 3,
+    "date_format": "%d %b %Y %H:%M:%S %z",
+    "torrent_name_column_index": 0,
+    "magnet_link_column_index": 1,
+    "infohash_pattern": "btih:([a-zA-Z0-9]+)",
+    "output_extensions": {
+      "active": ".csv",
+      "archive": ".archive",
+      "old": ".old"
+    },
+    "output_columns": ["torrent_name", "infohash", "magnet_link"],
+    "create_subdirectory": true,
+    "skip_if_exists": [".csv", ".archive", ".old"]
+  },
+  
+  "file_retention": {
+    "keep_latest_rounds": 3,
+    "directory_pattern": "{year}r(\\d+){quality}",
+    "backup_extension": ".old"
+  },
+  
+  "parsing": {
+    "torrent_name": {
+      "round_pattern": "(?:{year})x(\\d+)",
+      "grand_prix_pattern": "(?:{year})x\\d+\\.(.+?)\\.(?:{session_types}|{quality_markers})",
+      "fallback_gp_pattern": "(?:{year})x\\d+\\.([A-Za-z]+(?:\\.[A-Za-z]+)*?)\\."
+    },
+    "filename": {
+      "title_pattern": "^(\\d+)\\.(.+?)\\.(mp4|mkv|avi|ts)$",
+      "fallback_title_pattern": "^(.+?)\\.(mp4|mkv|avi|ts)$"
+    },
+    "session_types": ["Qualifying", "Race", "Sprint", "Practice", "FP1", "FP2", "FP3", "Pre-Season", "Testing"],
+    "quality_markers": ["1080p", "2160p", "4K", "UHD", "720p", "SD", "480p", "Sky", "F1TV"],
+    "title_format": "{title} - {grand_prix}",
+    "title_cleanup": {
+      "replace_dots": true,
+      "replace_underscores": true,
+      "title_case": false,
+      "strip_quality": true,
+      "strip_source": true
+    }
+  },
+  
+  "data_paths": {
+    "config_file": "../../data/f1_config.json",
+    "input_csv": "content.csv",
+    "output_csv": "6processed.csv",
+    "info_json": "info.json"
+  },
+  
+  "column_mapping": {
+    "torrent_name": ["torrent file name", "torrent_name", "torrent", "name"],
+    "filename": ["filename within torrent", "filename", "file", "path"],
+    "infohash": ["infohash", "hash", "info_hash"],
+    "file_index": ["file index", "file_index", "fileindex", "index", "idx"],
+    "filesize": ["filesize_gb", "filesize", "size", "file_size", "size_gb"]
+  },
+  
+  "output": {
+    "include_filesize": true,
+    "include_quality": true,
+    "sort_by": ["season", "episode"],
+    "deduplicate": true
+  },
+  
+  "peer_settings": {
+    "max_peers_to_try": 100,
+    "peer_connect_timeout": 5,
+    "peer_metadata_timeout": 30
+  },
+  "tracker_settings": {
+    "tracker_timeout": 10,
+    "dht_timeout": 20
+  },
+  "debug": {
+    "verbose": true,
+    "debug_peers": true,
+    "log_skipped_rows": false
+  }
+}
