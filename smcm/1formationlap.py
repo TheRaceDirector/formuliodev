@@ -10,6 +10,15 @@ import shutil
 import time
 import random
 import json
+import sys
+import io
+
+# Ensure stdout/stderr handle Unicode universally
+# (Windows defaults to cp1252; Docker/Linux may vary by locale)
+if hasattr(sys.stdout, 'buffer'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+if hasattr(sys.stderr, 'buffer'):
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 # Load configuration
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -22,7 +31,7 @@ with open(general_config_path, 'r', encoding='utf-8') as f:
     year = general_config["year"]
 
 # Load keywords from f1_config.json
-f1_config_path = os.path.join(data_dir, 'moto_config.json')
+f1_config_path = os.path.join(data_dir, 'f1_config.json')
 with open(f1_config_path, 'r', encoding='utf-8') as f:
     f1_config = json.load(f)
     keywords = f1_config["keywords"]
@@ -68,7 +77,6 @@ def extract_btih(magnet_or_link):
     match = re.search(r'xt=urn:btih:([a-fA-F0-9]{40})', magnet_or_link)
     if match:
         return match.group(1).lower()
-    # Also try shorter hashes (some use 32-char base32)
     match = re.search(r'xt=urn:btih:([a-zA-Z0-9]{32})', magnet_or_link)
     if match:
         return match.group(1).lower()
@@ -120,12 +128,10 @@ def get_existing_btihs(csv_file_path):
             with open(csv_file_path, 'r', newline='', encoding='utf-8') as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
-                    # Extract btih from the link (magnet) column
                     link = row.get('link', '')
                     btih = extract_btih(link)
                     if btih:
                         existing_btihs.add(btih)
-                    # Also check the guid column (for backwards compatibility)
                     guid = row.get('guid', '')
                     if guid and re.match(r'^[a-fA-F0-9]{40}$', guid):
                         existing_btihs.add(guid.lower())
@@ -202,7 +208,7 @@ def fetch_and_parse_rss(url, feed_type='default', timeout=20):
             if response.status_code == 429:
                 retry_after = int(response.headers.get('Retry-After', RETRY_DELAY * (2 ** attempt)))
                 delay = retry_after + random.uniform(1, 3)
-                print(f"  ⚠ Rate limited (429). Waiting {delay:.1f} seconds before retry...")
+                print(f"  ! Rate limited (429). Waiting {delay:.1f} seconds before retry...")
                 time.sleep(delay)
                 continue
 
@@ -222,7 +228,7 @@ def fetch_and_parse_rss(url, feed_type='default', timeout=20):
             return feed
 
         except requests.Timeout:
-            print(f"  ✗ Timeout error (attempt {attempt + 1}/{MAX_RETRIES})")
+            print(f"  x Timeout error (attempt {attempt + 1}/{MAX_RETRIES})")
             if attempt < MAX_RETRIES - 1:
                 delay = RETRY_DELAY * (2 ** attempt) + random.uniform(0, 2)
                 print(f"  Retrying in {delay:.1f} seconds...")
@@ -230,7 +236,7 @@ def fetch_and_parse_rss(url, feed_type='default', timeout=20):
             continue
 
         except requests.HTTPError as e:
-            print(f"  ✗ HTTP Error: {e.response.status_code}")
+            print(f"  x HTTP Error: {e.response.status_code}")
             if 400 <= e.response.status_code < 500 and e.response.status_code != 429:
                 return None
             if attempt < MAX_RETRIES - 1:
@@ -240,7 +246,7 @@ def fetch_and_parse_rss(url, feed_type='default', timeout=20):
             continue
 
         except requests.RequestException as e:
-            print(f"  ✗ Request error: {str(e)}")
+            print(f"  x Request error: {str(e)}")
             if attempt < MAX_RETRIES - 1:
                 delay = RETRY_DELAY * (2 ** attempt) + random.uniform(0, 2)
                 print(f"  Retrying in {delay:.1f} seconds...")
@@ -248,10 +254,10 @@ def fetch_and_parse_rss(url, feed_type='default', timeout=20):
             continue
 
         except Exception as e:
-            print(f"  ✗ Parse error: {str(e)}")
+            print(f"  x Parse error: {str(e)}")
             return None
 
-    print(f"  ✗ Failed after {MAX_RETRIES} attempts")
+    print(f"  x Failed after {MAX_RETRIES} attempts")
     return None
 
 
@@ -278,19 +284,16 @@ def process_bt4gpx_feed(feed, existing_btihs):
         if not matches_keywords(entry.title) or year not in entry.title:
             continue
 
-        # The <link> in bt4gpx feeds IS the magnet link
         link = entry.get('link', '')
-
-        # Extract btih as the unique identifier
         btih = extract_btih(link)
         if not btih:
             if DEBUG:
-                print(f"    ✗ No btih found in link for '{entry.title[:60]}'")
+                print(f"    x No btih found in link for '{entry.title[:60]}'")
             continue
 
         if is_duplicate(btih, existing_btihs):
             if DEBUG:
-                print(f"    ✗ Duplicate (btih: {btih[:16]}...): '{entry.title[:50]}'")
+                print(f"    x Duplicate (btih: {btih[:16]}...): '{entry.title[:50]}'")
             continue
 
         pubDate = entry.get('published', entry.get('pubDate', entry.get('updated', '')))
@@ -299,12 +302,11 @@ def process_bt4gpx_feed(feed, existing_btihs):
         else:
             formatted_pubDate = datetime.now(tz=timezone.utc).strftime('%d %b %Y %H:%M:%S %z')
 
-        # Store the btih as the guid
         new_entries.append([entry.title, link, btih, formatted_pubDate])
         existing_btihs.add(btih)
 
         if DEBUG:
-            print(f"    ✓ MATCH - {entry.title[:50]} (btih: {btih[:16]}...)")
+            print(f"    + MATCH - {entry.title[:50]} (btih: {btih[:16]}...)")
 
     return new_entries
 
@@ -332,13 +334,13 @@ def process_reddit_feed(feed, existing_btihs):
             content = entry.description
         else:
             if DEBUG:
-                print(f"      ✗ No content field found")
+                print(f"      x No content field found")
             continue
 
         magnet_link_match = re.search(r'(magnet:\?xt=urn:btih:[^\s"<]+)', content)
         if not magnet_link_match:
             if DEBUG:
-                print(f"      ✗ No magnet link found")
+                print(f"      x No magnet link found")
             continue
 
         link = magnet_link_match.group(1)
@@ -347,12 +349,12 @@ def process_reddit_feed(feed, existing_btihs):
         btih = extract_btih(link)
         if not btih:
             if DEBUG:
-                print(f"      ✗ No btih found in magnet link")
+                print(f"      x No btih found in magnet link")
             continue
 
         if is_duplicate(btih, existing_btihs):
             if DEBUG:
-                print(f"      ✗ Duplicate (btih: {btih[:16]}...)")
+                print(f"      x Duplicate (btih: {btih[:16]}...)")
             continue
 
         pubDate = entry.get('updated', entry.get('published', ''))
@@ -365,7 +367,7 @@ def process_reddit_feed(feed, existing_btihs):
         existing_btihs.add(btih)
 
         if DEBUG:
-            print(f"      ✓ MATCH - {entry.title[:50]} (btih: {btih[:16]}...)")
+            print(f"      + MATCH - {entry.title[:50]} (btih: {btih[:16]}...)")
 
     return new_entries
 
@@ -380,7 +382,8 @@ def parse_feed_file(feed_file_path):
     """Parse the feed.txt file and return list of (type, url) tuples."""
     feeds = []
 
-    with open(feed_file_path, 'r') as file:
+    # FIXED: explicit encoding so it works on Windows, Docker, and all Linux locales
+    with open(feed_file_path, 'r', encoding='utf-8') as file:
         current_type = None
 
         for line in file:
@@ -450,7 +453,7 @@ def main():
             append_to_csv(entry, csv_file_path)
 
         if new_entries:
-            print(f"  ✓ Found {len(new_entries)} new entries")
+            print(f"  Found {len(new_entries)} new entries")
             total_new_entries += len(new_entries)
         else:
             print(f"  No new entries (checked {len(feed.entries)} items)")
