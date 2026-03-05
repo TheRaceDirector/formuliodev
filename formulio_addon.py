@@ -476,6 +476,16 @@ MANIFEST = {
 # Each catalog entry: id, name, metadata, and the CSV file that holds its videos
 CATALOG = {
     'series': [
+            {
+            'id': 'hpytt0202605', 'name': 'Sky F1 - 4K',
+            'description': 'formulio@tuta.io',
+            'releaseInfo': '2026',
+            'poster': 'https://i.postimg.cc/zfPNXN1H/sky14k.jpg',
+            'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
+            'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
+            'genres': ['Formula Racing'], 'videos': [],
+            'videoFile': './egor/eg4/6processed.csv'
+        },
         {
             'id': 'hpytt0202601', 'name': 'Sky F1 - FHD',
             'description': 'formulio@tuta.io',
@@ -485,16 +495,6 @@ CATALOG = {
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing'], 'videos': [],
             'videoFile': './egor/ego/6processed.csv'
-        },
-        {
-            'id': 'hpytt0202602', 'name': 'Sky F1 - FHD (SMC)',
-            'description': 'formulio@tuta.io',
-            'releaseInfo': '2026',
-            'poster': 'https://i.postimg.cc/KYMnKTQb/sky2.jpg',
-            'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
-            'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Formula Racing'], 'videos': [],
-            'videoFile': './smcg/smc/6processed.csv'
         },
         {
             'id': 'hpytt0202603', 'name': 'F1TV - English',
@@ -517,17 +517,7 @@ CATALOG = {
             'videoFile': './ss/ssm/6processed.csv'
         },
         {
-            'id': 'hpytt0202605', 'name': 'Sky F1 - 4K',
-            'description': 'formulio@tuta.io',
-            'releaseInfo': '2026',
-            'poster': 'https://i.postimg.cc/zfPNXN1H/sky14k.jpg',
-            'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
-            'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Formula Racing'], 'videos': [],
-            'videoFile': './egor/eg4/6processed.csv'
-        },
-        {
-            'id': 'hpytt0202606', 'name': 'Sky F1 - 4K (SMC)',
+            'id': 'hpytt0202606', 'name': 'Sky F1 - 4K (2)',
             'description': 'formulio@tuta.io',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/ry4Tc7Zz/sky24k.jpg',
@@ -537,14 +527,24 @@ CATALOG = {
             'videoFile': './smcg/sm4/6processed.csv'
         },
         {
-            'id': 'hpytt0202607', 'name': 'Sky F1 - SD',
+            'id': 'hpytt0202602', 'name': 'Sky F1 - FHD (2)',
             'description': 'formulio@tuta.io',
             'releaseInfo': '2026',
-            'poster': 'https://i.postimg.cc/Pqcn5Vvx/sky2sd.jpg',
+            'poster': 'https://i.postimg.cc/KYMnKTQb/sky2.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing'], 'videos': [],
-            'videoFile': './smcg/sms/6processed.csv'
+            'videoFile': './smcg/smc/6processed.csv'
+        },
+        {
+            'id': 'hpytt0202612', 'name': 'MotoGP - 4K',
+            'description': 'formulio@tuta.io',
+            'releaseInfo': '2026',
+            'poster': 'https://i.postimg.cc/3Rpyv1D8/motogphd.jpg',
+            'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
+            'background': 'https://i.postimg.cc/fR252zq3/motobackground.jpg',
+            'genres': ['Moto Racing'], 'videos': [],
+            'videoFile': './smcm/sm4/6processed.csv'
         },
         {
             'id': 'hpytt0202611', 'name': 'MotoGP - FHD',
@@ -557,14 +557,14 @@ CATALOG = {
             'videoFile': './smcm/smc/6processed.csv'
         },
         {
-            'id': 'hpytt0202612', 'name': 'MotoGP - 4K',
-            'description': 'formulio@tuta.io',
+            'id': 'hpytt0202607', 'name': 'Sky F1 - SD',
+            'description': 'This is Low Quality \nformulio@tuta.io',
             'releaseInfo': '2026',
-            'poster': 'https://i.postimg.cc/3Rpyv1D8/motogphd.jpg',
-            'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
-            'background': 'https://i.postimg.cc/fR252zq3/motobackground.jpg',
-            'genres': ['Moto Racing'], 'videos': [],
-            'videoFile': './smcm/sm4/6processed.csv'
+            'poster': 'https://i.postimg.cc/Pqcn5Vvx/sky2sd.jpg',
+            'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
+            'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
+            'genres': ['Formula Racing'], 'videos': [],
+            'videoFile': './smcg/sms/6processed.csv'
         }
     ]
 }
