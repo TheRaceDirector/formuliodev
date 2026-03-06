@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-6merger.py - Generic torrent content processor for Stremio addons
+6merger.py - Generic torrent content processor for Stremio addons - v4 using incremental
 
 This script processes torrent content CSV files and generates formatted output
 for use with Stremio addons. Configuration is read from info.json in the same directory.
@@ -271,7 +271,6 @@ def get_default_column_mapping() -> Dict[str, List[str]]:
 
 def extract_filename(filepath: str) -> str:
     """Extract just the filename from a path, handling various separators."""
-    # Handle both forward and backslashes
     filepath = filepath.replace('\\', '/')
     if '/' in filepath:
         return filepath.split('/')[-1]
@@ -291,7 +290,6 @@ def clean_title(title: str, cleanup_config: Dict[str, bool]) -> str:
     if cleanup_config.get('title_case', False):
         result = result.title()
     
-    # Remove extra whitespace
     result = ' '.join(result.split())
     
     return result.strip()
@@ -306,27 +304,22 @@ def extract_round_info(torrent_name: str, config: Config) -> Tuple[str, str]:
     round_number = 'Unknown'
     grand_prix_name = 'Unknown'
     
-    # Extract round number
     if config._round_regex:
         match = config._round_regex.search(torrent_name)
         if match:
-            # Handle both single group and double group patterns
             groups = match.groups()
             round_number = groups[-1]  # Last group is always the round number
     
-    # Extract grand prix name - try main pattern first
     if config._gp_regex:
         match = config._gp_regex.search(torrent_name)
         if match:
             grand_prix_name = match.group(1)
     
-    # Try fallback pattern if main pattern failed
     if grand_prix_name == 'Unknown' and config._fallback_gp_regex:
         match = config._fallback_gp_regex.search(torrent_name)
         if match:
             grand_prix_name = match.group(1)
     
-    # Clean up grand prix name
     grand_prix_name = clean_title(grand_prix_name, config.parsing.title_cleanup)
     
     return round_number, grand_prix_name
@@ -336,24 +329,20 @@ def extract_title(filename: str, config: Config) -> str:
     """Extract the title portion from a filename."""
     title = 'Unknown'
     
-    # Try main title pattern
     if config._title_regex:
         match = config._title_regex.search(filename)
         if match:
             groups = match.groups()
-            # Second group is typically the title in patterns like "01.Title.mp4"
             if len(groups) >= 2:
                 title = groups[1]
             else:
                 title = groups[0]
     
-    # Try fallback pattern
     if title == 'Unknown' and config._fallback_title_regex:
         match = config._fallback_title_regex.search(filename)
         if match:
             title = match.group(1)
     
-    # Clean up title
     title = clean_title(title, config.parsing.title_cleanup)
     
     return title
@@ -387,6 +376,57 @@ def build_thumbnail_map(sport_config: Dict) -> Dict[str, str]:
 
 
 # ============================================================================
+# Existing Output Loading (incremental mode)
+# ============================================================================
+
+def load_existing_output(output_path: Path, fieldnames: List[str]) -> Tuple[
+    List[Dict],       # existing rows as dicts
+    set,              # seen (round, title) keys
+    Dict[str, int]    # max episode per season key "year:round"
+]:
+    """
+    Load an existing output CSV and extract state needed for incremental updates.
+
+    Returns:
+        existing_rows   - all rows already in the file, preserved as-is
+        seen_keys       - set of (season_str, title) tuples already present
+        episode_maxes   - dict mapping "season" int → highest episode number seen
+    """
+    existing_rows = []
+    seen_keys = set()
+    episode_maxes: Dict[int, int] = {}
+
+    if not output_path.exists():
+        return existing_rows, seen_keys, episode_maxes
+
+    try:
+        with open(output_path, 'r', newline='', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                existing_rows.append(row)
+
+                title = row.get('title', '')
+                season_raw = row.get('season', '0')
+                episode_raw = row.get('episode', '0')
+
+                try:
+                    season = int(season_raw)
+                    episode = int(episode_raw)
+                except ValueError:
+                    season, episode = 0, 0
+
+                seen_keys.add((season_raw, title))
+
+                if season not in episode_maxes or episode > episode_maxes[season]:
+                    episode_maxes[season] = episode
+
+    except Exception as e:
+        print(f"Warning: Could not read existing output file: {e}")
+
+    return existing_rows, seen_keys, episode_maxes
+
+
+# ============================================================================
 # Main Processing
 # ============================================================================
 
@@ -403,7 +443,6 @@ def process_row(
     
     Returns None if row should be skipped.
     """
-    # Validate row has enough columns
     required_cols = ['torrent_name', 'filename', 'infohash', 'file_index']
     for col in required_cols:
         if col not in col_indices:
@@ -411,7 +450,6 @@ def process_row(
         if col_indices[col] >= len(row):
             return None
     
-    # Extract values
     torrent_name = row[col_indices['torrent_name']].strip()
     filename = row[col_indices['filename']].strip()
     infohash = row[col_indices['infohash']].strip()
@@ -421,71 +459,63 @@ def process_row(
     except (ValueError, TypeError):
         return None
     
-    # Extract filesize if available
     filesize = ''
     if 'filesize' in col_indices and col_indices['filesize'] < len(row):
         filesize = row[col_indices['filesize']].strip()
     
-    # Extract actual filename from path
     actual_filename = extract_filename(filename)
 
-    # Skip non-video files
     file_ext = os.path.splitext(actual_filename)[1].lower()
     if file_ext not in {'.mkv', '.mp4', '.avi', '.ts'}:
         if config.debug.get('log_skipped_rows'):
             print(f"  Skipped (non-video): {actual_filename}")
         return None
     
-    # Extract round info
     round_number, grand_prix_name = extract_round_info(torrent_name, config)
     
-    # Skip if round number couldn't be determined and deduplication is enabled
     if round_number == 'Unknown' and config.output.get('deduplicate', True):
         if config.debug.get('log_skipped_rows'):
             print(f"  Skipped (unknown round): {torrent_name}")
         return None
     
-    # Extract and format title (do this BEFORE deduplication check)
     title = extract_title(actual_filename, config)
     formatted_title = format_title(title, grand_prix_name, config)
     
-    # Skip files where title couldn't be extracted (e.g. wrong source)
     if title == 'Unknown':
         if config.debug.get('log_skipped_rows'):
             print(f"  Skipped (no title match): {actual_filename}")
         return None
     
-    # Deduplication check - based on round and title, not infohash
+    # Deduplication — shared between full-rebuild and incremental modes.
+    # In incremental mode, seen_entries is pre-populated from the existing file.
+    # The key is (season_as_str, formatted_title) to match what load_existing_output stores.
+    try:
+        season = int(round_number)
+    except ValueError:
+        season = 0
+
+    unique_key = (str(season), formatted_title)
+
     if config.output.get('deduplicate', True):
-        # Use round + formatted title as the unique key
-        # This will keep only the first occurrence of each session
-        unique_key = (round_number, formatted_title)
         if unique_key in seen_entries:
             if config.debug.get('verbose'):
                 print(f"  Skipped duplicate: {formatted_title}")
             return None
         seen_entries.add(unique_key)
     
-    # Episode counting (after deduplication)
-    round_key = f'{config.year}:{round_number}'
-    if round_key not in episode_counter:
-        episode_counter[round_key] = 0
-    episode_counter[round_key] += 1
+    # Episode counting — in incremental mode episode_counter is pre-seeded
+    # with the highest existing episode per season, so new entries continue
+    # from where the file left off.
+    if season not in episode_counter:
+        episode_counter[season] = 0
+    episode_counter[season] += 1
     
-    # Get thumbnail
     thumbnail = thumbnail_map.get(round_number, '')
     
-    # Determine season number
-    try:
-        season = int(round_number)
-    except ValueError:
-        season = 0
-    
-    # Build output row
     output = {
         'series_id': config.series_id,
         'season': season,
-        'episode': episode_counter[round_key],
+        'episode': episode_counter[season],
         'title': formatted_title,
         'thumbnail': thumbnail,
         'infoHash': infohash,
@@ -493,7 +523,6 @@ def process_row(
         'filename': actual_filename
     }
     
-    # Optional fields
     if config.output.get('include_filesize', True):
         output['filesize'] = filesize
     
@@ -506,29 +535,60 @@ def process_row(
 def process_csv(config: Config, sport_config: Dict, dry_run: bool = False) -> int:
     """
     Process the input CSV and generate output CSV.
-    
-    Returns the number of entries processed.
+
+    Supports two modes controlled by output.incremental in info.json:
+
+        incremental: true  — load existing output, skip already-present entries,
+                             append only new rows, preserve existing episode numbers.
+
+        incremental: false (default) — original full-rebuild behaviour,
+                             compare whole file and overwrite if changed.
+
+    Returns the number of total entries in the output file.
     """
     input_path = resolve_path(config.data_paths.get('input_csv', 'content.csv'))
     output_path = resolve_path(config.data_paths.get('output_csv', '6processed.csv'))
-    
+    incremental = config.output.get('incremental', False)
+
     if not input_path.exists():
         print(f"Error: Input file not found: {input_path}")
         return 0
     
-    # Get column mapping
     column_mapping = config.column_mapping or get_default_column_mapping()
-    
-    # Build thumbnail map
     thumbnail_map = build_thumbnail_map(sport_config)
-    
-    # Processing state
-    output_data = []
-    episode_counter = {}
-    seen_entries = set()
+
+    # Determine output fieldnames up front — needed by both modes
+    fieldnames = ['series_id', 'season', 'episode', 'title', 'thumbnail', 'infoHash', 'fileIdx']
+    if config.output.get('include_filesize', True):
+        fieldnames.append('filesize')
+    if config.output.get('include_quality', False):
+        fieldnames.append('quality')
+    fieldnames.append('filename')
+
+    # ------------------------------------------------------------------ #
+    # Incremental mode: seed state from existing output file              #
+    # ------------------------------------------------------------------ #
+    if incremental:
+        existing_rows, seen_entries, episode_maxes = load_existing_output(output_path, fieldnames)
+        # episode_counter starts at the highest episode already written per season
+        # so new entries continue the sequence correctly
+        episode_counter: Dict[int, int] = dict(episode_maxes)
+
+        if config.debug.get('verbose'):
+            print(f"Incremental mode: {len(existing_rows)} existing rows loaded")
+            for season, max_ep in sorted(episode_counter.items()):
+                print(f"  Season {season}: last episode = {max_ep}")
+    else:
+        existing_rows = []
+        seen_entries: set = set()
+        episode_counter: Dict[int, int] = {}
+
+    # ------------------------------------------------------------------ #
+    # Process input CSV                                                   #
+    # ------------------------------------------------------------------ #
+    new_rows = []
     skipped_count = 0
-    
-    # Process input file
+
     with open(input_path, 'r', newline='', encoding='utf-8') as f:
         reader = csv.reader(f)
         
@@ -538,13 +598,11 @@ def process_csv(config: Config, sport_config: Dict, dry_run: bool = False) -> in
             print("Error: Input CSV is empty")
             return 0
         
-        # Detect columns
         col_indices = detect_columns(header, column_mapping)
         
         if config.debug.get('verbose'):
             print(f"Detected columns: {col_indices}")
         
-        # Validate required columns
         required = ['torrent_name', 'filename', 'infohash', 'file_index']
         missing = [col for col in required if col not in col_indices]
         if missing:
@@ -552,7 +610,6 @@ def process_csv(config: Config, sport_config: Dict, dry_run: bool = False) -> in
             print(f"Available columns: {header}")
             return 0
         
-        # Process rows
         for row_num, row in enumerate(reader, start=2):
             if not row or all(cell.strip() == '' for cell in row):
                 continue
@@ -563,56 +620,70 @@ def process_csv(config: Config, sport_config: Dict, dry_run: bool = False) -> in
             )
             
             if result:
-                output_data.append(result)
+                new_rows.append(result)
             else:
                 skipped_count += 1
-    
+
     if config.debug.get('verbose'):
-        print(f"Processed {len(output_data)} entries, skipped {skipped_count}")
-    
-    # Sort output
-    sort_keys = config.output.get('sort_by', ['season', 'episode'])
-    output_data.sort(key=lambda x: tuple(x.get(k, 0) for k in sort_keys))
-    
-    if dry_run:
-        print(f"Dry run: would write {len(output_data)} entries to {output_path}")
-        return len(output_data)
-    
-    # Check if data has changed
-    existing_data = []
-    if output_path.exists():
-        try:
-            with open(output_path, 'r', newline='', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                existing_data = list(reader)
-        except Exception:
-            pass
-    
-    # Determine fieldnames based on output config
-    fieldnames = ['series_id', 'season', 'episode', 'title', 'thumbnail', 'infoHash', 'fileIdx']
-    if config.output.get('include_filesize', True):
-        fieldnames.append('filesize')
-    if config.output.get('include_quality', False):
-        fieldnames.append('quality')
-    fieldnames.append('filename')
-    
-    # Compare data
-    def normalize(row):
-        return tuple(str(row.get(k, '')) for k in fieldnames)
-    
-    existing_normalized = [normalize(r) for r in existing_data]
-    new_normalized = [normalize(r) for r in output_data]
-    
-    if new_normalized != existing_normalized:
-        with open(output_path, 'w', newline='', encoding='utf-8') as f:
+        print(f"New entries: {len(new_rows)}, skipped: {skipped_count}")
+
+    # ------------------------------------------------------------------ #
+    # Incremental mode: append and write; Full mode: compare and overwrite#
+    # ------------------------------------------------------------------ #
+    if incremental:
+        if not new_rows:
+            print(f"No new entries to add to {output_path}")
+            return len(existing_rows)
+
+        if dry_run:
+            print(f"Dry run: would append {len(new_rows)} new entries to {output_path} "
+                  f"(existing: {len(existing_rows)})")
+            for r in new_rows:
+                print(f"  S{r['season']}E{r['episode']:02d} {r['title']}")
+            return len(existing_rows) + len(new_rows)
+
+        write_header = not output_path.exists() or len(existing_rows) == 0
+        with open(output_path, 'a', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction='ignore')
-            writer.writeheader()
-            writer.writerows(output_data)
-        print(f"Updated {output_path} ({len(output_data)} entries)")
+            if write_header:
+                writer.writeheader()
+            writer.writerows(new_rows)
+
+        print(f"Appended {len(new_rows)} new entries to {output_path} "
+              f"(total: {len(existing_rows) + len(new_rows)})")
+        return len(existing_rows) + len(new_rows)
+
     else:
-        print(f"No changes to {output_path}")
-    
-    return len(output_data)
+        # Original full-rebuild behaviour preserved exactly
+        output_data = new_rows
+        sort_keys = config.output.get('sort_by', ['season', 'episode'])
+        output_data.sort(key=lambda x: tuple(x.get(k, 0) for k in sort_keys))
+
+        if dry_run:
+            print(f"Dry run: would write {len(output_data)} entries to {output_path}")
+            return len(output_data)
+
+        existing_file_rows = []
+        if output_path.exists():
+            try:
+                with open(output_path, 'r', newline='', encoding='utf-8') as f:
+                    existing_file_rows = list(csv.DictReader(f))
+            except Exception:
+                pass
+
+        def normalize(row):
+            return tuple(str(row.get(k, '')) for k in fieldnames)
+
+        if [normalize(r) for r in output_data] != [normalize(r) for r in existing_file_rows]:
+            with open(output_path, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction='ignore')
+                writer.writeheader()
+                writer.writerows(output_data)
+            print(f"Updated {output_path} ({len(output_data)} entries)")
+        else:
+            print(f"No changes to {output_path}")
+
+        return len(output_data)
 
 
 # ============================================================================
@@ -632,10 +703,8 @@ def main():
     
     print(f"6merger.py running from: {SCRIPT_DIR}")
     
-    # Load configuration
     config, raw_config = load_config()
     
-    # Override verbose setting from command line
     if args.verbose:
         config.debug['verbose'] = True
     
@@ -644,15 +713,14 @@ def main():
         print(f"Year: {config.year}")
         print(f"Sport: {config.sport}")
         print(f"Quality: {config.quality}")
+        print(f"Mode: {'incremental' if config.output.get('incremental') else 'full rebuild'}")
     
-    # Load sport-specific config
     sport_config = load_sport_config(config)
     
     if config.debug.get('verbose'):
         calendar_count = len(sport_config.get('calendar', {}))
         print(f"Loaded {calendar_count} rounds from sport config")
     
-    # Process CSV
     count = process_csv(config, sport_config, dry_run=args.dry_run)
     
     if count == 0:
