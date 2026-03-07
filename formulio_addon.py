@@ -478,7 +478,7 @@ CATALOG = {
     'series': [
             {
             'id': 'hpytt0202605', 'name': 'Sky F1 - 4K',
-            'description': 'formulio@tuta.io',
+            'description': 'If you get a StremThru error, use the P2P source\nformulio@tuta.io',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/zfPNXN1H/sky14k.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -488,7 +488,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202601', 'name': 'Sky F1 - FHD',
-            'description': 'formulio@tuta.io',
+            'description': 'If you get a StremThru error, use the P2P source\nformulio@tuta.io',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/g2d9tyXS/sky1.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -498,7 +498,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202603', 'name': 'F1TV - English',
-            'description': 'formulio@tuta.io',
+            'description': 'If you get a StremThru error, use the P2P source\nformulio@tuta.io',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/pXf4j9GD/f1tveng.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -508,7 +508,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202604', 'name': 'F1TV - International',
-            'description': 'formulio@tuta.io',
+            'description': 'If you get a StremThru error, use the P2P source\nformulio@tuta.io',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/1zjjSDXZ/f1tvint.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -518,7 +518,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202606', 'name': 'Sky F1 - 4K (2)',
-            'description': 'formulio@tuta.io',
+            'description': 'If you get a StremThru error, use the P2P source\nformulio@tuta.io',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/ry4Tc7Zz/sky24k.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -528,7 +528,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202602', 'name': 'Sky F1 - FHD (2)',
-            'description': 'formulio@tuta.io',
+            'description': 'If you get a StremThru error, use the P2P source\nformulio@tuta.io',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/KYMnKTQb/sky2.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -538,7 +538,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202612', 'name': 'MotoGP - 4K',
-            'description': 'formulio@tuta.io',
+            'description': 'If you get a StremThru error, use the P2P source\nformulio@tuta.io',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/3Rpyv1D8/motogphd.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
@@ -548,7 +548,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202611', 'name': 'MotoGP - FHD',
-            'description': 'formulio@tuta.io',
+            'description': 'If you get a StremThru error, use the P2P source\nformulio@tuta.io',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/3Rpyv1D8/motogphd.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',

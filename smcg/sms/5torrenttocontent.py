@@ -744,10 +744,7 @@ def process_csv_files():
             print("\n[WARNING] Shutdown requested - stopping processing")
             break
         
-        csv_files = sorted(
-            glob.glob(os.path.join(subdir, '[0-9]*.csv')), 
-            key=lambda f: int(os.path.splitext(os.path.basename(f))[0])
-        )
+        csv_files = sorted(glob.glob(os.path.join(subdir, '*.csv')))
         
         for csv_file in csv_files:
             if shutdown_requested:
