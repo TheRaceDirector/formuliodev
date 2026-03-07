@@ -85,8 +85,8 @@
   "parsing": {
     "torrent_name": {
       "round_pattern": "R(\\d+)",
-      "grand_prix_pattern": "R\\d+[.\\s]+([A-Za-z\\s]+?Grand Prix)",
-      "fallback_gp_pattern": "R\\d+[.\\s]+([A-Za-z\\s]+?)(?:[.|$])"
+      "grand_prix_pattern": "R\\d+[.\\s]+([A-Za-z][A-Za-z.\\s]+?Grand[.\\s]Prix)(?:[.\\s]|$)",
+      "fallback_gp_pattern": "R\\d+[.\\s]+([A-Za-z][A-Za-z.\\s]+?)(?:\\.SkyF1HD|\\.Sky|\\.F1TV|\\.UHD|\\.2160|\\.1080|\\.720|\\s(?:SkyF1HD|Sky|F1TV|UHD)|$)"
     },
     "filename": {
       "title_pattern": "^\\d+\\.F1\\.\\d{4}\\.R\\d+\\..+?\\.Grand\\.Prix\\.(.+?)(?:\\.SkyF1HD|\\.Sky|\\.F1TV|\\.UHD|\\.2160p|\\.1080p|\\.720p|\\.mkv|\\.mp4)",
@@ -119,6 +119,7 @@
   },
   
   "output": {
+    "incremental": true,
     "include_filesize": true,
     "include_quality": true,
     "sort_by": ["season", "episode"],
