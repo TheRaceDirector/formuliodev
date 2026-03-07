@@ -30,8 +30,8 @@ with open(general_config_path, 'r', encoding='utf-8') as f:
     general_config = json.load(f)
     year = general_config["year"]
 
-# Load keywords from f1_config.json
-f1_config_path = os.path.join(data_dir, 'f1_config.json')
+# Load keywords from moto_config.json
+f1_config_path = os.path.join(data_dir, 'moto_config.json')
 with open(f1_config_path, 'r', encoding='utf-8') as f:
     f1_config = json.load(f)
     keywords = f1_config["keywords"]
