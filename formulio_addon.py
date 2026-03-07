@@ -687,7 +687,6 @@ def run_script(directory):
             timeout=300,  # 5 min max per script
         )
         if result.stdout.strip():
-            # Log last few lines of stdout for visibility
             last_lines = result.stdout.strip().split('\n')[-3:]
             for line in last_lines:
                 logger.info(f"  [{directory}] {line}")
@@ -696,7 +695,6 @@ def run_script(directory):
         logger.error(f"Script {script_path} timed out after 300s")
         return False
     except subprocess.CalledProcessError as e:
-        # Show full stderr (up to 1000 chars) so you can actually debug
         stderr_text = (e.stderr or '').strip()
         if stderr_text:
             logger.error(f"Script {script_path} failed (exit {e.returncode}):\n{stderr_text[:1000]}")
@@ -708,54 +706,99 @@ def run_script(directory):
         return False
 
 
+def run_pipeline_and_reload(directory):
+    """
+    Run a single pipeline script and immediately reload videos if its CSV changed.
+    Returns True if the CSV was updated.
+    """
+    csv_path = os.path.join(directory, '6processed.csv')
+    mtime_before = os.path.getmtime(csv_path) if os.path.exists(csv_path) else 0
+
+    success = run_script(directory)
+
+    if success:
+        mtime_after = os.path.getmtime(csv_path) if os.path.exists(csv_path) else 0
+        if mtime_after != mtime_before:
+            logger.info(f"CSV updated: {csv_path} — reloading videos immediately")
+            load_all_videos()
+            return True
+    return False
+
+
 def run_scripts_in_loop():
     """
     Background thread:
-      1. Run feed scripts (RSS fetchers) → updates f1db.csv in parent dirs
-      2. Run pipeline scripts (processors) → updates 6processed.csv in child dirs
-      3. Reload video data if any 6processed.csv changed
-      4. Sleep and repeat
+      1. Run feed scripts (RSS fetchers) in parallel — updates f1db.csv in parent dirs
+      2. Run pipeline scripts in parallel — updates 6processed.csv in child dirs,
+         reloading video data immediately after each pipeline that produces a change
+      3. Sleep and repeat
     """
     logger.info(f"Script loop starting (Python: {PYTHON_EXE})")
 
-    # Track 6processed.csv modification times to know when to reload
-    csv_mod_times = {}
-    for directory in PIPELINE_DIRECTORIES:
-        csv_path = os.path.join(directory, '6processed.csv')
-        if os.path.exists(csv_path):
-            csv_mod_times[directory] = os.path.getmtime(csv_path)
-
-    first_run = True
-
     while True:
-        # Step 1: Run feed fetchers (parent dirs)
-        logger.info("--- Running feed fetchers ---")
+        # Step 1: Run all feed fetchers in parallel and wait for all to finish
+        # before starting pipelines (pipelines depend on the feed output)
+        logger.info("--- Running feed fetchers (parallel) ---")
+        feed_threads = []
         for directory in FEED_DIRECTORIES:
-            run_script(directory)
+            t = Thread(target=run_script, args=(directory,), daemon=True)
+            t.start()
+            feed_threads.append(t)
+        for t in feed_threads:
+            t.join()
 
-        # Step 2: Run pipelines (child dirs)
-        logger.info("--- Running pipelines ---")
+        # Step 2: Run all pipelines in parallel — each one reloads videos
+        # immediately if its CSV changed, so new content is live as fast as possible
+        logger.info("--- Running pipelines (parallel) ---")
+        pipeline_threads = []
         for directory in PIPELINE_DIRECTORIES:
-            run_script(directory)
-
-        # Step 3: Check if any 6processed.csv changed → reload
-        any_changed = False
-        for directory in PIPELINE_DIRECTORIES:
-            csv_path = os.path.join(directory, '6processed.csv')
-            if os.path.exists(csv_path):
-                new_mod = os.path.getmtime(csv_path)
-                if new_mod != csv_mod_times.get(directory, 0):
-                    csv_mod_times[directory] = new_mod
-                    any_changed = True
-                    logger.info(f"CSV updated: {csv_path}")
-
-        if any_changed or first_run:
-            logger.info("Reloading video data from CSVs...")
-            load_all_videos()
-            first_run = False
+            t = Thread(target=run_pipeline_and_reload, args=(directory,), daemon=True)
+            t.start()
+            pipeline_threads.append(t)
+        for t in pipeline_threads:
+            t.join()
 
         logger.info(f"--- Script loop complete. Sleeping {config.SCRIPT_INTERVAL}s ---")
         time.sleep(config.SCRIPT_INTERVAL)
+
+
+def csv_watcher_loop():
+    """
+    Independent background thread: poll all CSV mod times every 30 seconds.
+    Catches any external changes to CSVs without waiting for the script loop,
+    including new files being created for the first time.
+    """
+    csv_mod_times = {}
+
+    # Seed initial mod times for any CSVs that already exist
+    for series in CATALOG['series']:
+        path = series.get('videoFile')
+        if path and os.path.exists(path):
+            csv_mod_times[path] = os.path.getmtime(path)
+
+    logger.info("CSV watcher started")
+
+    while True:
+        time.sleep(30)
+        try:
+            changed = False
+            for series in CATALOG['series']:
+                path = series.get('videoFile')
+                if not path:
+                    continue
+                if not os.path.exists(path):
+                    continue
+                mtime = os.path.getmtime(path)
+                if mtime != csv_mod_times.get(path, 0):
+                    csv_mod_times[path] = mtime
+                    changed = True
+                    logger.info(f"CSV watcher detected change: {path}")
+
+            if changed:
+                logger.info("CSV watcher reloading all videos...")
+                load_all_videos()
+        except Exception as e:
+            logger.error(f"CSV watcher error: {e}")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1163,14 +1206,19 @@ if __name__ == '__main__':
     signal.signal(signal.SIGTERM, graceful_shutdown)
     signal.signal(signal.SIGINT, graceful_shutdown)
 
-    # Load existing video data first
+    # Load existing video data immediately on startup before any scripts run
     try:
         load_all_videos()
     except Exception as e:
         logger.error(f"Error loading initial video data: {e}")
 
-    # Start background script runner
+    # Start background script runner — runs feeds then pipelines in parallel,
+    # reloading video data immediately after each pipeline that produces a CSV change
     Thread(target=run_scripts_in_loop, daemon=True).start()
+
+    # Start independent CSV watcher — polls every 30s to catch any changes
+    # including externally written files or new CSVs being created
+    Thread(target=csv_watcher_loop, daemon=True).start()
 
     logger.info(f"Formulio addon starting (Python: {PYTHON_EXE})")
     app.run(host='0.0.0.0', port=8000)
