@@ -540,7 +540,7 @@ CATALOG = {
             'id': 'hpytt0202612', 'name': 'MotoGP - 4K',
             'description': 'If you get a StremThru error, use the P2P source\nformulio@tuta.io',
             'releaseInfo': '2026',
-            'poster': 'https://i.postimg.cc/3Rpyv1D8/motogphd.jpg',
+            'poster': 'https://i.postimg.cc/MHmvsGDg/motogp4k.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
             'background': 'https://i.postimg.cc/fR252zq3/motobackground.jpg',
             'genres': ['Moto Racing'], 'videos': [],
