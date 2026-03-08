@@ -9,7 +9,7 @@ import random
 import signal
 import sys
 import json
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 
 # ============================================================
 # CONFIGURATION LOADING
@@ -65,6 +65,15 @@ try:
     DHT_TIMEOUT = CONFIG['tracker_settings']['dht_timeout']
     VERBOSE = CONFIG['debug']['verbose']
     DEBUG_PEERS = CONFIG['debug']['debug_peers']
+    
+    # Per-magnet timeout: max seconds to spend resolving a single magnet link
+    # Falls back to 90s if not specified in config
+    PER_MAGNET_TIMEOUT = CONFIG.get('per_magnet_timeout', 90)
+    
+    # Overall script timeout: max total seconds this script will run
+    # Falls back to 900s (15 min) if not specified in config
+    OVERALL_SCRIPT_TIMEOUT = CONFIG.get('overall_script_timeout', 900)
+    
 except KeyError as e:
     print(f"[ERROR]: Missing required configuration key: {e}")
     print(f"   Please check your info.json file")
@@ -72,6 +81,7 @@ except KeyError as e:
 
 print(f"[QUALITY] Filter: {quality}")
 print(f"  Will process directories ending with: {quality}")
+print(f"[TIMEOUTS] Per-magnet: {PER_MAGNET_TIMEOUT}s | Overall script: {OVERALL_SCRIPT_TIMEOUT}s")
 print()
 
 # DHT Bootstrap nodes (kept for DHT discovery)
@@ -94,6 +104,7 @@ peer_stats = {
 }
 
 shutdown_requested = False
+script_start_time = None  # Track when the script started
 
 def signal_handler(sig, frame):
     global shutdown_requested
@@ -101,6 +112,15 @@ def signal_handler(sig, frame):
     shutdown_requested = True
 
 signal.signal(signal.SIGINT, signal_handler)
+
+def check_overall_timeout():
+    """Check if the overall script timeout has been exceeded."""
+    global shutdown_requested, script_start_time
+    if script_start_time and time.time() - script_start_time > OVERALL_SCRIPT_TIMEOUT:
+        print(f"\n[TIMEOUT] Overall script timeout ({OVERALL_SCRIPT_TIMEOUT}s) exceeded - finishing up")
+        shutdown_requested = True
+        return True
+    return False
 
 def log(msg, level=1):
     if VERBOSE or level == 0:
@@ -678,6 +698,24 @@ def magnet_to_torrent_info(magnet_uri):
     metadata = fetch_metadata_parallel(info_hash, peers)
     return metadata
 
+def resolve_magnet_with_timeout(magnet_link, timeout_seconds):
+    """
+    Resolve a single magnet link with a hard timeout.
+    Uses a thread pool to enforce the timeout — if the resolution
+    takes longer than timeout_seconds, we give up on this magnet.
+    Returns metadata dict or None.
+    """
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(magnet_to_torrent_info, magnet_link)
+        try:
+            return future.result(timeout=timeout_seconds)
+        except FuturesTimeoutError:
+            print(f"  [SKIPPED] Magnet timed out after {timeout_seconds}s — moving on")
+            return None
+        except Exception as e:
+            print(f"  [SKIPPED] Magnet error: {e}")
+            return None
+
 def extract_files_with_sizes(metadata):
     files = []
     
@@ -695,7 +733,9 @@ def extract_files_with_sizes(metadata):
     return files
 
 def process_csv_files():
-    global shutdown_requested
+    global shutdown_requested, script_start_time
+    
+    script_start_time = time.time()
     
     content_file_path = 'content.csv'
 
@@ -739,21 +779,28 @@ def process_csv_files():
     
     print()
     
+    magnets_skipped = 0
+    magnets_resolved = 0
+    magnets_failed = 0
+    
     for subdir in matching_dirs:
-        if shutdown_requested:
-            print("\n[WARNING] Shutdown requested - stopping processing")
+        if shutdown_requested or check_overall_timeout():
+            print("\n[WARNING] Shutdown/timeout requested - stopping processing")
             break
         
         csv_files = sorted(glob.glob(os.path.join(subdir, '*.csv')))
         
         for csv_file in csv_files:
-            if shutdown_requested:
-                print("\n[WARNING] Shutdown requested - stopping current file")
+            if shutdown_requested or check_overall_timeout():
+                print("\n[WARNING] Shutdown/timeout requested - stopping current file")
                 break
             
             print(f"\n{'='*60}")
             print(f"Processing: {csv_file}")
             print(f"Directory quality: {subdir.split(quality)[0]}...{quality}")
+            elapsed_total = time.time() - script_start_time
+            remaining = OVERALL_SCRIPT_TIMEOUT - elapsed_total
+            print(f"Script time: {elapsed_total:.0f}s elapsed, ~{remaining:.0f}s remaining")
             print('='*60)
             
             all_magnets_successful = True
@@ -764,8 +811,8 @@ def process_csv_files():
                 content_writer = csv.writer(content_file)
                 
                 for line_num, line in enumerate(file, 1):
-                    if shutdown_requested:
-                        print("\n[WARNING] Shutdown requested - stopping current file")
+                    if shutdown_requested or check_overall_timeout():
+                        print("\n[WARNING] Shutdown/timeout requested - stopping current file")
                         all_magnets_successful = False
                         break
                     
@@ -786,18 +833,27 @@ def process_csv_files():
                     print(f"\n[{line_num}] {torrent_name[:55]}...")
                     
                     start_time = time.time()
-                    metadata = magnet_to_torrent_info(magnet_link)
+                    
+                    # Use per-magnet timeout to skip slow magnets
+                    metadata = resolve_magnet_with_timeout(magnet_link, PER_MAGNET_TIMEOUT)
+                    
                     elapsed = time.time() - start_time
                     
-                    if shutdown_requested:
+                    if shutdown_requested or check_overall_timeout():
                         all_magnets_successful = False
                         break
                     
                     if metadata is None:
                         all_magnets_successful = False
-                        print(f"  [FAILED] ({elapsed:.1f}s)")
+                        if elapsed >= PER_MAGNET_TIMEOUT - 1:
+                            magnets_skipped += 1
+                            print(f"  [SKIPPED] Timed out after {elapsed:.1f}s (limit: {PER_MAGNET_TIMEOUT}s)")
+                        else:
+                            magnets_failed += 1
+                            print(f"  [FAILED] ({elapsed:.1f}s)")
                         continue
 
+                    magnets_resolved += 1
                     files = extract_files_with_sizes(metadata)
                     total_size = sum(size for _, size in files)
                     
@@ -808,7 +864,7 @@ def process_csv_files():
                         content_writer.writerow([torrent_name, filepath, infohash, file_index, size_gb])
                         print(f'    [{file_index}] {filepath} ({format_size(size)}, {size_gb} GB)')
 
-            if shutdown_requested:
+            if shutdown_requested or check_overall_timeout():
                 print(f'\n[WARNING] Interrupted - not archiving {csv_file}')
                 break
             
@@ -817,10 +873,21 @@ def process_csv_files():
                 os.rename(csv_file, archive_file_path)
                 print(f'\n[SUCCESS] Archived: {csv_file}')
             else:
-                print(f'\n[FAILED] Not archiving {csv_file} - some failed')
+                print(f'\n[PARTIAL] Not archiving {csv_file} - some magnets failed/skipped')
     
+    # Print summary
+    total_time = time.time() - script_start_time
+    print(f"\n{'='*60}")
+    print(f"[SUMMARY]")
+    print(f"  Total time: {total_time:.1f}s")
+    print(f"  Resolved:   {magnets_resolved}")
+    print(f"  Failed:     {magnets_failed}")
+    print(f"  Skipped:    {magnets_skipped} (per-magnet timeout)")
     if shutdown_requested:
-        print("\n[SUCCESS] Graceful shutdown complete")
+        print(f"  Status:     Stopped early (shutdown/timeout)")
+    else:
+        print(f"  Status:     Completed normally")
+    print(f"{'='*60}")
 
 if __name__ == '__main__':
     try:
