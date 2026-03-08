@@ -677,14 +677,20 @@ def run_script(directory):
     if not os.path.isfile(script_path):
         logger.warning(f"Script not found, skipping: {script_path}")
         return False
+    
+    # Determine timeout: feed scripts are fast (300s), pipeline scripts need more time
+    # because 5torrenttocontent.py resolves magnet links from the network
+    is_pipeline = '/' in directory or '\\' in directory  # child dirs have path separators
+    timeout = 1200 if is_pipeline else 300  # 20 min for pipelines, 5 min for feeds
+    
     try:
-        logger.info(f"Running: {script_path}")
+        logger.info(f"Running: {script_path} (timeout: {timeout}s)")
         result = subprocess.run(
             [PYTHON_EXE, script_path],
             check=True,
             capture_output=True,
             text=True,
-            timeout=300,  # 5 min max per script
+            timeout=timeout,
         )
         if result.stdout.strip():
             last_lines = result.stdout.strip().split('\n')[-3:]
@@ -692,7 +698,7 @@ def run_script(directory):
                 logger.info(f"  [{directory}] {line}")
         return True
     except subprocess.TimeoutExpired:
-        logger.error(f"Script {script_path} timed out after 300s")
+        logger.error(f"Script {script_path} timed out after {timeout}s")
         return False
     except subprocess.CalledProcessError as e:
         stderr_text = (e.stderr or '').strip()
