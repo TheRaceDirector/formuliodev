@@ -1,5 +1,6 @@
 {
   "series_id": "hpytt0202612",
+  "year": 2026,
   "sport": "motogp",
   "quality": "4K",
   "per_magnet_timeout": 90,
@@ -124,4 +125,5 @@
     "debug_peers": true,
     "log_skipped_rows": false
   }
+
 }
