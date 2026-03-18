@@ -558,7 +558,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202607', 'name': 'Sky F1 - SD',
-            'description': 'This is Low Quality \nformulio@tuta.io',
+            'description': 'This is Low Quality SD\nformulio@tuta.io',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/Pqcn5Vvx/sky2sd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
