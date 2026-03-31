@@ -356,7 +356,7 @@ def rd_get_stream_url(api_key, info_hash, file_idx, filename, user_ip=None):
                 links = info.get('links', [])
                 if links:
                     return _pick_and_unrestrict(api_key, info, links, file_idx, filename, user_ip)
-            time.sleep(2)
+            time.sleep(4)
 
             info = rd_get_torrent_info(api_key, torrent_id)
             if info and info.get('status') == 'waiting_files_selection':
