@@ -279,7 +279,7 @@ def rd_unrestrict_link(api_key, link, user_ip=None):
     """Unrestrict a link on RD. Returns download URL or None."""
     url = f"{config.RD_API_BASE}/unrestrict/link"
     headers = {'Authorization': f'Bearer {api_key}'}
-    data = {'link': link, 'remote': 1}
+    data = {'link': link, 'remote': 0}
     try:
         resp = requests.post(url, headers=headers, data=data, timeout=15)
         if resp.status_code == 403:
@@ -347,6 +347,15 @@ def rd_get_stream_url(api_key, info_hash, file_idx, filename, user_ip=None):
                 logger.error(f"RD failed to add magnet for {info_hash[:8]}")
                 return None
 
+            time.sleep(2)
+
+            info = rd_get_torrent_info(api_key, torrent_id)
+            if info and info.get('status') == 'waiting_files_selection':
+                rd_select_files(api_key, torrent_id, 'all')
+            elif info and info.get('status') == 'downloaded':
+                links = info.get('links', [])
+                if links:
+                    return _pick_and_unrestrict(api_key, info, links, file_idx, filename, user_ip)
             time.sleep(2)
 
             info = rd_get_torrent_info(api_key, torrent_id)
