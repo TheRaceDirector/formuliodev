@@ -486,28 +486,58 @@ MANIFEST = {
 CATALOG = {
     'series': [
             {
-            'id': 'hpytt0202605', 'name': 'Sky F1 - 4K',
-            'description': 'If you get a StremThru error, use the P2P source\nformulio@tuta.io',
+            'id': 'hpytt0202605', 'name': 'Sky F1 UHD',
+            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
             'releaseInfo': '2026',
-            'poster': 'https://i.postimg.cc/zfPNXN1H/sky14k.jpg',
+            'poster': 'https://i.postimg.cc/c4CjHMNS/sf1uhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing'], 'videos': [],
             'videoFile': './egor/eg4/6processed.csv'
         },
         {
-            'id': 'hpytt0202601', 'name': 'Sky F1 - FHD',
-            'description': 'If you get a StremThru error, use the P2P source\nformulio@tuta.io',
+            'id': 'hpytt0202613', 'name': 'F1TV UHD (English)',
+            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
             'releaseInfo': '2026',
-            'poster': 'https://i.postimg.cc/g2d9tyXS/sky1.jpg',
+            'poster': 'https://i.postimg.cc/43xW3VMN/f1tenglishuhd.jpg',
+            'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
+            'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
+            'genres': ['Formula Racing'], 'videos': [],
+            'videoFile': './ss/ssf4/6processed.csv'
+        },
+        {
+            'id': 'hpytt0202614', 'name': 'F1TV UHD (International)',
+            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
+            'releaseInfo': '2026',
+            'poster': 'https://i.postimg.cc/1zBcw2pr/f1tenguhd.jpg',
+            'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
+            'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
+            'genres': ['Formula Racing'], 'videos': [],
+            'videoFile': './ss/ssm4/6processed.csv'
+        },
+        {
+            'id': 'hpytt0202606', 'name': 'Sky F1 UHD (alternative)',
+            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
+            'releaseInfo': '2026',
+            'poster': 'https://i.postimg.cc/QC73nRky/sf12uhd.jpg',
+            'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
+            'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
+            'genres': ['Formula Racing'], 'videos': [],
+            'videoFile': './smcg/sm4/6processed.csv'
+        },
+        {
+            'id': 'hpytt0202601', 'name': 'Sky F1',
+            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
+            'releaseInfo': '2026',
+            'poster': 'https://i.postimg.cc/QM30pcw2/sf1.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing'], 'videos': [],
             'videoFile': './egor/ego/6processed.csv'
         },
         {
-            'id': 'hpytt0202603', 'name': 'F1TV - English',
-            'description': 'If you get a StremThru error, use the P2P source\nformulio@tuta.io',
+            'id': 'hpytt0202603', 'name': 'F1TV (English)',
+            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/pXf4j9GD/f1tveng.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -516,8 +546,8 @@ CATALOG = {
             'videoFile': './ss/ssf/6processed.csv'
         },
         {
-            'id': 'hpytt0202604', 'name': 'F1TV - International',
-            'description': 'If you get a StremThru error, use the P2P source\nformulio@tuta.io',
+            'id': 'hpytt0202604', 'name': 'F1TV (International)',
+            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/1zjjSDXZ/f1tvint.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -526,18 +556,8 @@ CATALOG = {
             'videoFile': './ss/ssm/6processed.csv'
         },
         {
-            'id': 'hpytt0202606', 'name': 'Sky F1 - 4K (2)',
-            'description': 'If you get a StremThru error, use the P2P source\nformulio@tuta.io',
-            'releaseInfo': '2026',
-            'poster': 'https://i.postimg.cc/ry4Tc7Zz/sky24k.jpg',
-            'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
-            'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Formula Racing'], 'videos': [],
-            'videoFile': './smcg/sm4/6processed.csv'
-        },
-        {
-            'id': 'hpytt0202602', 'name': 'Sky F1 - FHD (2)',
-            'description': 'If you get a StremThru error, use the P2P source\nformulio@tuta.io',
+            'id': 'hpytt0202602', 'name': 'Sky F1 (alternative)',
+            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/KYMnKTQb/sky2.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -546,8 +566,8 @@ CATALOG = {
             'videoFile': './smcg/smc/6processed.csv'
         },
         {
-            'id': 'hpytt0202612', 'name': 'MotoGP - 4K',
-            'description': 'If you get a StremThru error, use the P2P source\nformulio@tuta.io',
+            'id': 'hpytt0202612', 'name': 'MotoGP 4K',
+            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/MHmvsGDg/motogp4k.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
@@ -556,8 +576,8 @@ CATALOG = {
             'videoFile': './smcm/sm4/6processed.csv'
         },
         {
-            'id': 'hpytt0202611', 'name': 'MotoGP - FHD',
-            'description': 'If you get a StremThru error, use the P2P source\nformulio@tuta.io',
+            'id': 'hpytt0202611', 'name': 'MotoGP FHD',
+            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/3Rpyv1D8/motogphd.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
@@ -566,7 +586,7 @@ CATALOG = {
             'videoFile': './smcm/smc/6processed.csv'
         },
         {
-            'id': 'hpytt0202607', 'name': 'Sky F1 - SD',
+            'id': 'hpytt0202607', 'name': 'Sky F1 SD',
             'description': 'This is Low Quality SD\nformulio@tuta.io',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/Pqcn5Vvx/sky2sd.jpg',
@@ -671,7 +691,9 @@ PIPELINE_DIRECTORIES = [
     'smcg/sm4',
     'smcg/sms',
     'ss/ssf',
-    'ss/ssm',
+    'ss/ssm',    
+    'ss/ssf4',
+    'ss/ssm4',
     'smcm/smc',
     'smcm/sm4',
 ]
@@ -1005,8 +1027,8 @@ def validate_realdebrid():
 def index():
     return send_from_directory(app.static_folder, 'index.html')
 
-@app.route('/configure')
-def configure():
+@app.route('/<config_str>/configure')
+def configure_with_config(config_str):
     return send_from_directory(app.static_folder, 'index.html')
 
 @app.route('/images/<path:filename>')

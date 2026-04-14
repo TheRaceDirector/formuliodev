@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulio — Configure Addon</title>
+    <title>Formulio - Configure Addon</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -23,55 +23,83 @@
         }
         .dark-overlay {
             position: fixed; inset: 0;
-            background: rgba(0,0,0,0.45); z-index: 1;
+            background: rgba(0,0,0,0.50); z-index: 1;
         }
         .card {
             position: relative; z-index: 2;
-            background: rgba(20,20,20,0.55);
-            padding: 32px; border-radius: 24px;
-            max-width: 680px; width: 100%;
-            box-shadow: 0 12px 48px rgba(0,0,0,0.4);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
+            background: rgba(18,18,18,0.60);
+            padding: 36px 32px; border-radius: 20px;
+            max-width: 640px; width: 100%;
+            box-shadow: 0 16px 64px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.04);
             transition: all 0.4s ease;
             margin: 30px 0;
         }
         .card:hover, .card:focus-within {
-            background: rgba(20,20,20,0.78);
-            backdrop-filter: blur(14px);
+            background: rgba(18,18,18,0.80);
+            backdrop-filter: blur(18px);
         }
         .card.hidden { opacity: 0; transform: scale(0.95); pointer-events: none; }
 
-        h1 { font-size: 3em; color: #ff3333; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; }
-        .sub { font-size: 1.1em; color: #aaa; margin-bottom: 12px; }
+        h1 {
+            font-size: 2.8em; color: #ff3333; font-weight: 800;
+            letter-spacing: -1px; margin-bottom: 2px;
+            display: flex; align-items: baseline;
+            justify-content: center; gap: 10px;
+        }
+        .v-badge {
+            font-size: 0.28em; font-weight: 700; letter-spacing: 0.5px;
+            background: rgba(255,51,51,0.15); color: #ff6666;
+            border: 1px solid rgba(255,51,51,0.30);
+            border-radius: 5px; padding: 3px 7px;
+            vertical-align: middle; line-height: 1;
+            position: relative; top: -0.15em;
+            text-transform: uppercase;
+        }
+        .sub { font-size: 1.05em; color: #999; margin-bottom: 14px; }
         .community a {
-            color: #ff9999; text-decoration: none; font-weight: 600; font-size: 0.92em;
+            color: #ff9999; text-decoration: none; font-weight: 600; font-size: 0.88em;
+            transition: color 0.2s;
         }
         .community a:hover { color: #ff3333; text-decoration: underline; }
 
-        /* ── Section ── */
-        .sec-head {
-            display: flex; align-items: center; gap: 10px;
-            border-bottom: 2px solid rgba(255,51,51,0.3);
-            padding-bottom: 8px; margin: 26px 0 16px 0;
-            color: #ff3333; font-size: 1.1em; font-weight: 700;
+        /* Reconfigure Banner */
+        .reconfig-banner {
+            background: rgba(255,170,68,0.10);
+            border: 1px solid rgba(255,170,68,0.30);
+            border-radius: 10px; padding: 12px 16px;
+            margin-top: 16px; text-align: left;
+            display: none;
         }
-        .num {
-            background: #ff3333; color: #fff;
-            width: 24px; height: 24px; border-radius: 50%;
-            display: inline-flex; align-items: center; justify-content: center;
-            font-size: 0.82em; font-weight: 700; flex-shrink: 0;
+        .reconfig-banner.show { display: block; }
+        .reconfig-banner .rb-title {
+            font-weight: 700; font-size: 0.9em; color: #ffaa44;
+            margin-bottom: 4px; display: flex; align-items: center; gap: 6px;
+        }
+        .reconfig-banner .rb-text {
+            font-size: 0.82em; color: #bbb; line-height: 1.5;
         }
 
-        /* ── Provider Cards ── */
-        .providers { display: flex; flex-direction: column; gap: 12px; }
+        /* Section */
+        .sec-head {
+            display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding-bottom: 8px; margin: 24px 0 14px 0;
+            color: #fff; font-size: 1.05em; font-weight: 700;
+        }
+        .sec-head i { color: #ff3333; font-size: 0.9em; }
+
+        /* Provider Cards */
+        .providers { display: flex; flex-direction: column; gap: 10px; }
         .prov {
-            background: rgba(40,40,40,0.4);
-            border: 1px solid rgba(100,100,100,0.2);
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.06);
             border-radius: 12px; overflow: hidden;
             transition: all 0.3s ease;
         }
-        .prov.on { border-color: rgba(255,51,51,0.45); background: rgba(40,40,40,0.6); }
+        .prov.on { border-color: rgba(255,51,51,0.35); background: rgba(255,51,51,0.04); }
         .prov-head {
             display: flex; align-items: center; gap: 12px;
             padding: 13px 16px; cursor: pointer; user-select: none;
@@ -80,11 +108,20 @@
             width: 18px; height: 18px; accent-color: #ff3333; cursor: pointer; flex-shrink: 0;
         }
         .prov-name { font-weight: 700; font-size: 1em; color: #fff; }
+        .prov-tags { margin-left: auto; display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
         .prov-tag {
-            margin-left: auto; font-size: 0.68em; padding: 2px 8px;
-            border-radius: 4px; font-weight: 600;
-            background: #2a4a2a; color: #88dd88;
+            font-size: 0.65em; padding: 2px 8px;
+            border-radius: 4px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.3px;
         }
+        .prov-tag.debrid { background: #1e3a1e; color: #7ddb7d; }
+        .prov-tag.recommended { background: #3d3017; color: #f0c040; }
+        .prov-tag.signup {
+            background: rgba(139,92,246,0.15); color: #a78bfa;
+            cursor: pointer; text-decoration: none;
+            transition: background 0.2s;
+        }
+        .prov-tag.signup:hover { background: rgba(139,92,246,0.28); }
         .prov-body {
             max-height: 0; overflow: hidden;
             transition: max-height 0.4s ease, padding 0.3s ease;
@@ -98,17 +135,18 @@
         .iw { position: relative; }
         .iw input {
             width: 100%; padding: 10px 40px 10px 12px;
-            border-radius: 8px; border: 1px solid #444;
-            background: rgba(50,50,50,0.7); color: #fff; font-size: 14px;
-            transition: border-color 0.2s;
+            border-radius: 8px; border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(255,255,255,0.05); color: #fff; font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        .iw input:focus { outline: none; border-color: #ff3333; box-shadow: 0 0 0 2px rgba(255,51,51,0.2); }
+        .iw input:focus { outline: none; border-color: #ff3333; box-shadow: 0 0 0 2px rgba(255,51,51,0.15); }
         .iw .eye {
             position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
-            background: none; border: none; color: #777; cursor: pointer; font-size: 14px; padding: 4px;
+            background: none; border: none; color: #555; cursor: pointer; font-size: 14px; padding: 4px;
+            transition: color 0.2s;
         }
         .iw .eye:hover { color: #fff; }
-        .hint { font-size: 0.8em; color: #888; margin-top: 5px; }
+        .hint { font-size: 0.78em; color: #666; margin-top: 5px; }
         .hint a { color: #ff9999; text-decoration: none; }
         .hint a:hover { text-decoration: underline; }
         .vld { font-size: 0.8em; margin-top: 4px; min-height: 18px; }
@@ -116,10 +154,10 @@
         .vld.err { color: #ff6666; }
         .vld.wait { color: #ffcc00; }
 
-        /* ── P2P ── */
+        /* P2P */
         .p2p-box {
-            background: rgba(40,40,40,0.3);
-            border: 1px solid rgba(100,100,100,0.18);
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.06);
             border-radius: 12px; padding: 14px 16px;
         }
         .p2p-head {
@@ -131,117 +169,123 @@
         }
         .p2p-detail {
             margin-top: 10px; padding: 10px;
-            background: rgba(50,50,50,0.25);
-            border-radius: 8px; border-left: 3px solid #ffaa44;
+            background: rgba(255,170,68,0.04);
+            border-radius: 8px; border-left: 3px solid rgba(255,170,68,0.4);
         }
-        .p2p-detail p { font-size: 0.83em; color: #bbb; margin: 3px 0; }
-        .p2p-detail .w { color: #ffaa88; font-size: 0.8em; }
+        .p2p-detail p { font-size: 0.82em; color: #999; margin: 3px 0; }
+        .p2p-detail .w { color: #cc8855; font-size: 0.78em; }
 
-        /* ── Button ── */
+        /* Button */
         .gen-btn {
             width: 100%; background: #ff3333; color: #fff; border: none;
-            padding: 15px; font-size: 1.05em; font-weight: 700;
+            padding: 15px; font-size: 1.02em; font-weight: 700;
             border-radius: 10px; cursor: pointer;
             text-transform: uppercase; letter-spacing: 0.5px;
             transition: all 0.25s ease; margin-top: 22px;
-            box-shadow: 0 4px 12px rgba(255,51,51,0.25);
+            box-shadow: 0 4px 20px rgba(255,51,51,0.20);
         }
-        .gen-btn:hover { background: #cc0000; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(255,51,51,0.35); }
-        .gen-btn:disabled { background: #555; cursor: not-allowed; transform: none; box-shadow: none; }
+        .gen-btn:hover { background: #e02020; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(255,51,51,0.30); }
+        .gen-btn:disabled { background: #333; color: #666; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        /* ── Result ── */
+        /* Result */
         #result { display: none; margin-top: 26px; animation: fadeUp 0.4s ease; }
         @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(-10px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
         .res-box {
-            background: rgba(30,30,30,0.6);
-            border: 1px solid rgba(255,51,51,0.3);
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(102,255,102,0.15);
             border-radius: 14px; padding: 22px;
         }
-        .res-title { font-size: 1.15em; font-weight: 700; color: #66ff66; margin-bottom: 14px; }
+        .res-title { font-size: 1.1em; font-weight: 700; color: #66ff66; margin-bottom: 14px; }
         .stremio-btn {
             display: flex; align-items: center; justify-content: center; gap: 8px;
             width: 100%; background: #8b5cf6; color: #fff; border: none;
             padding: 14px; font-size: 1em; font-weight: 700;
             border-radius: 10px; cursor: pointer;
             transition: all 0.25s ease; text-decoration: none;
-            box-shadow: 0 4px 12px rgba(139,92,246,0.3);
+            box-shadow: 0 4px 16px rgba(139,92,246,0.25);
         }
-        .stremio-btn:hover { background: #7c3aed; transform: translateY(-2px); }
+        .stremio-btn:hover { background: #7c3aed; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(139,92,246,0.35); }
 
-        .manual { margin-top: 18px; }
-        .manual-lbl { font-size: 0.8em; color: #777; font-weight: 600; margin-bottom: 5px; }
-        .url-row { display: flex; }
-        .url-row input {
-            flex: 1; padding: 9px 11px;
-            background: rgba(40,40,40,0.8);
-            border: 1px solid #444; border-right: none;
-            border-radius: 8px 0 0 8px;
-            color: #aaa; font-size: 0.82em;
+        /* Manual URL box */
+        .manual { margin-top: 16px; }
+        .manual-lbl { font-size: 0.78em; color: #666; font-weight: 600; margin-bottom: 6px; }
+        .url-box {
+            display: flex; align-items: stretch;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 10px; overflow: hidden;
+        }
+        .url-box-text {
+            flex: 1; padding: 11px 14px;
+            color: #777; font-size: 0.78em;
             font-family: 'Courier New', monospace;
+            white-space: nowrap; overflow: hidden;
+            text-overflow: ellipsis;
+            background: transparent;
+            border: none; outline: none;
+            cursor: text;
         }
-        .url-row input:focus { outline: none; }
-        .url-row button {
-            padding: 9px 14px; background: #444; color: #fff;
-            border: 1px solid #444; border-radius: 0 8px 8px 0;
-            cursor: pointer; font-size: 0.82em; transition: background 0.2s;
-            white-space: nowrap;
+        .url-box-text:focus { color: #aaa; }
+        .url-box-copy {
+            padding: 10px 16px;
+            background: rgba(255,255,255,0.06);
+            border: none; border-left: 1px solid rgba(255,255,255,0.08);
+            color: #ccc; font-size: 0.82em; cursor: pointer;
+            transition: background 0.2s; white-space: nowrap;
+            font-family: inherit;
         }
-        .url-row button:hover { background: #555; }
-        .url-row button.ok { background: #2a6b2a; }
+        .url-box-copy:hover { background: rgba(255,255,255,0.12); }
+        .url-box-copy.ok { background: #2a6b2a; color: #aaffaa; }
 
         .info-bx {
-            background: rgba(40,40,40,0.45);
-            border-left: 3px solid #ffcc00;
-            padding: 13px; margin-top: 16px;
+            background: rgba(255,255,255,0.025);
+            border-left: 3px solid rgba(255,204,0,0.4);
+            padding: 13px; margin-top: 14px;
             border-radius: 8px; text-align: left;
-            font-size: 0.88em; line-height: 1.6;
+            font-size: 0.86em; line-height: 1.6;
         }
         .info-bx-t { font-weight: 700; color: #ffcc00; margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
         .info-bx ul { margin: 5px 0; padding-left: 16px; }
-        .info-bx li { margin: 2px 0; }
+        .info-bx li { margin: 2px 0; color: #bbb; }
+
+        .tip-bx {
+            background: rgba(139,92,246,0.06);
+            border-left: 3px solid rgba(139,92,246,0.4);
+            padding: 12px; margin-top: 10px;
+            border-radius: 8px; text-align: left; font-size: 0.84em;
+            color: #bbb; line-height: 1.5;
+        }
+        .tip-bx strong { color: #a78bfa; }
+        .tip-bx a { color: #a78bfa; text-decoration: none; }
+        .tip-bx a:hover { text-decoration: underline; }
 
         .pin-bx {
-            background: rgba(255,51,51,0.07);
-            border-left: 3px solid #ff3333;
-            padding: 12px; margin-top: 14px;
-            border-radius: 8px; text-align: left; font-size: 0.85em;
+            background: rgba(255,51,51,0.05);
+            border-left: 3px solid rgba(255,51,51,0.3);
+            padding: 12px; margin-top: 10px;
+            border-radius: 8px; text-align: left; font-size: 0.84em;
+            color: #bbb; line-height: 1.5;
         }
+        .pin-bx strong { color: #ff6666; }
         .pin-bx a { color: #ff9999; text-decoration: none; }
         .pin-bx a:hover { text-decoration: underline; }
 
-        /* ── P2P Only ── */
-        .p2p-only {
-            margin-top: 26px; padding-top: 18px;
-            border-top: 1px solid rgba(255,255,255,0.07);
-            text-align: center;
-        }
-        .p2p-only-txt { font-size: 0.88em; color: #666; margin-bottom: 10px; }
-        .p2p-only-btn {
-            background: #3a3a3a; color: #ccc; border: none;
-            padding: 11px 22px; font-size: 0.92em; font-weight: 600;
-            border-radius: 8px; cursor: pointer; transition: all 0.2s;
-        }
-        .p2p-only-btn:hover { background: #4a4a4a; color: #fff; }
-        .p2p-only-link {
-            display: block; margin-top: 6px;
-            color: #555; font-size: 0.78em; text-decoration: none;
-        }
-        .p2p-only-link:hover { color: #888; }
-
         .disc {
-            font-size: 0.75em; text-align: center;
-            margin-top: 14px; color: #555;
-            padding: 6px 0; border-top: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.72em; text-align: center;
+            margin-top: 14px; color: #444;
+            padding: 6px 0;
             position: relative; z-index: 2;
+            transition: opacity 0.4s ease;
         }
+        .disc.hidden { opacity: 0; pointer-events: none; }
 
         .tog {
             position: fixed; bottom: 14px; right: 14px;
             background: rgba(0,0,0,0.65); color: #fff;
-            border: 1px solid rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.10);
             border-radius: 6px; padding: 6px 12px;
             font-size: 12px; cursor: pointer; z-index: 100;
             transition: all 0.3s ease;
@@ -260,8 +304,10 @@
 
         @media (max-width: 600px) {
             h1 { font-size: 2.2em; }
-            .card { padding: 18px; margin: 12px 0; }
+            .card { padding: 20px 16px; margin: 12px 0; }
             .gen-btn { font-size: 0.95em; padding: 13px; }
+            .prov-tags { gap: 4px; }
+            .prov-tag { font-size: 0.58em; padding: 2px 6px; }
         }
     </style>
 </head>
@@ -269,18 +315,24 @@
 <div class="hero">
     <div class="dark-overlay"></div>
     <div class="card" id="card">
-        <h1>Formulio</h1>
-        <div class="sub">Motor Racing Replays on Stremio</div>
+        <h1>Formulio <span class="v-badge">v3</span></h1>
+        <div class="sub">Motor Racing Replays on Stremio/Nuvio</div>
         <div class="community">
             <a href="https://www.reddit.com/r/FormulaStremio/" target="_blank">
-                <i class="fab fa-reddit"></i> Join r/FormulaStremio for important updates and support
+                <i class="fab fa-reddit"></i> Join r/FormulaStremio for updates &amp; support
             </a>
         </div>
 
+        <!-- Reconfigure banner - shown when visiting /<config>/configure -->
+        <div class="reconfig-banner" id="reconfig-banner">
+            <div class="rb-title"><i class="fas fa-pen-to-square"></i> Reconfiguring Addon</div>
+            <div class="rb-text">Your existing settings have been loaded below. Make your changes and click <strong>Install</strong> to update.</div>
+        </div>
+
         <form onsubmit="return false;">
-            <!-- ── Debrid Providers ── -->
+            <!-- Debrid Providers -->
             <div class="sec-head">
-                <span class="num">1</span> Debrid Providers
+                <i class="fas fa-bolt"></i> Debrid Providers
             </div>
             <div class="providers">
                 <!-- TorBox -->
@@ -288,7 +340,10 @@
                     <div class="prov-head" onclick="tog('tb')">
                         <input type="checkbox" id="tb-on" onclick="event.stopPropagation();tog('tb')">
                         <span class="prov-name">TorBox</span>
-                        <span class="prov-tag">Debrid</span>
+                        <span class="prov-tags">
+                            <span class="prov-tag recommended">★ Recommended</span>
+                            <span class="prov-tag debrid">Debrid</span>
+                            <a href="https://torbox.app/subscription?referral=bfb5f62c-6a15-4fea-870c-babd8990f691" target="_blank" class="prov-tag signup" onclick="event.stopPropagation()" title="Using this link to sign up will give me and you 7 days free debrid per number of months purchased at initial signup ❤️">Sign Up ↗</a>                        </span>
                     </div>
                     <div class="prov-body">
                         <label for="tb-key">API Key</label>
@@ -296,7 +351,7 @@
                             <input type="password" id="tb-key" placeholder="Enter TorBox API key" autocomplete="off">
                             <button type="button" class="eye" onclick="toggleVis('tb-key',this)"><i class="fas fa-eye"></i></button>
                         </div>
-                        <div class="hint">Get key from <a href="https://torbox.app/settings" target="_blank">torbox.app/settings</a></div>
+                        <div class="hint">Get your key from <a href="https://torbox.app/settings" target="_blank">torbox.app/settings</a></div>
                         <div class="vld" id="tb-vld"></div>
                     </div>
                 </div>
@@ -305,7 +360,9 @@
                     <div class="prov-head" onclick="tog('rd')">
                         <input type="checkbox" id="rd-on" onclick="event.stopPropagation();tog('rd')">
                         <span class="prov-name">Real-Debrid</span>
-                        <span class="prov-tag">Debrid</span>
+                        <span class="prov-tags">
+                            <span class="prov-tag debrid">Debrid</span>
+                            <a href="http://real-debrid.com/?id=9851709" target="_blank" class="prov-tag signup" onclick="event.stopPropagation()" title="Using this link to sign up will give you 5 days free debrid ❤️">Sign Up ↗</a>                        </span>
                     </div>
                     <div class="prov-body">
                         <label for="rd-key">API Token</label>
@@ -313,15 +370,15 @@
                             <input type="password" id="rd-key" placeholder="Enter Real-Debrid API token" autocomplete="off">
                             <button type="button" class="eye" onclick="toggleVis('rd-key',this)"><i class="fas fa-eye"></i></button>
                         </div>
-                        <div class="hint">Get token from <a href="https://real-debrid.com/apitoken" target="_blank">real-debrid.com/apitoken</a></div>
+                        <div class="hint">Get your token from <a href="https://real-debrid.com/apitoken" target="_blank">real-debrid.com/apitoken</a></div>
                         <div class="vld" id="rd-vld"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- ── P2P ── -->
+            <!-- P2P -->
             <div class="sec-head">
-                <span class="num">2</span> P2P Backup Streams
+                <i class="fas fa-circle-nodes"></i> P2P Backup Streams
             </div>
             <div class="p2p-box">
                 <div class="p2p-head" onclick="document.getElementById('p2p-on').click()">
@@ -329,20 +386,19 @@
                     <span class="prov-name">Enable P2P streams</span>
                 </div>
                 <div class="p2p-detail">
-                    <p><i class="fas fa-info-circle" style="color:#ffaa44;margin-right:3px"></i>
-                        P2P streams appear alongside debrid as a fallback.</p>
-                    <p>Uncached files only show P2P (if enabled).</p>
-                    <p class="w"><i class="fas fa-exclamation-triangle" style="margin-right:3px"></i>
-                        P2P uses peer-to-peer. Only use where legally permitted.</p>
+                    <p><i class="fas fa-info-circle" style="color:#ffaa44;margin-right:4px"></i>
+                        P2P streams appear alongside debrid as a fallback option.</p>
+                    <p class="w"><i class="fas fa-exclamation-triangle" style="margin-right:4px"></i>
+                        P2P uses peer-to-peer networking. Only use where legally permitted.</p>
                 </div>
             </div>
 
             <button type="button" class="gen-btn" id="gen-btn" onclick="generate()">
-                <i class="fas fa-cog" style="margin-right:5px"></i> Generate &amp; Install
+                <i class="fas fa-magic" style="margin-right:5px"></i> Generate Addon
             </button>
         </form>
 
-        <!-- ── Result ── -->
+        <!-- Result -->
         <div id="result">
             <div class="res-box">
                 <div class="res-title"><i class="fas fa-check-circle" style="margin-right:5px"></i> Addon Ready!</div>
@@ -350,42 +406,36 @@
                     <i class="fas fa-play"></i> Install in Stremio
                 </a>
                 <div class="manual">
-                    <div class="manual-lbl">Manual Install URL</div>
-                    <div class="url-row">
-                        <input type="text" id="man-url" readonly onclick="this.select()">
-                        <button type="button" onclick="copyUrl(this)"><i class="fas fa-copy"></i> Copy</button>
+                    <div class="manual-lbl">Manual install URL</div>
+                    <div class="url-box">
+                        <input type="text" id="man-url" class="url-box-text" readonly onclick="this.select()">
+                        <button type="button" class="url-box-copy" onclick="copyUrl(this)">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
                     </div>
                 </div>
                 <div class="info-bx">
                     <div class="info-bx-t"><i class="fas fa-info-circle"></i> Stream Types</div>
                     <ul>
-                        <li><strong>⚡ [TB]</strong> — TorBox cached · instant playback</li>
-                        <li><strong>⚡ [RD]</strong> — Real-Debrid cached · instant playback</li>
-                        <li><strong>🔗 [P2P]</strong> — Peer-to-peer fallback · speed varies</li>
+                        <li><strong>⚡ [TB]</strong> - TorBox cached - instant playback</li>
+                        <li><strong>⚡ [RD]</strong> - Real-Debrid cached - instant playback</li>
+                        <li><strong>🔗 [P2P]</strong> - Peer-to-peer fallback - speed varies</li>
                     </ul>
-                    <p style="font-size:0.86em;color:#999;margin-top:6px">
-                        Only cached files show debrid streams. Uncached → P2P only.
-                    </p>
+                </div>
+                <div class="tip-bx">
+                    <strong><i class="fas fa-tv" style="margin-right:3px"></i> Finding Content:</strong>
+                    After installing, a new <strong>"Formulio"</strong> row will appear on your Stremio home screen - all content is displayed there.
                 </div>
                 <div class="pin-bx">
-                    <strong><i class="fas fa-thumbtack"></i> Tip:</strong>
-                    Pin Formulio to the top using
+                    <strong><i class="fas fa-thumbtack" style="margin-right:3px"></i> Tip:</strong>
+                    Move the Formulio row to the top of your home screen using
                     <a href="https://stremio-addon-manager.vercel.app/" target="_blank">Stremio Addon Manager</a>.
                 </div>
             </div>
         </div>
-
-        <!-- ── P2P Only ── -->
-        <div class="p2p-only">
-            <div class="p2p-only-txt">No debrid? Install P2P-only:</div>
-            <button class="p2p-only-btn" onclick="installP2P()">
-                <i class="fas fa-magnet" style="margin-right:4px"></i> Install P2P-Only
-            </button>
-            <a id="p2p-manual" href="#" target="_blank" class="p2p-only-link">P2P manual install link</a>
-        </div>
     </div>
 
-    <div class="disc">
+    <div class="disc" id="disc">
         This addon does not host content. It provides pointers to publicly available content.
         Use only where legally permitted.
     </div>
@@ -397,7 +447,58 @@
 <script>
 const B = window.location.origin;
 
-// ── Provider toggle ──
+// ================================================================
+// Parse config from URL path (for /<config>/configure reconfiguration)
+// ================================================================
+
+function getConfigFromPath() {
+    const path = window.location.pathname;
+    const match = path.match(/^\/([A-Za-z0-9+/=_-]+)\/configure\/?$/);
+    if (!match) return null;
+    try {
+        let b64 = match[1];
+        while (b64.length % 4 !== 0) b64 += '=';
+        b64 = b64.replace(/-/g, '+').replace(/_/g, '/');
+        const json = atob(b64);
+        return JSON.parse(json);
+    } catch (e) {
+        console.warn('Could not parse config from URL:', e);
+        return null;
+    }
+}
+
+function applyConfigFromURL() {
+    const cfg = getConfigFromPath();
+    if (!cfg) return;
+
+    document.getElementById('reconfig-banner').classList.add('show');
+
+    const btn = document.getElementById('gen-btn');
+    btn.innerHTML = '<i class="fas fa-magic" style="margin-right:5px"></i> Update & Reinstall';
+
+    if (cfg.debrid && cfg.debrid.tb && cfg.debrid.tb.apiKey) {
+        document.getElementById('tb-on').checked = true;
+        document.getElementById('tb-card').classList.add('on');
+        document.getElementById('tb-key').value = cfg.debrid.tb.apiKey;
+        setTimeout(() => validateKey('tb', cfg.debrid.tb.apiKey), 300);
+    }
+
+    if (cfg.debrid && cfg.debrid.rd && cfg.debrid.rd.apiKey) {
+        document.getElementById('rd-on').checked = true;
+        document.getElementById('rd-card').classList.add('on');
+        document.getElementById('rd-key').value = cfg.debrid.rd.apiKey;
+        setTimeout(() => validateKey('rd', cfg.debrid.rd.apiKey), 500);
+    }
+
+    if (cfg.enableP2P !== undefined) {
+        document.getElementById('p2p-on').checked = cfg.enableP2P;
+    }
+}
+
+// ================================================================
+// Provider toggle
+// ================================================================
+
 function tog(id) {
     const cb = document.getElementById(id + '-on');
     const card = document.getElementById(id + '-card');
@@ -410,7 +511,10 @@ function tog(id) {
     }
 }
 
-// ── Eye toggle ──
+// ================================================================
+// Eye toggle
+// ================================================================
+
 function toggleVis(id, btn) {
     const inp = document.getElementById(id);
     const ico = btn.querySelector('i');
@@ -418,7 +522,10 @@ function toggleVis(id, btn) {
     else { inp.type = 'password'; ico.className = 'fas fa-eye'; }
 }
 
-// ── Validation via backend proxy ──
+// ================================================================
+// Validation
+// ================================================================
+
 let tbTimer, rdTimer;
 
 document.getElementById('tb-key').addEventListener('input', function() {
@@ -452,9 +559,9 @@ function validateKey(provider, key) {
         if (d.success) {
             el.className = 'vld ok';
             if (provider === 'tb') {
-                el.innerHTML = '<i class="fas fa-check-circle"></i> Valid — Plan: <b>' + (d.plan || 'Unknown') + '</b>';
+                el.innerHTML = '<i class="fas fa-check-circle"></i> Valid - Plan: <b>' + (d.plan || 'Unknown') + '</b>';
             } else {
-                el.innerHTML = '<i class="fas fa-check-circle"></i> Valid — ' + (d.username || '') + ' (' + (d.type || 'free') + ')';
+                el.innerHTML = '<i class="fas fa-check-circle"></i> Valid - ' + (d.username || '') + ' (' + (d.type || 'free') + ')';
             }
         } else {
             el.className = 'vld err';
@@ -462,13 +569,15 @@ function validateKey(provider, key) {
         }
     })
     .catch(() => {
-        // Silent fail — don't show network errors
         el.className = 'vld';
         el.textContent = '';
     });
 }
 
-// ── Generate ──
+// ================================================================
+// Generate
+// ================================================================
+
 function generate() {
     const btn = document.getElementById('gen-btn');
     const tbOn = document.getElementById('tb-on').checked;
@@ -499,47 +608,55 @@ function generate() {
         document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'center' });
 
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-cog" style="margin-right:5px"></i> Generate & Install';
+        btn.innerHTML = '<i class="fas fa-magic" style="margin-right:5px"></i> Generate Addon';
     }, 400);
 }
 
-// ── Copy ──
+// ================================================================
+// Copy
+// ================================================================
+
 function copyUrl(btn) {
     const inp = document.getElementById('man-url');
     navigator.clipboard.writeText(inp.value).then(() => {
         btn.classList.add('ok');
-        btn.innerHTML = '<i class="fas fa-check"></i> Copied';
-        setTimeout(() => { btn.classList.remove('ok'); btn.innerHTML = '<i class="fas fa-copy"></i> Copy'; }, 2000);
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        setTimeout(() => {
+            btn.classList.remove('ok');
+            btn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+        }, 2000);
     }).catch(() => { inp.select(); document.execCommand('copy'); });
 }
 
-// ── P2P Only ──
-function installP2P() {
-    const cfg = { debrid: {}, enableP2P: true };
-    const b64 = btoa(JSON.stringify(cfg));
-    const mUrl = B + '/' + b64 + '/manifest.json';
-    window.location.href = mUrl.replace(/^https?:\/\//, 'stremio://');
-}
+// ================================================================
+// Card + disclaimer toggle
+// ================================================================
 
-// ── Card toggle ──
 function toggleCard() {
     const c = document.getElementById('card');
+    const d = document.getElementById('disc');
     const h = document.getElementById('hide-btn');
     const s = document.getElementById('show-btn');
     if (c.classList.contains('hidden')) {
-        c.classList.remove('hidden'); h.classList.remove('out'); s.classList.add('out');
+        c.classList.remove('hidden');
+        d.classList.remove('hidden');
+        h.classList.remove('out');
+        s.classList.add('out');
     } else {
-        c.classList.add('hidden'); h.classList.add('out'); s.classList.remove('out');
+        c.classList.add('hidden');
+        d.classList.add('hidden');
+        h.classList.add('out');
+        s.classList.remove('out');
     }
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') toggleCard(); });
 
-// ── Init ──
+// ================================================================
+// Init
+// ================================================================
+
 window.onload = function() {
-    const cfg = { debrid: {}, enableP2P: true };
-    const b64 = btoa(JSON.stringify(cfg));
-    const el = document.getElementById('p2p-manual');
-    if (el) el.href = B + '/' + b64 + '/manifest.json';
+    applyConfigFromURL();
 };
 </script>
 </body>
