@@ -850,13 +850,13 @@ def build_stream_title(video, provider_tag):
 
     parts = [provider_tag]
     if quality:
-        parts.append(f"📺 {quality}")
+        parts.append(f" 📺 {quality} ")
     if filesize:
-        parts.append(f"💾 {filesize} GB")
+        parts.append(f" 💾 {filesize} GB")
     header = '  '.join(parts)
 
     if filename:
-        return f"{header}\n📁 {filename}"
+        return f"{header}\n\n📁 {filename}"
     return header
 
 
@@ -874,7 +874,7 @@ def build_streams_for_video(video, series, season, debrid_cfg, enable_p2p, tb_ca
             download_url = torbox_get_stream_url(tb_key, info_hash, file_idx, filename, user_ip=user_ip)
             if download_url:
                 stream = {
-                    'title': build_stream_title(video, '⚡ [TB]'),
+                    'title': build_stream_title(video, '⚡ [TB] '),
                     'url': download_url,
                     'behaviorHints': {
                         'bingeGroup': f"tb-{series['id']}-{season}",
@@ -897,7 +897,7 @@ def build_streams_for_video(video, series, season, debrid_cfg, enable_p2p, tb_ca
         proxy_url = f"{request.host_url.rstrip('/')}/rd/play/{config_b64}/{info_hash}/{file_idx}/{encoded_filename}"
 
         stream = {
-            'title': build_stream_title(video, '⚡ [RD]'),
+            'title': build_stream_title(video, '⚡ [RD] '),
             'url': proxy_url,
             'behaviorHints': {
                 'bingeGroup': f"rd-{series['id']}-{season}",
