@@ -496,7 +496,7 @@ CATALOG = {
             'videoFile': './egor/eg4/6processed.csv'
         },
         {
-            'id': 'hpytt0202613', 'name': 'F1TV UHD (English)',
+            'id': 'hpytt0202615', 'name': 'F1TV UHD (English)',
             'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/43xW3VMN/f1tenglishuhd.jpg',
