@@ -487,7 +487,7 @@ CATALOG = {
     'series': [
             {
             'id': 'hpytt0202605', 'name': 'Sky F1 UHD',
-            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now nativly supports TorBox & RealDebrid\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/c4CjHMNS/sf1uhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -497,7 +497,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202615', 'name': 'F1TV UHD (English)',
-            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now nativly supports TorBox & RealDebrid\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/43xW3VMN/f1tenglishuhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -506,8 +506,8 @@ CATALOG = {
             'videoFile': './ss/ssf4/6processed.csv'
         },
         {
-            'id': 'hpytt0202614', 'name': 'F1TV UHD (International)',
-            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
+            'id': 'hpytt0202614', 'name': 'F1TV UHD (Global)',
+            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove addon, reinstall at formulio.hayd.uk\nLanguages: EN DE ES FR NL PT JP No-Commentary',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/1zBcw2pr/f1tenguhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -516,8 +516,8 @@ CATALOG = {
             'videoFile': './ss/ssm4/6processed.csv'
         },
         {
-            'id': 'hpytt0202606', 'name': 'Sky F1 UHD (alternative)',
-            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
+            'id': 'hpytt0202606', 'name': 'Sky F1 UHD (alt)',
+            'description': 'IMPORTANT MESSAGE\nThe addon now nativly supports TorBox & RealDebrid\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/QC73nRky/sf12uhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -527,7 +527,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202601', 'name': 'Sky F1',
-            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now nativly supports TorBox & RealDebrid\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/QM30pcw2/sf1.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -537,7 +537,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202603', 'name': 'F1TV (English)',
-            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now nativly supports TorBox & RealDebrid\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/pXf4j9GD/f1tveng.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -546,8 +546,8 @@ CATALOG = {
             'videoFile': './ss/ssf/6processed.csv'
         },
         {
-            'id': 'hpytt0202604', 'name': 'F1TV (International)',
-            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
+            'id': 'hpytt0202604', 'name': 'F1TV (Global)',
+            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove addon, reinstall at formulio.hayd.uk\nLanguages: EN DE ES FR NL PT JP No-Commentary',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/1zjjSDXZ/f1tvint.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -557,7 +557,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202602', 'name': 'Sky F1 (alternative)',
-            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now nativly supports TorBox & RealDebrid\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/KYMnKTQb/sky2.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -567,7 +567,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202612', 'name': 'MotoGP 4K',
-            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now nativly supports TorBox & RealDebrid\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/MHmvsGDg/motogp4k.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
@@ -576,8 +576,8 @@ CATALOG = {
             'videoFile': './smcm/sm4/6processed.csv'
         },
         {
-            'id': 'hpytt0202611', 'name': 'MotoGP FHD',
-            'description': 'The addon now nativly supports TorBox & RealDebrid\nRemove StremThru, reconfigure at formulio.hayd.uk',
+            'id': 'hpytt0202611', 'name': 'MotoGP',
+            'description': 'IMPORTANT MESSAGE\nThe addon now nativly supports TorBox & RealDebrid\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/3Rpyv1D8/motogphd.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
@@ -850,13 +850,13 @@ def build_stream_title(video, provider_tag):
 
     parts = [provider_tag]
     if quality:
-        parts.append(f" 📺 {quality} ")
+        parts.append(f"  {quality}")
     if filesize:
-        parts.append(f" 💾 {filesize} GB")
+        parts.append(f"  {filesize} GB")
     header = '  '.join(parts)
 
     if filename:
-        return f"{header}\n\n📁 {filename}"
+        return f"{header}\n\n{filename}"
     return header
 
 
@@ -874,7 +874,7 @@ def build_streams_for_video(video, series, season, debrid_cfg, enable_p2p, tb_ca
             download_url = torbox_get_stream_url(tb_key, info_hash, file_idx, filename, user_ip=user_ip)
             if download_url:
                 stream = {
-                    'title': build_stream_title(video, '⚡ [TB] '),
+                    'title': build_stream_title(video, '⚡ [TB]'),
                     'url': download_url,
                     'behaviorHints': {
                         'bingeGroup': f"tb-{series['id']}-{season}",
@@ -897,7 +897,7 @@ def build_streams_for_video(video, series, season, debrid_cfg, enable_p2p, tb_ca
         proxy_url = f"{request.host_url.rstrip('/')}/rd/play/{config_b64}/{info_hash}/{file_idx}/{encoded_filename}"
 
         stream = {
-            'title': build_stream_title(video, '⚡ [RD] '),
+            'title': build_stream_title(video, '⚡ [RD]'),
             'url': proxy_url,
             'behaviorHints': {
                 'bingeGroup': f"rd-{series['id']}-{season}",
