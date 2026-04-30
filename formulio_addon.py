@@ -11,6 +11,7 @@ import signal
 import urllib.parse
 import hashlib
 import threading
+import shutil
 from threading import Thread
 from flask import Flask, jsonify, abort, send_from_directory, request, redirect
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -38,11 +39,14 @@ PYTHON_EXE = sys.executable  # Use the same Python that's running this script
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Simple TTL cache for RD resolutions
+# Simple TTL cache for RD + AD resolutions
 # ═══════════════════════════════════════════════════════════════════════════
 
 _rd_cache = {}
 _rd_cache_lock = threading.Lock()
+
+_ad_cache = {}
+_ad_cache_lock = threading.Lock()
 
 
 def rd_cache_get(cache_key):
@@ -61,13 +65,36 @@ def rd_cache_get(cache_key):
 def rd_cache_set(cache_key, result):
     """Cache an RD result."""
     with _rd_cache_lock:
-        # Evict expired entries if cache is large
         if len(_rd_cache) > 1000:
             cutoff = now() - 300
             expired = [k for k, v in _rd_cache.items() if v['time'] < cutoff]
             for k in expired:
                 del _rd_cache[k]
         _rd_cache[cache_key] = {'result': result, 'time': now()}
+
+
+def ad_cache_get(cache_key):
+    """Get cached AD result if still valid. Success: 5 min, Failure: 60s."""
+    with _ad_cache_lock:
+        entry = _ad_cache.get(cache_key)
+        if not entry:
+            return None
+        ttl = 60 if entry['result'] == '__UNAVAILABLE__' else 300
+        if now() - entry['time'] < ttl:
+            return entry['result']
+        del _ad_cache[cache_key]
+        return None
+
+
+def ad_cache_set(cache_key, result):
+    """Cache an AD result."""
+    with _ad_cache_lock:
+        if len(_ad_cache) > 1000:
+            cutoff = now() - 300
+            expired = [k for k, v in _ad_cache.items() if v['time'] < cutoff]
+            for k in expired:
+                del _ad_cache[k]
+        _ad_cache[cache_key] = {'result': result, 'time': now()}
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -78,6 +105,8 @@ class Config:
     SCRIPT_INTERVAL = 909  # seconds between script runs (~15 min)
     TORBOX_API_BASE = 'https://api.torbox.app'
     RD_API_BASE = 'https://api.real-debrid.com/rest/1.0'
+    AD_API_BASE = 'https://api.alldebrid.com/v4'
+    AD_API_BASE_V41 = 'https://api.alldebrid.com/v4.1'
 
 
 config = Config()
@@ -330,7 +359,7 @@ def rd_get_stream_url(api_key, info_hash, file_idx, filename, user_ip=None):
                 if not links:
                     logger.info(f"RD torrent {info_hash[:8]} downloaded but no links yet")
                     return None
-                return _pick_and_unrestrict(api_key, info, links, file_idx, filename, user_ip)
+                return _rd_pick_and_unrestrict(api_key, info, links, file_idx, filename, user_ip)
 
             elif status in ('downloading', 'queued', 'magnet_conversion', 'compressing', 'uploading'):
                 logger.info(f"RD torrent {info_hash[:8]} in progress ({status}), not ready")
@@ -355,7 +384,7 @@ def rd_get_stream_url(api_key, info_hash, file_idx, filename, user_ip=None):
             elif info and info.get('status') == 'downloaded':
                 links = info.get('links', [])
                 if links:
-                    return _pick_and_unrestrict(api_key, info, links, file_idx, filename, user_ip)
+                    return _rd_pick_and_unrestrict(api_key, info, links, file_idx, filename, user_ip)
             time.sleep(4)
 
             info = rd_get_torrent_info(api_key, torrent_id)
@@ -364,7 +393,7 @@ def rd_get_stream_url(api_key, info_hash, file_idx, filename, user_ip=None):
             elif info and info.get('status') == 'downloaded':
                 links = info.get('links', [])
                 if links:
-                    return _pick_and_unrestrict(api_key, info, links, file_idx, filename, user_ip)
+                    return _rd_pick_and_unrestrict(api_key, info, links, file_idx, filename, user_ip)
 
             logger.info(f"RD torrent {info_hash[:8]} added and queued, not ready yet")
             return None
@@ -374,7 +403,7 @@ def rd_get_stream_url(api_key, info_hash, file_idx, filename, user_ip=None):
         return None
 
 
-def _pick_and_unrestrict(api_key, info, links, file_idx, filename, user_ip):
+def _rd_pick_and_unrestrict(api_key, info, links, file_idx, filename, user_ip):
     """Pick the right link from a downloaded torrent and unrestrict it."""
     files = info.get('files', [])
     selected_files = [f for f in files if f.get('selected') == 1]
@@ -417,6 +446,256 @@ def rd_validate_key(api_key):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# AllDebrid Helper Functions
+# ═══════════════════════════════════════════════════════════════════════════
+
+def ad_upload_magnet(api_key, info_hash):
+    """Upload magnet to AllDebrid. Returns magnet id or None."""
+    url = f"{config.AD_API_BASE}/magnet/upload"
+    headers = {'Authorization': f'Bearer {api_key}'}
+    try:
+        resp = requests.post(url, headers=headers, data={'magnets[]': info_hash}, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get('status') == 'success':
+            magnets = data.get('data', {}).get('magnets', [])
+            if magnets:
+                m = magnets[0]
+                if 'error' in m:
+                    logger.error(f"AD upload magnet error: {m['error']}")
+                    return None
+                return m.get('id')
+        return None
+    except Exception as e:
+        logger.error(f"AD upload magnet error: {e}")
+        return None
+
+
+def ad_get_magnet_status(api_key, magnet_id):
+    """Get status of a specific AllDebrid magnet. Returns magnet dict or None."""
+    url = f"{config.AD_API_BASE_V41}/magnet/status"
+    headers = {'Authorization': f'Bearer {api_key}'}
+    try:
+        resp = requests.post(url, headers=headers, data={'id': magnet_id}, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get('status') == 'success':
+            magnets = data.get('data', {}).get('magnets', [])
+            # v4.1 returns a list; sometimes an object when a specific id is requested
+            if isinstance(magnets, list):
+                for m in magnets:
+                    if str(m.get('id')) == str(magnet_id):
+                        return m
+                if magnets:
+                    return magnets[0]
+            elif isinstance(magnets, dict):
+                return magnets
+        return None
+    except Exception as e:
+        logger.error(f"AD get magnet status error: {e}")
+        return None
+
+
+def ad_find_magnet_by_hash(api_key, info_hash):
+    """Find existing magnet in user's AllDebrid list by hash. Returns magnet dict or None."""
+    url = f"{config.AD_API_BASE_V41}/magnet/status"
+    headers = {'Authorization': f'Bearer {api_key}'}
+    try:
+        resp = requests.post(url, headers=headers, data={}, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get('status') == 'success':
+            magnets = data.get('data', {}).get('magnets', [])
+            if not isinstance(magnets, list):
+                return None
+            target_hash = info_hash.lower()
+            for m in magnets:
+                m_hash = (m.get('hash') or '').lower()
+                if m_hash == target_hash:
+                    return m
+        return None
+    except Exception as e:
+        logger.error(f"AD find magnet error: {e}")
+        return None
+
+
+def ad_get_magnet_files(api_key, magnet_id):
+    """Get files (with download links) for an AllDebrid magnet. Returns list or None."""
+    url = f"{config.AD_API_BASE}/magnet/files"
+    headers = {'Authorization': f'Bearer {api_key}'}
+    try:
+        resp = requests.post(url, headers=headers, data={'id[]': magnet_id}, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get('status') == 'success':
+            magnets = data.get('data', {}).get('magnets', [])
+            if magnets and isinstance(magnets, list):
+                m = magnets[0]
+                if 'error' in m:
+                    logger.error(f"AD get files error: {m['error']}")
+                    return None
+                return m.get('files', [])
+        return None
+    except Exception as e:
+        logger.error(f"AD get magnet files error: {e}")
+        return None
+
+
+def ad_unlock_link(api_key, link, user_ip=None):
+    """Unlock an AllDebrid link. Returns direct download URL or None."""
+    url = f"{config.AD_API_BASE}/link/unlock"
+    headers = {'Authorization': f'Bearer {api_key}'}
+    try:
+        resp = requests.post(url, headers=headers, data={'link': link}, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get('status') == 'success':
+            return data.get('data', {}).get('link')
+        else:
+            err = data.get('error', {})
+            logger.error(f"AD unlock error: {err.get('code')} - {err.get('message')}")
+            return None
+    except Exception as e:
+        logger.error(f"AD unlock link error: {e}")
+        return None
+
+
+def _ad_flatten_files(files_tree):
+    """Flatten AllDebrid nested files tree into a list of {path, size, link} entries."""
+    results = []
+
+    def walk(nodes, prefix=""):
+        if not isinstance(nodes, list):
+            return
+        for node in nodes:
+            name = node.get('n', '')
+            current_path = f"{prefix}/{name}" if prefix else name
+            if 'e' in node and isinstance(node['e'], list):
+                # folder
+                walk(node['e'], current_path)
+            elif 'l' in node:
+                # file with link
+                results.append({
+                    'path': current_path,
+                    'name': name,
+                    'size': node.get('s', 0),
+                    'link': node['l']
+                })
+
+    walk(files_tree or [])
+    return results
+
+
+def _ad_pick_file(flat_files, file_idx, filename):
+    """Pick the correct file from a flattened AllDebrid file list."""
+    if not flat_files:
+        return None
+
+    # Try match by filename
+    if filename:
+        for f in flat_files:
+            if filename in f['path'] or filename == f['name']:
+                logger.info(f"AD matched file by name: {f['path']}")
+                return f
+
+    # Filter only video-like files for idx matching (similar to how RD orders them)
+    video_exts = ('.mkv', '.mp4', '.avi', '.mov', '.m4v', '.ts', '.flv', '.wmv', '.webm')
+    videos = [f for f in flat_files if f['name'].lower().endswith(video_exts)]
+
+    candidates = videos if videos else flat_files
+
+    if file_idx is not None and 0 <= file_idx < len(candidates):
+        logger.info(f"AD matched file by idx {file_idx}: {candidates[file_idx]['path']}")
+        return candidates[file_idx]
+
+    # Fallback: largest file
+    largest = max(candidates, key=lambda f: f.get('size', 0))
+    logger.info(f"AD fallback to largest file: {largest['path']}")
+    return largest
+
+
+def ad_get_stream_url(api_key, info_hash, file_idx, filename, user_ip=None):
+    """Full AllDebrid flow. Returns a direct download URL or None if not ready."""
+    try:
+        existing = ad_find_magnet_by_hash(api_key, info_hash)
+
+        if existing:
+            magnet_id = existing['id']
+            status_code = existing.get('statusCode', -1)
+            status = existing.get('status', '')
+            logger.info(f"AD magnet {info_hash[:8]} found, status={status} ({status_code})")
+
+            if status_code == 4:
+                # Ready - get files and unlock
+                files_tree = ad_get_magnet_files(api_key, magnet_id)
+                if not files_tree:
+                    logger.info(f"AD magnet {info_hash[:8]} ready but no files yet")
+                    return None
+
+                flat = _ad_flatten_files(files_tree)
+                picked = _ad_pick_file(flat, file_idx, filename)
+                if not picked:
+                    logger.error(f"AD no file picked for {info_hash[:8]}")
+                    return None
+
+                return ad_unlock_link(api_key, picked['link'], user_ip=user_ip)
+
+            elif status_code in (0, 1, 2, 3):
+                # Processing: queued / downloading / compressing / uploading
+                logger.info(f"AD magnet {info_hash[:8]} in progress ({status}), not ready")
+                return None
+
+            else:
+                # Error states (5+)
+                logger.warning(f"AD magnet {info_hash[:8]} error status={status} ({status_code})")
+                return None
+
+        else:
+            logger.info(f"AD magnet {info_hash[:8]} not in library, uploading...")
+            magnet_id = ad_upload_magnet(api_key, info_hash)
+            if not magnet_id:
+                logger.error(f"AD failed to upload magnet for {info_hash[:8]}")
+                return None
+
+            time.sleep(2)
+
+            # Check if instantly ready
+            info = ad_get_magnet_status(api_key, magnet_id)
+            if info and info.get('statusCode') == 4:
+                files_tree = ad_get_magnet_files(api_key, magnet_id)
+                if files_tree:
+                    flat = _ad_flatten_files(files_tree)
+                    picked = _ad_pick_file(flat, file_idx, filename)
+                    if picked:
+                        return ad_unlock_link(api_key, picked['link'], user_ip=user_ip)
+
+            logger.info(f"AD magnet {info_hash[:8]} uploaded and queued, not ready yet")
+            return None
+
+    except Exception as e:
+        logger.error(f"AD stream URL error for {info_hash}: {e}")
+        return None
+
+
+def ad_validate_key(api_key):
+    """Validate an AllDebrid API key. Returns user info dict or None."""
+    url = f"{config.AD_API_BASE}/user"
+    headers = {'Authorization': f'Bearer {api_key}'}
+    try:
+        resp = requests.get(url, headers=headers, timeout=8)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get('status') == 'success':
+            user = data.get('data', {}).get('user')
+            if user and user.get('username'):
+                return user
+        return None
+    except Exception as e:
+        logger.error(f"AD validate key error: {e}")
+        return None
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Config Parsing & User IP
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -450,7 +729,7 @@ def get_user_ip():
 
 MANIFEST = {
     'id': 'org.stremio.formulio',
-    'version': '3.0.0',
+    'version': '3.0.1',
     'name': 'Formulio',
     'description': (
         'An Addon for Motor Racing Replay Content with Debrid support. '
@@ -487,7 +766,7 @@ CATALOG = {
     'series': [
             {
             'id': 'hpytt0202605', 'name': 'Sky F1 UHD',
-            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox & RealDebrid\nRemove addon, reinstall from formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/c4CjHMNS/sf1uhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -497,7 +776,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202615', 'name': 'F1TV UHD (English)',
-            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox & RealDebrid\nRemove addon, reinstall from formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/43xW3VMN/f1tenglishuhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -507,7 +786,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202614', 'name': 'F1TV UHD (Global)',
-            'description': 'The addon now supports TorBox & RealDebrid\nRemove addon, reinstall at formulio.hayd.uk\nLanguages: 🇬🇧 🇩🇪 🇪🇸 🇫🇷 🇳🇱 🇵🇹 🇯🇵 🔇',
+            'description': 'The addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall at formulio.hayd.uk\nLanguages: 🇬🇧 🇩🇪 🇪🇸 🇫🇷 🇳🇱 🇵🇹 🇯🇵 🔇',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/1zBcw2pr/f1tenguhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -517,7 +796,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202606', 'name': 'Sky F1 UHD (alt)',
-            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox & RealDebrid\nRemove addon, reinstall from formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/QC73nRky/sf12uhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -527,7 +806,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202601', 'name': 'Sky F1',
-            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox & RealDebrid\nRemove addon, reinstall from formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/QM30pcw2/sf1.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -537,7 +816,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202603', 'name': 'F1TV (English)',
-            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox & RealDebrid\nRemove addon, reinstall from formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/pXf4j9GD/f1tveng.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -547,7 +826,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202604', 'name': 'F1TV (Global)',
-            'description': 'The addon now supports TorBox & RealDebrid\nRemove addon, reinstall at formulio.hayd.uk\nLanguages: 🇬🇧 🇩🇪 🇪🇸 🇫🇷 🇳🇱 🇵🇹 🇯🇵 🔇',
+            'description': 'The addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall at formulio.hayd.uk\nLanguages: 🇬🇧 🇩🇪 🇪🇸 🇫🇷 🇳🇱 🇵🇹 🇯🇵 🔇',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/1zjjSDXZ/f1tvint.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -557,7 +836,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202602', 'name': 'Sky F1 (alternative)',
-            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox & RealDebrid\nRemove addon, reinstall from formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/KYMnKTQb/sky2.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -567,7 +846,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202612', 'name': 'MotoGP 4K',
-            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox & RealDebrid\nRemove addon, reinstall from formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/MHmvsGDg/motogp4k.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
@@ -577,7 +856,7 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202611', 'name': 'MotoGP',
-            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox & RealDebrid\nRemove addon, reinstall from formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/3Rpyv1D8/motogphd.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
@@ -665,17 +944,45 @@ def load_all_videos():
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Background Script Runner
-#
-# Two types of directories:
-#   1. FEED_DIRECTORIES  — contain 1formationlap.py that fetches RSS → f1db.csv
-#   2. PIPELINE_DIRECTORIES — contain 1formationlap.py that processes → 6processed.csv
-#
-# On startup: run ALL scripts once (feeds first, then pipelines).
-# On loop: repeat every SCRIPT_INTERVAL seconds.
+# CSV Health Monitoring
 # ═══════════════════════════════════════════════════════════════════════════
 
-# Parent dirs: RSS feed fetchers (produce/update f1db.csv)
+def check_csv_health():
+    """Check that all expected CSV files exist and are valid."""
+    missing = []
+    invalid = []
+    
+    for series in CATALOG['series']:
+        path = series.get('videoFile')
+        if not path:
+            continue
+        
+        if not os.path.exists(path):
+            missing.append(path)
+            logger.error(f"🚨 MISSING CSV: {path}")
+        else:
+            try:
+                size = os.path.getsize(path)
+                if size == 0:
+                    invalid.append(path)
+                    logger.error(f"🚨 EMPTY CSV: {path}")
+                else:
+                    with open(path, 'r') as f:
+                        lines = f.readlines()
+                        if len(lines) < 1:
+                            invalid.append(path)
+                            logger.error(f"🚨 INVALID CSV (no headers): {path}")
+            except Exception as e:
+                invalid.append(path)
+                logger.error(f"🚨 CORRUPTED CSV {path}: {e}")
+    
+    return missing, invalid
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Background Script Runner — with graceful shutdown and backup protection
+# ═══════════════════════════════════════════════════════════════════════════
+
 FEED_DIRECTORIES = [
     'egor',
     'smcg',
@@ -683,7 +990,6 @@ FEED_DIRECTORIES = [
     'smcm',
 ]
 
-# Child dirs: processing pipelines (produce 6processed.csv)
 PIPELINE_DIRECTORIES = [
     'egor/ego',
     'egor/eg4',
@@ -700,81 +1006,110 @@ PIPELINE_DIRECTORIES = [
 
 
 def run_script(directory):
-    """
-    Run 1formationlap.py in the given directory.
-    Returns True if it ran successfully.
-    """
     script_path = os.path.join(directory, '1formationlap.py')
     if not os.path.isfile(script_path):
         logger.warning(f"Script not found, skipping: {script_path}")
         return False
     
-    # Determine timeout: feed scripts are fast (300s), pipeline scripts need more time
-    # because 5torrenttocontent.py resolves magnet links from the network
-    is_pipeline = '/' in directory or '\\' in directory  # child dirs have path separators
-    timeout = 1200 if is_pipeline else 300  # 20 min for pipelines, 5 min for feeds
+    is_pipeline = '/' in directory or '\\' in directory
+    timeout = 1200 if is_pipeline else 300
     
     try:
         logger.info(f"Running: {script_path} (timeout: {timeout}s)")
-        result = subprocess.run(
-            [PYTHON_EXE, script_path],
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
+        
+        process = subprocess.Popen(
+            [PYTHON_EXE, '1formationlap.py'],  # ← FIXED: just the filename, not the full path
+            cwd=directory,                       # ← cwd already navigates into the folder
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
         )
-        if result.stdout.strip():
-            last_lines = result.stdout.strip().split('\n')[-3:]
-            for line in last_lines:
-                logger.info(f"  [{directory}] {line}")
-        return True
-    except subprocess.TimeoutExpired:
-        logger.error(f"Script {script_path} timed out after {timeout}s")
-        return False
-    except subprocess.CalledProcessError as e:
-        stderr_text = (e.stderr or '').strip()
-        if stderr_text:
-            logger.error(f"Script {script_path} failed (exit {e.returncode}):\n{stderr_text[:1000]}")
-        else:
-            logger.error(f"Script {script_path} failed (exit {e.returncode}), no stderr output")
-        return False
+        
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+            
+            if process.returncode == 0:
+                if stdout.strip():
+                    last_lines = stdout.strip().split('\n')[-3:]
+                    for line in last_lines:
+                        logger.info(f"  [{directory}] {line}")
+                return True
+            else:
+                logger.error(f"Script {script_path} failed with exit code {process.returncode}")
+                if stderr:
+                    logger.error(f"stderr: {stderr[:1000]}")
+                return False
+                
+        except subprocess.TimeoutExpired:
+            logger.warning(f"Script {script_path} timed out after {timeout}s, attempting graceful shutdown...")
+            process.terminate()
+            try:
+                stdout, stderr = process.communicate(timeout=30)
+                logger.info(f"Script {script_path} terminated gracefully")
+                if stdout:
+                    logger.debug(f"stdout: {stdout[-500:]}")
+                return False
+            except subprocess.TimeoutExpired:
+                logger.error(f"Script {script_path} did not respond to SIGTERM, force killing")
+                process.kill()
+                stdout, stderr = process.communicate()
+                logger.error(f"Script {script_path} was force-killed")
+                return False
+                
     except Exception as e:
-        logger.error(f"Error launching {script_path}: {e}")
+        logger.error(f"Error running {script_path}: {e}")
         return False
 
 
 def run_pipeline_and_reload(directory):
-    """
-    Run a single pipeline script and immediately reload videos if its CSV changed.
-    Returns True if the CSV was updated.
-    """
     csv_path = os.path.join(directory, '6processed.csv')
+    backup_path = os.path.join(directory, '6processed.csv.backup')
+    
+    if os.path.exists(csv_path):
+        try:
+            shutil.copy2(csv_path, backup_path)
+            logger.info(f"Created backup: {backup_path}")
+        except Exception as e:
+            logger.error(f"Failed to create backup for {csv_path}: {e}")
+    
     mtime_before = os.path.getmtime(csv_path) if os.path.exists(csv_path) else 0
 
     success = run_script(directory)
 
     if success:
+        if os.path.exists(csv_path):
+            try:
+                with open(csv_path, 'r') as f:
+                    lines = f.readlines()
+                    if len(lines) < 2:
+                        logger.error(f"CSV {csv_path} is empty or invalid, restoring backup")
+                        if os.path.exists(backup_path):
+                            shutil.copy2(backup_path, csv_path)
+                            return False
+            except Exception as e:
+                logger.error(f"CSV validation failed for {csv_path}: {e}, restoring backup")
+                if os.path.exists(backup_path):
+                    shutil.copy2(backup_path, csv_path)
+                return False
+        
         mtime_after = os.path.getmtime(csv_path) if os.path.exists(csv_path) else 0
         if mtime_after != mtime_before:
             logger.info(f"CSV updated: {csv_path} — reloading videos immediately")
             load_all_videos()
             return True
+    else:
+        if not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0:
+            if os.path.exists(backup_path):
+                logger.error(f"CSV {csv_path} missing/empty after failed run, restoring backup")
+                shutil.copy2(backup_path, csv_path)
+    
     return False
 
 
 def run_scripts_in_loop():
-    """
-    Background thread:
-      1. Run feed scripts (RSS fetchers) in parallel — updates f1db.csv in parent dirs
-      2. Run pipeline scripts in parallel — updates 6processed.csv in child dirs,
-         reloading video data immediately after each pipeline that produces a change
-      3. Sleep and repeat
-    """
     logger.info(f"Script loop starting (Python: {PYTHON_EXE})")
 
     while True:
-        # Step 1: Run all feed fetchers in parallel and wait for all to finish
-        # before starting pipelines (pipelines depend on the feed output)
         logger.info("--- Running feed fetchers (parallel) ---")
         feed_threads = []
         for directory in FEED_DIRECTORIES:
@@ -784,8 +1119,6 @@ def run_scripts_in_loop():
         for t in feed_threads:
             t.join()
 
-        # Step 2: Run all pipelines in parallel — each one reloads videos
-        # immediately if its CSV changed, so new content is live as fast as possible
         logger.info("--- Running pipelines (parallel) ---")
         pipeline_threads = []
         for directory in PIPELINE_DIRECTORIES:
@@ -800,24 +1133,23 @@ def run_scripts_in_loop():
 
 
 def csv_watcher_loop():
-    """
-    Independent background thread: poll all CSV mod times every 30 seconds.
-    Catches any external changes to CSVs without waiting for the script loop,
-    including new files being created for the first time.
-    """
     csv_mod_times = {}
 
-    # Seed initial mod times for any CSVs that already exist
     for series in CATALOG['series']:
         path = series.get('videoFile')
         if path and os.path.exists(path):
             csv_mod_times[path] = os.path.getmtime(path)
 
-    logger.info("CSV watcher started")
+    logger.info("CSV watcher started with health monitoring")
 
     while True:
         time.sleep(30)
         try:
+            missing, invalid = check_csv_health()
+            
+            if missing or invalid:
+                logger.error(f"CSV health check failed: {len(missing)} missing, {len(invalid)} invalid")
+            
             changed = False
             for series in CATALOG['series']:
                 path = series.get('videoFile')
@@ -842,8 +1174,23 @@ def csv_watcher_loop():
 # Stream Building
 # ═══════════════════════════════════════════════════════════════════════════
 
-def build_stream_title(video, provider_tag):
-    """Build display title for a stream entry."""
+def build_stream_name(video, provider_tag):
+    """Build the short stream 'name' shown as a label/badge in Stremio."""
+    # Kept for provider identification in the stream list
+    return provider_tag
+
+
+def build_stream_title(video):
+    """Build main stream title: 'Episode Title - Quality' (e.g. 'Race - JapaneseGP - 4K')."""
+    title = video.get('title', '').strip()
+    quality = video.get('quality', '').strip()
+    if title and quality:
+        return f"{title} - {quality}"
+    return title or quality or 'Stream'
+
+
+def build_stream_description(video, provider_tag):
+    """Build the detailed description (previously the title) with provider + quality + size + filename."""
     quality = video.get('quality', '')
     filesize = video.get('filesize', '')
     filename = video.get('filename', '')
@@ -859,13 +1206,14 @@ def build_stream_title(video, provider_tag):
         return f"{header}\n\n{filename}"
     return header
 
-
 def build_streams_for_video(video, series, season, debrid_cfg, enable_p2p, tb_cached, user_ip):
     """Build stream entries for a single video. Returns list of stream dicts."""
     streams = []
     info_hash = video['infoHash']
     filename = video.get('filename', '')
     file_idx = video.get('fileIdx', 0)
+
+    stream_title = build_stream_title(video)
 
     # ── TorBox Debrid Stream ──
     tb_key = debrid_cfg.get('tb', {}).get('apiKey')
@@ -874,7 +1222,9 @@ def build_streams_for_video(video, series, season, debrid_cfg, enable_p2p, tb_ca
             download_url = torbox_get_stream_url(tb_key, info_hash, file_idx, filename, user_ip=user_ip)
             if download_url:
                 stream = {
-                    'title': build_stream_title(video, '⚡ [TorBox]'),
+                    'name': 'Formulio\n⚡ TorBox',
+                    'title': stream_title,
+                    'description': build_stream_description(video, '⚡ [TorBox]'),
                     'url': download_url,
                     'behaviorHints': {
                         'bingeGroup': f"tb-{series['id']}-{season}",
@@ -897,7 +1247,9 @@ def build_streams_for_video(video, series, season, debrid_cfg, enable_p2p, tb_ca
         proxy_url = f"{request.host_url.rstrip('/')}/rd/play/{config_b64}/{info_hash}/{file_idx}/{encoded_filename}"
 
         stream = {
-            'title': build_stream_title(video, '⚡ [RealDebrid]'),
+            'name': 'Formulio\nRealDebrid',
+            'title': stream_title,
+            'description': build_stream_description(video, '[RealDebrid]'),
             'url': proxy_url,
             'behaviorHints': {
                 'bingeGroup': f"rd-{series['id']}-{season}",
@@ -908,10 +1260,35 @@ def build_streams_for_video(video, series, season, debrid_cfg, enable_p2p, tb_ca
             stream['behaviorHints']['filename'] = filename
         streams.append(stream)
 
+    # ── AllDebrid Stream (lazy — resolved on playback via /ad/play/) ──
+    ad_key = debrid_cfg.get('ad', {}).get('apiKey')
+    if ad_key:
+        config_data = json.dumps({'debrid': debrid_cfg, 'enableP2P': enable_p2p})
+        config_b64 = base64.b64encode(config_data.encode('utf-8')).decode('utf-8').rstrip('=')
+
+        encoded_filename = urllib.parse.quote(filename, safe='') if filename else ''
+        proxy_url = f"{request.host_url.rstrip('/')}/ad/play/{config_b64}/{info_hash}/{file_idx}/{encoded_filename}"
+
+        stream = {
+            'name': 'Formulio\nAllDebrid',
+            'title': stream_title,
+            'description': build_stream_description(video, '[AllDebrid]'),
+            'url': proxy_url,
+            'behaviorHints': {
+                'bingeGroup': f"ad-{series['id']}-{season}",
+                'notWebReady': False
+            }
+        }
+        if filename:
+            stream['behaviorHints']['filename'] = filename
+        streams.append(stream)
+
     # ── P2P Stream ──
     if enable_p2p:
         stream = {
-            'title': build_stream_title(video, '🔗 [P2P]'),
+            'name': 'Formulio\n🔗 P2P',
+            'title': stream_title,
+            'description': build_stream_description(video, '🔗 [P2P]'),
             'infoHash': info_hash,
             'behaviorHints': {
                 'bingeGroup': f"p2p-{series['id']}-{season}"
@@ -925,7 +1302,6 @@ def build_streams_for_video(video, series, season, debrid_cfg, enable_p2p, tb_ca
 
     return streams
 
-
 # ═══════════════════════════════════════════════════════════════════════════
 # RD Proxy Endpoint — resolves on playback, not on browse
 # ═══════════════════════════════════════════════════════════════════════════
@@ -935,7 +1311,6 @@ def build_streams_for_video(video, series, season, debrid_cfg, enable_p2p, tb_ca
 @app.route('/rd/play/<config_str>/<info_hash>/<int:file_idx>')
 def rd_play(config_str, info_hash, file_idx, filename=None):
     """On-demand RD resolver. Redirects to real file URL, or serves placeholder."""
-    # HEAD probes from the player — don't do any RD work
     if request.method == 'HEAD':
         return '', 200
 
@@ -967,6 +1342,49 @@ def rd_play(config_str, info_hash, file_idx, filename=None):
     else:
         rd_cache_set(cache_key, '__UNAVAILABLE__')
         logger.info(f"RD not ready for {info_hash[:8]}, serving placeholder")
+        return send_from_directory(app.static_folder, 'rd_downloading.mp4')
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# AD Proxy Endpoint — resolves on playback, not on browse
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.route('/ad/play/<config_str>/<info_hash>/<int:file_idx>/<path:filename>')
+@app.route('/ad/play/<config_str>/<info_hash>/<int:file_idx>/')
+@app.route('/ad/play/<config_str>/<info_hash>/<int:file_idx>')
+def ad_play(config_str, info_hash, file_idx, filename=None):
+    """On-demand AllDebrid resolver. Redirects to real file URL, or serves placeholder."""
+    if request.method == 'HEAD':
+        return '', 200
+
+    cfg = parse_config(config_str)
+    ad_key = cfg.get('debrid', {}).get('ad', {}).get('apiKey')
+    if not ad_key:
+        return send_from_directory(app.static_folder, 'rd_downloading.mp4')
+
+    user_ip = get_user_ip()
+    if filename:
+        filename = urllib.parse.unquote(filename)
+
+    key_hash = hashlib.md5(ad_key.encode()).hexdigest()[:8]
+    cache_key = f"{key_hash}:{info_hash}:{file_idx}:{filename or ''}"
+
+    cached = ad_cache_get(cache_key)
+    if cached == '__UNAVAILABLE__':
+        return send_from_directory(app.static_folder, 'rd_downloading.mp4')
+    if cached:
+        logger.info(f"AD cache hit for {info_hash[:8]}")
+        return redirect(cached)
+
+    download_url = ad_get_stream_url(ad_key, info_hash, file_idx, filename, user_ip=user_ip)
+
+    if download_url:
+        ad_cache_set(cache_key, download_url)
+        logger.info(f"AD resolved {info_hash[:8]}")
+        return redirect(download_url)
+    else:
+        ad_cache_set(cache_key, '__UNAVAILABLE__')
+        logger.info(f"AD not ready for {info_hash[:8]}, serving placeholder")
         return send_from_directory(app.static_folder, 'rd_downloading.mp4')
 
 
@@ -1016,6 +1434,33 @@ def validate_realdebrid():
         return respond_with({'success': False, 'error': 'Invalid API token'})
     except Exception as e:
         logger.error(f"RD validation proxy error: {e}")
+        return respond_with({'success': False, 'error': 'Validation failed'})
+
+
+@app.route('/api/validate/ad', methods=['POST'])
+def validate_alldebrid():
+    """Proxy endpoint for AllDebrid API key validation."""
+    try:
+        data = request.get_json(silent=True) or {}
+        api_key = data.get('apiKey', '').strip()
+        if not api_key:
+            return respond_with({'success': False, 'error': 'No API key provided'})
+
+        user_data = ad_validate_key(api_key)
+        if user_data:
+            is_premium = user_data.get('isPremium', False)
+            is_trial = user_data.get('isTrial', False)
+            account_type = 'premium' if is_premium else ('trial' if is_trial else 'free')
+            return respond_with({
+                'success': True,
+                'username': user_data.get('username', ''),
+                'email': user_data.get('email', ''),
+                'type': account_type,
+                'isPremium': is_premium
+            })
+        return respond_with({'success': False, 'error': 'Invalid API key'})
+    except Exception as e:
+        logger.error(f"AD validation proxy error: {e}")
         return respond_with({'success': False, 'error': 'Validation failed'})
 
 
@@ -1071,19 +1516,13 @@ def stream_default(type, id):
 
 @app.route('/<config_str>/manifest.json')
 def manifest_configured(config_str):
-    cfg = parse_config(config_str)
+    # Parse the config just to validate it, but don't alter the manifest name.
+    parse_config(config_str)
     manifest = dict(MANIFEST)
-    providers = []
-    if cfg['debrid'].get('tb', {}).get('apiKey'):
-        providers.append('TB')
-    if cfg['debrid'].get('rd', {}).get('apiKey'):
-        providers.append('RD')
-    if cfg.get('enableP2P'):
-        providers.append('P2P')
-    if providers:
-        tag = ' + '.join(providers)
-        manifest['name'] = f'Formulio ({tag})'
-        manifest['id'] = 'org.stremio.formulio.configured'
+    # Give configured installs a distinct id so Stremio treats it as a separate addon,
+    # but keep the display name as just "Formulio".
+    manifest['id'] = 'org.stremio.formulio.configured'
+    manifest['name'] = 'Formulio'
     return respond_with(manifest)
 
 @app.route('/<config_str>/catalog/<type>/<id>.json')
@@ -1243,18 +1682,12 @@ if __name__ == '__main__':
     signal.signal(signal.SIGTERM, graceful_shutdown)
     signal.signal(signal.SIGINT, graceful_shutdown)
 
-    # Load existing video data immediately on startup before any scripts run
     try:
         load_all_videos()
     except Exception as e:
         logger.error(f"Error loading initial video data: {e}")
 
-    # Start background script runner — runs feeds then pipelines in parallel,
-    # reloading video data immediately after each pipeline that produces a CSV change
     Thread(target=run_scripts_in_loop, daemon=True).start()
-
-    # Start independent CSV watcher — polls every 30s to catch any changes
-    # including externally written files or new CSVs being created
     Thread(target=csv_watcher_loop, daemon=True).start()
 
     logger.info(f"Formulio addon starting (Python: {PYTHON_EXE})")
