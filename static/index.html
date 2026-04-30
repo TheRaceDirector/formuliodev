@@ -65,7 +65,6 @@
         }
         .community a:hover { color: #ff3333; text-decoration: underline; }
 
-        /* Reconfigure Banner */
         .reconfig-banner {
             background: rgba(255,170,68,0.10);
             border: 1px solid rgba(255,170,68,0.30);
@@ -82,7 +81,6 @@
             font-size: 0.82em; color: #bbb; line-height: 1.5;
         }
 
-        /* Section */
         .sec-head {
             display: flex; align-items: center; gap: 10px;
             border-bottom: 1px solid rgba(255,255,255,0.06);
@@ -91,7 +89,6 @@
         }
         .sec-head i { color: #ff3333; font-size: 0.9em; }
 
-        /* Provider Cards */
         .providers { display: flex; flex-direction: column; gap: 10px; }
         .prov {
             background: rgba(255,255,255,0.025);
@@ -154,18 +151,29 @@
         .vld.err { color: #ff6666; }
         .vld.wait { color: #ffcc00; }
 
-        /* P2P */
         .p2p-box {
             background: rgba(255,255,255,0.025);
             border: 1px solid rgba(255,255,255,0.06);
             border-radius: 12px; padding: 14px 16px;
+            transition: opacity 0.3s ease, border-color 0.3s ease;
+        }
+        .p2p-box.p2p-locked {
+            opacity: 0.45;
+            cursor: not-allowed;
         }
         .p2p-head {
             display: flex; align-items: center; gap: 12px;
             cursor: pointer; user-select: none;
         }
+        .p2p-box.p2p-locked .p2p-head {
+            cursor: not-allowed;
+            pointer-events: none;
+        }
         .p2p-head input[type="checkbox"] {
             width: 18px; height: 18px; accent-color: #ff3333; cursor: pointer;
+        }
+        .p2p-head input[type="checkbox"]:disabled {
+            cursor: not-allowed;
         }
         .p2p-detail {
             margin-top: 10px; padding: 10px;
@@ -175,7 +183,16 @@
         .p2p-detail p { font-size: 0.82em; color: #999; margin: 3px 0; }
         .p2p-detail .w { color: #cc8855; font-size: 0.78em; }
 
-        /* Button */
+        /* Shown only when no debrid selected */
+        .p2p-locked-msg {
+            margin-top: 10px; padding: 8px 10px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px; border-left: 3px solid rgba(255,255,255,0.12);
+            font-size: 0.80em; color: #666;
+            display: none;
+        }
+        .p2p-locked-msg.visible { display: block; }
+
         .gen-btn {
             width: 100%; background: #ff3333; color: #fff; border: none;
             padding: 15px; font-size: 1.02em; font-weight: 700;
@@ -187,7 +204,6 @@
         .gen-btn:hover { background: #e02020; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(255,51,51,0.30); }
         .gen-btn:disabled { background: #333; color: #666; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        /* Result */
         #result { display: none; margin-top: 26px; animation: fadeUp 0.4s ease; }
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(10px); }
@@ -209,7 +225,6 @@
         }
         .stremio-btn:hover { background: #7c3aed; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(139,92,246,0.35); }
 
-        /* Manual URL box */
         .manual { margin-top: 16px; }
         .manual-lbl { font-size: 0.78em; color: #666; font-weight: 600; margin-bottom: 6px; }
         .url-box {
@@ -323,14 +338,12 @@
             </a>
         </div>
 
-        <!-- Reconfigure banner - shown when visiting /<config>/configure -->
         <div class="reconfig-banner" id="reconfig-banner">
             <div class="rb-title"><i class="fas fa-pen-to-square"></i> Reconfiguring Addon</div>
             <div class="rb-text">Your existing settings have been loaded below. Make your changes and click <strong>Install</strong> to update.</div>
         </div>
 
         <form onsubmit="return false;">
-            <!-- Debrid Providers -->
             <div class="sec-head">
                 <i class="fas fa-bolt"></i> Debrid Providers
             </div>
@@ -343,7 +356,8 @@
                         <span class="prov-tags">
                             <span class="prov-tag recommended">★ Recommended</span>
                             <span class="prov-tag debrid">Debrid</span>
-                            <a href="https://torbox.app/subscription?referral=bfb5f62c-6a15-4fea-870c-babd8990f691" target="_blank" class="prov-tag signup" onclick="event.stopPropagation()" title="Using this link to sign up will give me and you 7 days free debrid per number of months purchased at initial signup ❤️">Sign Up ↗</a>                        </span>
+                            <a href="https://torbox.app/subscription?referral=bfb5f62c-6a15-4fea-870c-babd8990f691" target="_blank" class="prov-tag signup" onclick="event.stopPropagation()" title="Using this link to sign up will give me and you 7 days free debrid per number of months purchased at initial signup ❤️">Sign Up ↗</a>
+                        </span>
                     </div>
                     <div class="prov-body">
                         <label for="tb-key">API Key</label>
@@ -362,7 +376,8 @@
                         <span class="prov-name">Real-Debrid</span>
                         <span class="prov-tags">
                             <span class="prov-tag debrid">Debrid</span>
-                            <a href="http://real-debrid.com/?id=9851709" target="_blank" class="prov-tag signup" onclick="event.stopPropagation()" title="Using this link to sign up will give you 5 days free debrid ❤️">Sign Up ↗</a>                        </span>
+                            <a href="http://real-debrid.com/?id=9851709" target="_blank" class="prov-tag signup" onclick="event.stopPropagation()" title="Using this link to sign up will give you 5 days free debrid ❤️">Sign Up ↗</a>
+                        </span>
                     </div>
                     <div class="prov-body">
                         <label for="rd-key">API Token</label>
@@ -374,18 +389,44 @@
                         <div class="vld" id="rd-vld"></div>
                     </div>
                 </div>
+                <!-- AllDebrid -->
+                <div class="prov" id="ad-card">
+                    <div class="prov-head" onclick="tog('ad')">
+                        <input type="checkbox" id="ad-on" onclick="event.stopPropagation();tog('ad')">
+                        <span class="prov-name">AllDebrid</span>
+                        <span class="prov-tags">
+                            <span class="prov-tag debrid">Debrid</span>
+                            <a href="https://alldebrid.com/register/?lang=en" target="_blank" class="prov-tag signup" onclick="event.stopPropagation()" title="Sign up for AllDebrid">Sign Up ↗</a>
+                        </span>
+                    </div>
+                    <div class="prov-body">
+                        <label for="ad-key">API Key</label>
+                        <div class="iw">
+                            <input type="password" id="ad-key" placeholder="Enter AllDebrid API key" autocomplete="off">
+                            <button type="button" class="eye" onclick="toggleVis('ad-key',this)"><i class="fas fa-eye"></i></button>
+                        </div>
+                        <div class="hint">Get your key from <a href="https://alldebrid.com/apikeys" target="_blank">alldebrid.com/apikeys</a></div>
+                        <div class="vld" id="ad-vld"></div>
+                    </div>
+                </div>
             </div>
 
-            <!-- P2P -->
             <div class="sec-head">
                 <i class="fas fa-circle-nodes"></i> P2P Backup Streams
             </div>
-            <div class="p2p-box">
-                <div class="p2p-head" onclick="document.getElementById('p2p-on').click()">
-                    <input type="checkbox" id="p2p-on" checked onclick="event.stopPropagation()">
+            <div class="p2p-box p2p-locked" id="p2p-box">
+                <div class="p2p-head" onclick="handleP2PClick()">
+                    <input type="checkbox" id="p2p-on" disabled onclick="event.stopPropagation()">
                     <span class="prov-name">Enable P2P streams</span>
+                    <span style="margin-left:auto; font-size:0.72em; color:#555; font-weight:600; text-transform:uppercase; letter-spacing:0.3px;">Backup only</span>
                 </div>
-                <div class="p2p-detail">
+                <!-- Shown only when no debrid is active -->
+                <div class="p2p-locked-msg visible" id="p2p-locked-msg">
+                    <i class="fas fa-lock" style="margin-right:5px;"></i>
+                    Select a debrid provider above to enable P2P as a backup option.
+                </div>
+                <!-- Shown once a debrid is active -->
+                <div class="p2p-detail" id="p2p-detail" style="display:none;">
                     <p><i class="fas fa-info-circle" style="color:#ffaa44;margin-right:4px"></i>
                         P2P streams appear alongside debrid as a fallback option.</p>
                     <p class="w"><i class="fas fa-exclamation-triangle" style="margin-right:4px"></i>
@@ -398,7 +439,6 @@
             </button>
         </form>
 
-        <!-- Result -->
         <div id="result">
             <div class="res-box">
                 <div class="res-title"><i class="fas fa-check-circle" style="margin-right:5px"></i> Addon Ready!</div>
@@ -417,8 +457,9 @@
                 <div class="info-bx">
                     <div class="info-bx-t"><i class="fas fa-info-circle"></i> Stream Types</div>
                     <ul>
-                        <li><strong>⚡ [TB]</strong> - TorBox cached - instant playback</li>
-                        <li><strong>⚡ [RD]</strong> - Real-Debrid cached - instant playback</li>
+                        <li><strong>⚡ [TorBox]</strong> - Cached - instant playback</li>
+                        <li><strong>[RealDebrid]</strong> - Possibly cached - playback availability may vary</li>
+                        <li><strong>[AllDebrid]</strong> - Possibly cached - playback availability may vary</li>
                         <li><strong>🔗 [P2P]</strong> - Peer-to-peer fallback - speed varies</li>
                     </ul>
                 </div>
@@ -447,9 +488,39 @@
 <script>
 const B = window.location.origin;
 
-// ================================================================
-// Parse config from URL path (for /<config>/configure reconfiguration)
-// ================================================================
+function anyDebridActive() {
+    return document.getElementById('tb-on').checked ||
+           document.getElementById('rd-on').checked ||
+           document.getElementById('ad-on').checked;
+}
+
+function updateP2PAvailability() {
+    const unlocked = anyDebridActive();
+    const box      = document.getElementById('p2p-box');
+    const cb       = document.getElementById('p2p-on');
+    const lockedMsg = document.getElementById('p2p-locked-msg');
+    const detail    = document.getElementById('p2p-detail');
+
+    if (unlocked) {
+        box.classList.remove('p2p-locked');
+        cb.disabled = false;
+        lockedMsg.classList.remove('visible');
+        detail.style.display = 'block';
+    } else {
+        box.classList.add('p2p-locked');
+        cb.disabled = true;
+        cb.checked  = false;   // force off when no debrid selected
+        lockedMsg.classList.add('visible');
+        detail.style.display = 'none';
+    }
+}
+
+// Intercept clicks on the P2P row when locked
+function handleP2PClick() {
+    if (!anyDebridActive()) return;
+    const cb = document.getElementById('p2p-on');
+    cb.checked = !cb.checked;
+}
 
 function getConfigFromPath() {
     const path = window.location.pathname;
@@ -490,17 +561,27 @@ function applyConfigFromURL() {
         setTimeout(() => validateKey('rd', cfg.debrid.rd.apiKey), 500);
     }
 
+    if (cfg.debrid && cfg.debrid.ad && cfg.debrid.ad.apiKey) {
+        document.getElementById('ad-on').checked = true;
+        document.getElementById('ad-card').classList.add('on');
+        document.getElementById('ad-key').value = cfg.debrid.ad.apiKey;
+        setTimeout(() => validateKey('ad', cfg.debrid.ad.apiKey), 700);
+    }
+
+    // Restore P2P only after debrid state is applied, and only if a debrid provider was saved
     if (cfg.enableP2P !== undefined) {
-        document.getElementById('p2p-on').checked = cfg.enableP2P;
+        // Use a small delay so debrid checkboxes are set first
+        setTimeout(() => {
+            updateP2PAvailability();
+            if (anyDebridActive()) {
+                document.getElementById('p2p-on').checked = cfg.enableP2P;
+            }
+        }, 50);
     }
 }
 
-// ================================================================
-// Provider toggle
-// ================================================================
-
 function tog(id) {
-    const cb = document.getElementById(id + '-on');
+    const cb   = document.getElementById(id + '-on');
     const card = document.getElementById(id + '-card');
     if (document.activeElement !== cb) cb.checked = !cb.checked;
     if (cb.checked) {
@@ -509,11 +590,9 @@ function tog(id) {
     } else {
         card.classList.remove('on');
     }
+    // Update P2P availability whenever a debrid toggle changes
+    updateP2PAvailability();
 }
-
-// ================================================================
-// Eye toggle
-// ================================================================
 
 function toggleVis(id, btn) {
     const inp = document.getElementById(id);
@@ -522,11 +601,7 @@ function toggleVis(id, btn) {
     else { inp.type = 'password'; ico.className = 'fas fa-eye'; }
 }
 
-// ================================================================
-// Validation
-// ================================================================
-
-let tbTimer, rdTimer;
+let tbTimer, rdTimer, adTimer;
 
 document.getElementById('tb-key').addEventListener('input', function() {
     clearTimeout(tbTimer);
@@ -542,6 +617,14 @@ document.getElementById('rd-key').addEventListener('input', function() {
     const el = document.getElementById('rd-vld');
     if (!v) { el.className = 'vld'; el.textContent = ''; return; }
     rdTimer = setTimeout(() => validateKey('rd', v), 600);
+});
+
+document.getElementById('ad-key').addEventListener('input', function() {
+    clearTimeout(adTimer);
+    const v = this.value.trim();
+    const el = document.getElementById('ad-vld');
+    if (!v) { el.className = 'vld'; el.textContent = ''; return; }
+    adTimer = setTimeout(() => validateKey('ad', v), 600);
 });
 
 function validateKey(provider, key) {
@@ -560,7 +643,9 @@ function validateKey(provider, key) {
             el.className = 'vld ok';
             if (provider === 'tb') {
                 el.innerHTML = '<i class="fas fa-check-circle"></i> Valid - Plan: <b>' + (d.plan || 'Unknown') + '</b>';
-            } else {
+            } else if (provider === 'rd') {
+                el.innerHTML = '<i class="fas fa-check-circle"></i> Valid - ' + (d.username || '') + ' (' + (d.type || 'free') + ')';
+            } else if (provider === 'ad') {
                 el.innerHTML = '<i class="fas fa-check-circle"></i> Valid - ' + (d.username || '') + ' (' + (d.type || 'free') + ')';
             }
         } else {
@@ -574,21 +659,20 @@ function validateKey(provider, key) {
     });
 }
 
-// ================================================================
-// Generate
-// ================================================================
-
 function generate() {
-    const btn = document.getElementById('gen-btn');
+    const btn  = document.getElementById('gen-btn');
     const tbOn = document.getElementById('tb-on').checked;
     const rdOn = document.getElementById('rd-on').checked;
-    const p2p = document.getElementById('p2p-on').checked;
+    const adOn = document.getElementById('ad-on').checked;
+    const p2p  = document.getElementById('p2p-on').checked;
     const tbKey = document.getElementById('tb-key').value.trim();
     const rdKey = document.getElementById('rd-key').value.trim();
+    const adKey = document.getElementById('ad-key').value.trim();
 
     if (tbOn && !tbKey) { alert('Please enter your TorBox API key.'); return; }
     if (rdOn && !rdKey) { alert('Please enter your Real-Debrid API token.'); return; }
-    if (!tbOn && !rdOn && !p2p) { alert('Enable at least one provider or P2P.'); return; }
+    if (adOn && !adKey) { alert('Please enter your AllDebrid API key.'); return; }
+    if (!tbOn && !rdOn && !adOn && !p2p) { alert('Enable at least one provider or P2P.'); return; }
 
     btn.disabled = true;
     btn.innerHTML = '<span class="spin"></span> Generating...';
@@ -597,8 +681,9 @@ function generate() {
         const cfg = { debrid: {}, enableP2P: p2p };
         if (tbOn && tbKey) cfg.debrid.tb = { apiKey: tbKey };
         if (rdOn && rdKey) cfg.debrid.rd = { apiKey: rdKey };
+        if (adOn && adKey) cfg.debrid.ad = { apiKey: adKey };
 
-        const b64 = btoa(JSON.stringify(cfg));
+        const b64  = btoa(JSON.stringify(cfg));
         const mUrl = B + '/' + b64 + '/manifest.json';
         const sUrl = mUrl.replace(/^https?:\/\//, 'stremio://');
 
@@ -612,10 +697,6 @@ function generate() {
     }, 400);
 }
 
-// ================================================================
-// Copy
-// ================================================================
-
 function copyUrl(btn) {
     const inp = document.getElementById('man-url');
     navigator.clipboard.writeText(inp.value).then(() => {
@@ -627,10 +708,6 @@ function copyUrl(btn) {
         }, 2000);
     }).catch(() => { inp.select(); document.execCommand('copy'); });
 }
-
-// ================================================================
-// Card + disclaimer toggle
-// ================================================================
 
 function toggleCard() {
     const c = document.getElementById('card');
@@ -649,13 +726,11 @@ function toggleCard() {
         s.classList.remove('out');
     }
 }
+
 document.addEventListener('keydown', e => { if (e.key === 'Escape') toggleCard(); });
 
-// ================================================================
-// Init
-// ================================================================
-
 window.onload = function() {
+    updateP2PAvailability(); // set correct initial state
     applyConfigFromURL();
 };
 </script>
