@@ -801,7 +801,7 @@ CATALOG = {
     'series': [
         {
             'id': 'hpytt0202605', 'name': 'Sky F1 UHD',
-            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall from formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now uses TorBox, RD & ADd\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/c4CjHMNS/sf1uhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -811,92 +811,92 @@ CATALOG = {
         },
         {
             'id': 'hpytt0202615', 'name': 'F1TV UHD (English)',
-            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall from formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now uses TorBox, RD & ADd\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/43xW3VMN/f1tenglishuhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Formula Racing'], 'videos': [],
+            'genres': ['Motorsport'], 'videos': [],
             'videoFile': './ss/ssf4/6processed.csv'
         },
         {
             'id': 'hpytt0202614', 'name': 'F1TV UHD (Global)',
-            'description': 'The addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall at formulio.hayd.uk\nLanguages: 🇬🇧 🇩🇪 🇪🇸 🇫🇷 🇳🇱 🇵🇹 🇯🇵 🔇',
+            'description': 'The addon now uses TorBox, RD & AD\nRemove addon, reinstall at formulio.hayd.uk\nLanguages: 🇬🇧 🇩🇪 🇪🇸 🇫🇷 🇳🇱 🇵🇹 🇯🇵 🔇',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/1zBcw2pr/f1tenguhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Formula Racing'], 'videos': [],
+            'genres': ['Motorsport'], 'videos': [],
             'videoFile': './ss/ssm4/6processed.csv'
         },
         {
-            'id': 'hpytt0202606', 'name': 'Sky F1 UHD (alt)',
-            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall from formulio.hayd.uk',
+            'id': 'hpytt0202606', 'name': 'Sky F1 UHD (Alt)',
+            'description': 'IMPORTANT MESSAGE\nThe addon now uses TorBox, RD & ADd\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/QC73nRky/sf12uhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Formula Racing'], 'videos': [],
+            'genres': ['Motorsport'], 'videos': [],
             'videoFile': './smcg/sm4/6processed.csv'
         },
         {
             'id': 'hpytt0202601', 'name': 'Sky F1',
-            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall from formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now uses TorBox, RD & ADd\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/QM30pcw2/sf1.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Formula Racing'], 'videos': [],
+            'genres': ['Motorsport'], 'videos': [],
             'videoFile': './egor/ego/6processed.csv'
         },
         {
             'id': 'hpytt0202603', 'name': 'F1TV (English)',
-            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall from formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now uses TorBox, RD & ADd\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/pXf4j9GD/f1tveng.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Formula Racing'], 'videos': [],
+            'genres': ['Motorsport'], 'videos': [],
             'videoFile': './ss/ssf/6processed.csv'
         },
         {
             'id': 'hpytt0202604', 'name': 'F1TV (Global)',
-            'description': 'The addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall at formulio.hayd.uk\nLanguages: 🇬🇧 🇩🇪 🇪🇸 🇫🇷 🇳🇱 🇵🇹 🇯🇵 🔇',
+            'description': 'The addon now uses TorBox, RD & AD\nRemove addon, reinstall at formulio.hayd.uk\nLanguages: 🇬🇧 🇩🇪 🇪🇸 🇫🇷 🇳🇱 🇵🇹 🇯🇵 🔇',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/1zjjSDXZ/f1tvint.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Formula Racing'], 'videos': [],
+            'genres': ['Motorsport'], 'videos': [],
             'videoFile': './ss/ssm/6processed.csv'
         },
         {
-            'id': 'hpytt0202602', 'name': 'Sky F1 (alternative)',
-            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall from formulio.hayd.uk',
+            'id': 'hpytt0202602', 'name': 'Sky F1 (Alternative)',
+            'description': 'IMPORTANT MESSAGE\nThe addon now uses TorBox, RD & ADd\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/KYMnKTQb/sky2.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Formula Racing'], 'videos': [],
+            'genres': ['Motorsport'], 'videos': [],
             'videoFile': './smcg/smc/6processed.csv'
         },
         {
             'id': 'hpytt0202612', 'name': 'MotoGP 4K',
-            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall from formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now uses TorBox, RD & ADd\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/MHmvsGDg/motogp4k.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
             'background': 'https://i.postimg.cc/fR252zq3/motobackground.jpg',
-            'genres': ['Moto Racing'], 'videos': [],
+            'genres': ['Motorsport'], 'videos': [],
             'videoFile': './smcm/sm4/6processed.csv'
         },
         {
             'id': 'hpytt0202611', 'name': 'MotoGP',
-            'description': 'IMPORTANT MESSAGE\nThe addon now supports TorBox, RealDebrid & AllDebrid\nRemove addon, reinstall from formulio.hayd.uk',
+            'description': 'IMPORTANT MESSAGE\nThe addon now uses TorBox, RD & ADd\nRemove addon, reinstall from formulio.hayd.uk',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/3Rpyv1D8/motogphd.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
             'background': 'https://i.postimg.cc/fR252zq3/motobackground.jpg',
-            'genres': ['Moto Racing'], 'videos': [],
+            'genres': ['Motorsport'], 'videos': [],
             'videoFile': './smcm/smc/6processed.csv'
         },
         {
@@ -906,7 +906,7 @@ CATALOG = {
             'poster': 'https://i.postimg.cc/Pqcn5Vvx/sky2sd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Formula Racing'], 'videos': [],
+            'genres': ['Motorsport'], 'videos': [],
             'videoFile': './smcg/sms/6processed.csv'
         }
     ]
