@@ -810,7 +810,10 @@ CATALOG = {
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing', 'Motorsport'],
             'videos': [],
-            'videoFile': './egor/eg4/6processed.csv'
+            'videoFile': './egor/eg4/6processed.csv',
+            'behaviorHints': {
+            'hasScheduledVideos': True,
+            },
         },
         {
             'id': 'hpytt0202615',
@@ -823,7 +826,10 @@ CATALOG = {
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing', 'Motorsport'],
             'videos': [],
-            'videoFile': './ss/ssf4/6processed.csv'
+            'videoFile': './ss/ssf4/6processed.csv',
+            'behaviorHints': {
+            'hasScheduledVideos': True,
+            },
         },
         {
             'id': 'hpytt0202614', 
@@ -836,7 +842,10 @@ CATALOG = {
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing', 'Motorsport'],
             'videos': [],            
-            'videoFile': './ss/ssm4/6processed.csv'
+            'videoFile': './ss/ssm4/6processed.csv',
+            'behaviorHints': {
+            'hasScheduledVideos': True,
+            },
         },
         {
             'id': 'hpytt0202606', 
@@ -849,7 +858,10 @@ CATALOG = {
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing', 'Motorsport'],
             'videos': [],            
-            'videoFile': './smcg/sm4/6processed.csv'
+            'videoFile': './smcg/sm4/6processed.csv',
+            'behaviorHints': {
+            'hasScheduledVideos': True,
+            },
         },
         {
             'id': 'hpytt0202601', 
@@ -862,7 +874,10 @@ CATALOG = {
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing', 'Motorsport'],
             'videos': [],            
-            'videoFile': './egor/ego/6processed.csv'
+            'videoFile': './egor/ego/6processed.csv',
+            'behaviorHints': {
+            'hasScheduledVideos': True,
+            },
         },
         {
             'id': 'hpytt0202603', 
@@ -875,7 +890,10 @@ CATALOG = {
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing', 'Motorsport'],
             'videos': [],            
-            'videoFile': './ss/ssf/6processed.csv'
+            'videoFile': './ss/ssf/6processed.csv',
+            'behaviorHints': {
+            'hasScheduledVideos': True,
+            },
         },
         {
             'id': 'hpytt0202604', 
@@ -888,7 +906,10 @@ CATALOG = {
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing', 'Motorsport'],
             'videos': [],            
-            'videoFile': './ss/ssm/6processed.csv'
+            'videoFile': './ss/ssm/6processed.csv',
+            'behaviorHints': {
+            'hasScheduledVideos': True,
+            },
         },
         {
             'id': 'hpytt0202602', 
@@ -901,7 +922,10 @@ CATALOG = {
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing', 'Motorsport'],
             'videos': [],            
-            'videoFile': './smcg/smc/6processed.csv'
+            'videoFile': './smcg/smc/6processed.csv',
+            'behaviorHints': {
+            'hasScheduledVideos': True,
+            },
         },
         {
             'id': 'hpytt0202612', 
@@ -914,7 +938,10 @@ CATALOG = {
             'background': 'https://i.postimg.cc/fR252zq3/motobackground.jpg',
             'genres': ['Moto Racing', 'Motorsport'],
             'videos': [],            
-            'videoFile': './smcm/sm4/6processed.csv'
+            'videoFile': './smcm/sm4/6processed.csv',
+            'behaviorHints': {
+            'hasScheduledVideos': True,
+            },
         },
         {
             'id': 'hpytt0202611', 
@@ -927,7 +954,10 @@ CATALOG = {
             'background': 'https://i.postimg.cc/fR252zq3/motobackground.jpg',
             'genres': ['Moto Racing', 'Motorsport'],
             'videos': [],            
-            'videoFile': './smcm/smc/6processed.csv'
+            'videoFile': './smcm/smc/6processed.csv',
+            'behaviorHints': {
+            'hasScheduledVideos': True,
+            },
         },
         {
             'id': 'hpytt0202607', 
@@ -940,7 +970,10 @@ CATALOG = {
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing', 'Motorsport'],
             'videos': [],            
-            'videoFile': './smcg/sms/6processed.csv'
+            'videoFile': './smcg/sms/6processed.csv',
+            'behaviorHints': {
+            'hasScheduledVideos': True,
+            },
         }
     ]
 }
