@@ -55,6 +55,8 @@ def worker_abort(worker):
 def post_fork(server, worker):
     logger.warning(f"Worker {worker.pid} forked")
     try:
+        from formulio_addon import load_all_videos
+        load_all_videos()  # populate CATALOG immediately on worker start
         thread = Thread(target=run_scripts_in_loop, daemon=True)
         thread.start()
         logger.warning(f"Background script thread started in worker {worker.pid}")
