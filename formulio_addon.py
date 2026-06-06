@@ -171,7 +171,7 @@ class Config:
     RD_API_BASE = 'https://api.real-debrid.com/rest/1.0'
     AD_API_BASE = 'https://api.alldebrid.com/v4'
     AD_API_BASE_V41 = 'https://api.alldebrid.com/v4.1'
-    TB_STREAM_BUDGET = 6.0
+    TB_STREAM_BUDGET = 4.0   # was 6.0 — keep /stream well under Stremio's timeout
 
 
 config = Config()
@@ -800,113 +800,146 @@ MANIFEST = {
 CATALOG = {
     'series': [
         {
-            'id': 'hpytt0202605', 'name': 'Sky F1 UHD',
-            'description': 'IMPORTANT MESSAGE\nThe addon now uses TorBox, RD & ADd\nRemove addon, reinstall from formulio.hayd.uk',
+            'id': 'hpytt0202605',
+            'name': 'Sky F1 UHD',
+            'type': 'series',
+            'description': 'Commentary: 🇬🇧',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/c4CjHMNS/sf1uhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Formula Racing'], 'videos': [],
+            'genres': ['Formula Racing', 'Motorsport'],
+            'videos': [],
             'videoFile': './egor/eg4/6processed.csv'
         },
         {
-            'id': 'hpytt0202615', 'name': 'F1TV UHD (English)',
-            'description': 'IMPORTANT MESSAGE\nThe addon now uses TorBox, RD & ADd\nRemove addon, reinstall from formulio.hayd.uk',
+            'id': 'hpytt0202615',
+            'name': 'F1TV UHD (English)',
+            'type': 'series',
+            'description': 'Commentary: 🇬🇧',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/43xW3VMN/f1tenglishuhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Motorsport'], 'videos': [],
+            'genres': ['Formula Racing', 'Motorsport'],
+            'videos': [],
             'videoFile': './ss/ssf4/6processed.csv'
         },
         {
-            'id': 'hpytt0202614', 'name': 'F1TV UHD (Global)',
-            'description': 'The addon now uses TorBox, RD & AD\nRemove addon, reinstall at formulio.hayd.uk\nLanguages: 🇬🇧 🇩🇪 🇪🇸 🇫🇷 🇳🇱 🇵🇹 🇯🇵 🔇',
+            'id': 'hpytt0202614', 
+            'name': 'F1TV UHD (Global)',
+            'type': 'series',
+            'description': 'Commentary: 🇬🇧 🇩🇪 🇪🇸 🇫🇷 🇳🇱 🇵🇹 🇯🇵 🔇',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/1zBcw2pr/f1tenguhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Motorsport'], 'videos': [],
+            'genres': ['Formula Racing', 'Motorsport'],
+            'videos': [],            
             'videoFile': './ss/ssm4/6processed.csv'
         },
         {
-            'id': 'hpytt0202606', 'name': 'Sky F1 UHD (Alt)',
-            'description': 'IMPORTANT MESSAGE\nThe addon now uses TorBox, RD & ADd\nRemove addon, reinstall from formulio.hayd.uk',
+            'id': 'hpytt0202606', 
+            'name': 'Sky F1 UHD (Alt)',
+            'type': 'series',
+            'description': 'Commentary: 🇬🇧',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/QC73nRky/sf12uhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Motorsport'], 'videos': [],
+            'genres': ['Formula Racing', 'Motorsport'],
+            'videos': [],            
             'videoFile': './smcg/sm4/6processed.csv'
         },
         {
-            'id': 'hpytt0202601', 'name': 'Sky F1',
-            'description': 'IMPORTANT MESSAGE\nThe addon now uses TorBox, RD & ADd\nRemove addon, reinstall from formulio.hayd.uk',
+            'id': 'hpytt0202601', 
+            'name': 'Sky F1',
+            'type': 'series',
+            'description': 'Commentary: 🇬🇧',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/QM30pcw2/sf1.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Motorsport'], 'videos': [],
+            'genres': ['Formula Racing', 'Motorsport'],
+            'videos': [],            
             'videoFile': './egor/ego/6processed.csv'
         },
         {
-            'id': 'hpytt0202603', 'name': 'F1TV (English)',
-            'description': 'IMPORTANT MESSAGE\nThe addon now uses TorBox, RD & ADd\nRemove addon, reinstall from formulio.hayd.uk',
+            'id': 'hpytt0202603', 
+            'name': 'F1TV (English)',
+            'type': 'series',
+            'description': 'Commentary: 🇬🇧',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/pXf4j9GD/f1tveng.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Motorsport'], 'videos': [],
+            'genres': ['Formula Racing', 'Motorsport'],
+            'videos': [],            
             'videoFile': './ss/ssf/6processed.csv'
         },
         {
-            'id': 'hpytt0202604', 'name': 'F1TV (Global)',
-            'description': 'The addon now uses TorBox, RD & AD\nRemove addon, reinstall at formulio.hayd.uk\nLanguages: 🇬🇧 🇩🇪 🇪🇸 🇫🇷 🇳🇱 🇵🇹 🇯🇵 🔇',
+            'id': 'hpytt0202604', 
+            'name': 'F1TV (Global)',
+            'type': 'series',
+            'description': 'Commentary: 🇬🇧 🇩🇪 🇪🇸 🇫🇷 🇳🇱 🇵🇹 🇯🇵 🔇',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/1zjjSDXZ/f1tvint.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Motorsport'], 'videos': [],
+            'genres': ['Formula Racing', 'Motorsport'],
+            'videos': [],            
             'videoFile': './ss/ssm/6processed.csv'
         },
         {
-            'id': 'hpytt0202602', 'name': 'Sky F1 (Alternative)',
-            'description': 'IMPORTANT MESSAGE\nThe addon now uses TorBox, RD & ADd\nRemove addon, reinstall from formulio.hayd.uk',
+            'id': 'hpytt0202602', 
+            'name': 'Sky F1 (Alternative)',
+            'type': 'series',
+            'description': 'Commentary: 🇬🇧',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/KYMnKTQb/sky2.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Motorsport'], 'videos': [],
+            'genres': ['Formula Racing', 'Motorsport'],
+            'videos': [],            
             'videoFile': './smcg/smc/6processed.csv'
         },
         {
-            'id': 'hpytt0202612', 'name': 'MotoGP 4K',
-            'description': 'IMPORTANT MESSAGE\nThe addon now uses TorBox, RD & ADd\nRemove addon, reinstall from formulio.hayd.uk',
+            'id': 'hpytt0202612', 
+            'name': 'MotoGP 4K',
+            'type': 'series',
+            'description': 'Commentary: 🇬🇧',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/MHmvsGDg/motogp4k.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
             'background': 'https://i.postimg.cc/fR252zq3/motobackground.jpg',
-            'genres': ['Motorsport'], 'videos': [],
+            'genres': ['Moto Racing', 'Motorsport'],
+            'videos': [],            
             'videoFile': './smcm/sm4/6processed.csv'
         },
         {
-            'id': 'hpytt0202611', 'name': 'MotoGP',
-            'description': 'IMPORTANT MESSAGE\nThe addon now uses TorBox, RD & ADd\nRemove addon, reinstall from formulio.hayd.uk',
+            'id': 'hpytt0202611', 
+            'name': 'MotoGP',
+            'type': 'series',
+            'description': 'Commentary: 🇬🇧',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/3Rpyv1D8/motogphd.jpg',
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
             'background': 'https://i.postimg.cc/fR252zq3/motobackground.jpg',
-            'genres': ['Motorsport'], 'videos': [],
+            'genres': ['Moto Racing', 'Motorsport'],
+            'videos': [],            
             'videoFile': './smcm/smc/6processed.csv'
         },
         {
-            'id': 'hpytt0202607', 'name': 'Sky F1 SD',
+            'id': 'hpytt0202607', 
+            'name': 'Sky F1 SD',
+            'type': 'series',
             'description': 'This is Low Quality SD\nformulio@tuta.io',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/Pqcn5Vvx/sky2sd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
-            'genres': ['Motorsport'], 'videos': [],
+            'genres': ['Formula Racing', 'Motorsport'],
+            'videos': [],            
             'videoFile': './smcg/sms/6processed.csv'
         }
     ]
@@ -969,11 +1002,27 @@ def load_videos(filepath: str) -> list:
 
 
 def load_all_videos():
+    """Atomically reload videos. Never replaces a populated list with an empty
+    one (prevents Stremio caching a 'movie-like' meta with zero videos)."""
     for series in CATALOG['series']:
         video_file = series.get('videoFile')
-        if video_file:
-            series['videos'] = load_videos(video_file)
-            logger.info(f"Loaded {len(series['videos'])} videos for '{series['name']}' from {video_file}")
+        if not video_file:
+            continue
+        new_videos = load_videos(video_file)
+        if new_videos:
+            # Atomic swap — only replace when we actually have data
+            series['videos'] = new_videos
+            logger.info(f"Loaded {len(new_videos)} videos for '{series['name']}' from {video_file}")
+        else:
+            # Keep the previous good list rather than blanking it out
+            existing = series.get('videos') or []
+            if existing:
+                logger.warning(
+                    f"Reload for '{series['name']}' returned 0 videos — "
+                    f"KEEPING previous {len(existing)} videos (file: {video_file})"
+                )
+            else:
+                logger.warning(f"No videos for '{series['name']}' and none cached ({video_file})")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1099,9 +1148,17 @@ def run_pipeline_and_reload(directory: str) -> bool:
 
         mtime_after = os.path.getmtime(csv_path) if os.path.exists(csv_path) else 0
         if mtime_after != mtime_before:
-            logger.info(f"CSV updated: {csv_path} — reloading videos")
-            load_all_videos()
-            return True
+            # Verify the new CSV parses to >0 videos before reloading
+            parsed = load_videos(csv_path)
+            if parsed:
+                logger.info(f"CSV updated: {csv_path} ({len(parsed)} videos) — reloading")
+                load_all_videos()
+                return True
+            else:
+                logger.error(f"New CSV {csv_path} parsed to 0 videos — restoring backup")
+                if os.path.exists(backup_path):
+                    shutil.copy2(backup_path, csv_path)
+                return False
     else:
         if not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0:
             if os.path.exists(backup_path):
@@ -1667,6 +1724,21 @@ def _handle_meta(type: str, id: str):
     item = next((i for i in CATALOG.get(type, []) if i['id'] == id), None)
     if not item:
         abort(404)
+
+    videos = item.get('videos') or []
+
+    # CRITICAL: never serve a series meta with zero videos.
+    # Stremio caches meta aggressively; an empty videos list makes it render
+    # the item like a single movie (all episodes shown as flat streams).
+    # Returning a transient error forces Stremio to retry instead of caching
+    # a broken layout for hours/days.
+    if not videos:
+        logger.error(f"Meta for {id} has 0 videos — returning 503 to avoid bad cache")
+        resp = jsonify({'meta': {}, 'error': 'Catalog temporarily unavailable'})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        return resp, 503
+
     meta = {k: item[k] for k in item if k in OPTIONAL_META}
     meta.update({
         'id': item['id'], 'type': type, 'name': item['name'],
@@ -1675,10 +1747,17 @@ def _handle_meta(type: str, id: str):
         'videos': [{
             'id': f"{item['id']}:{v['season']}:{v['episode']}",
             'title': v['title'], 'thumbnail': v['thumbnail'],
-            'season': v['season'], 'episode': v['episode']
-        } for v in item['videos']]
+            'season': v['season'], 'episode': v['episode'],
+            'released': v.get('released', '2026-01-01T00:00:00.000Z'),
+        } for v in videos]
     })
-    return respond_with({'meta': meta})
+
+    resp = jsonify({'meta': meta})
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Headers'] = '*'
+    # Encourage Stremio to refresh meta periodically rather than caching for days
+    resp.headers['Cache-Control'] = 'public, max-age=300'
+    return resp
 
 
 def _resolve_tb_urls_with_budget(api_key: str, videos_to_resolve: list,
@@ -1776,18 +1855,16 @@ def _handle_stream(type: str, id: str, config_str):
     tb_resolved_urls: dict = {}
     tb_key: str = debrid_cfg.get('tb', {}).get('apiKey', '')
     if tb_key:
+        # Default every hash to "not cached" up front so a TB failure/timeout
+        # still produces ⏳ proxy entries instead of dropping TorBox entirely.
+        tb_cached = {h: False for h in hashes}
         try:
-            tb_cached = torbox_check_cached(tb_key, hashes)
+            checked = torbox_check_cached(tb_key, hashes)
+            for h in hashes:
+                tb_cached[h] = bool(checked.get(h, False))
             cached_count = sum(1 for v in tb_cached.values() if v)
             logger.info(f"TB cache: {cached_count}/{len(hashes)} cached")
 
-            # Guarantee every requested hash has an explicit bool entry
-            # so build_streams_for_video always sees a defined value.
-            for h in hashes:
-                if h not in tb_cached:
-                    tb_cached[h] = False
-
-            # Only attempt to resolve URLs for hashes that are actually cached
             videos_to_resolve = [
                 (v['infoHash'], v.get('fileIdx', 0), v.get('filename', ''))
                 for v in videos if tb_cached.get(v['infoHash'])
@@ -1797,10 +1874,8 @@ def _handle_stream(type: str, id: str, config_str):
                     tb_key, videos_to_resolve, user_ip, config.TB_STREAM_BUDGET
                 )
         except Exception as e:
-            logger.error(f"TB cache/resolve failed, skipping TB streams: {e}")
-            # Fall back: mark everything as not-cached so ⏳ entries are shown
-            tb_cached = {h: False for h in hashes}
-            tb_resolved_urls = {}
+            logger.error(f"TB cache/resolve failed, falling back to ⏳ entries: {e}")
+            # tb_cached already all-False, tb_resolved_urls already {} → ⏳ shown
 
     all_streams: list = []
     for video in videos:
@@ -1814,7 +1889,28 @@ def _handle_stream(type: str, id: str, config_str):
         except Exception as e:
             logger.error(f"Error building streams for {video.get('infoHash', '?')[:8]}: {e}")
 
-    return respond_with({'streams': all_streams})
+    # Safety net: if nothing was built (debrid all failed AND p2p disabled),
+    # still offer P2P so Stremio never shows a bare "no streams found".
+    if not all_streams:
+        logger.warning(f"No streams built for {id} — emitting P2P fallback")
+        for video in videos:
+            fallback = {
+                'title': build_stream_title(video, '🔗 [P2P]'),
+                'infoHash': video['infoHash'],
+                'behaviorHints': {'bingeGroup': f"p2p-{series['id']}-{season}"}
+            }
+            if video.get('fileIdx') is not None:
+                fallback['fileIdx'] = video.get('fileIdx', 0)
+            if video.get('filename'):
+                fallback['behaviorHints']['filename'] = video['filename']
+            all_streams.append(fallback)
+
+    resp = jsonify({'streams': all_streams})
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Headers'] = '*'
+    # Do NOT let Stremio cache a possibly-empty/transient stream list
+    resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    return resp
 
 
 # ═══════════════════════════════════════════════════════════════════════════
