@@ -12,6 +12,7 @@ import random
 import json
 import sys
 import io
+import argparse
 
 # Ensure stdout/stderr handle Unicode universally
 # (Windows defaults to cp1252; Docker/Linux may vary by locale)
@@ -39,6 +40,7 @@ with open(f1_config_path, 'r', encoding='utf-8') as f:
 csv_file_path = os.path.join(script_dir, 'f1db.csv')
 
 DEBUG = False
+DRY_RUN = False
 
 RATE_LIMIT_DELAY = 3
 MAX_RETRIES = 3
@@ -46,6 +48,11 @@ RETRY_DELAY = 5
 
 USER_AGENTS = {
     'bt4gpx': {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+        'Accept-Language': 'en-US,en;q=0.9',
+    },
+    'knaben': {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'application/rss+xml, application/xml, text/xml, */*',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -143,6 +150,9 @@ def get_existing_btihs(csv_file_path):
 def ensure_csv_format():
     """Ensure CSV has the correct format and headers."""
     if not os.path.isfile(csv_file_path):
+        if DRY_RUN:
+            print("[dry-run] CSV does not exist; would create it with headers.")
+            return
         with open(csv_file_path, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['title', 'link', 'guid', 'pubDate'])
@@ -155,6 +165,9 @@ def ensure_csv_format():
 
             if not headers or headers != ['title', 'link', 'guid', 'pubDate']:
                 print(f"Warning: CSV headers don't match expected format. Creating backup and fixing.")
+                if DRY_RUN:
+                    print("[dry-run] Skipping backup/repair of CSV.")
+                    return
                 backup_path = csv_file_path + '.backup'
                 shutil.copy2(csv_file_path, backup_path)
 
@@ -174,6 +187,9 @@ def ensure_csv_format():
 
     except Exception as e:
         print(f"Error checking CSV format: {e}")
+        if DRY_RUN:
+            print("[dry-run] Skipping error recovery of CSV.")
+            return
         if os.path.isfile(csv_file_path):
             backup_path = csv_file_path + '.error'
             try:
@@ -311,6 +327,77 @@ def process_bt4gpx_feed(feed, existing_btihs):
     return new_entries
 
 
+def process_knaben_feed(feed, existing_btihs):
+    """Process Knaben RSS feed entries. Magnet is in the link field (CDATA-wrapped)."""
+    new_entries = []
+
+    if not feed or not hasattr(feed, 'entries') or not feed.entries:
+        return new_entries
+
+    if DEBUG:
+        print(f"  Processing {len(feed.entries)} entries...")
+
+    for entry in feed.entries:
+        title = entry.get('title', '').strip()
+
+        if not matches_keywords(title) or year not in title:
+            continue
+
+        # Magnet link lives in the <link> field, but is wrapped in CDATA
+        # with surrounding whitespace. Strip it before use.
+        link = entry.get('link', '').strip()
+
+        # Fallback: dig the magnet out of the description if link isn't one
+        if not link.startswith('magnet:'):
+            content = None
+            if hasattr(entry, 'content') and entry.content:
+                content = entry.content[0].value
+            elif hasattr(entry, 'summary'):
+                content = entry.summary
+            elif hasattr(entry, 'description'):
+                content = entry.description
+
+            if content:
+                magnet_match = re.search(r'(magnet:\?xt=urn:btih:[^\s"<]+)', content)
+                if magnet_match:
+                    link = magnet_match.group(1).replace('&amp;', '&')
+
+        link = link.replace('&amp;', '&')
+
+        btih = extract_btih(link)
+
+        # Knaben also provides a clean 40-char hex guid we can fall back on
+        if not btih:
+            guid = entry.get('guid', '') or entry.get('id', '')
+            guid = guid.strip()
+            if re.match(r'^[a-fA-F0-9]{40}$', guid):
+                btih = guid.lower()
+
+        if not btih:
+            if DEBUG:
+                print(f"    x No btih found for '{title[:60]}'")
+            continue
+
+        if is_duplicate(btih, existing_btihs):
+            if DEBUG:
+                print(f"    x Duplicate (btih: {btih[:16]}...): '{title[:50]}'")
+            continue
+
+        pubDate = entry.get('published', entry.get('pubDate', entry.get('updated', '')))
+        if pubDate:
+            formatted_pubDate = format_pubdate(pubDate)
+        else:
+            formatted_pubDate = datetime.now(tz=timezone.utc).strftime('%d %b %Y %H:%M:%S %z')
+
+        new_entries.append([title, link, btih, formatted_pubDate])
+        existing_btihs.add(btih)
+
+        if DEBUG:
+            print(f"    + MATCH - {title[:50]} (btih: {btih[:16]}...)")
+
+    return new_entries
+
+
 def process_reddit_feed(feed, existing_btihs):
     """Process Reddit RSS feed entries and extract magnet links."""
     new_entries = []
@@ -374,6 +461,7 @@ def process_reddit_feed(feed, existing_btihs):
 
 FEED_PROCESSORS = {
     'bt4gpx': process_bt4gpx_feed,
+    'knaben': process_knaben_feed,
     'reddit': process_reddit_feed,
 }
 
@@ -408,10 +496,38 @@ def parse_feed_file(feed_file_path):
     return feeds
 
 
+def parse_args():
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description='RSS feed aggregator for F1 torrents (bt4gpx, knaben, reddit).'
+    )
+    parser.add_argument(
+        '--dry-run',
+        action='store_true',
+        help='Fetch and match feeds but do NOT write anything to the CSV.'
+    )
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='Enable verbose debug output.'
+    )
+    return parser.parse_args()
+
+
 def main():
     """Main script logic."""
+    global DEBUG, DRY_RUN
+
+    args = parse_args()
+    if args.debug:
+        DEBUG = True
+    if args.dry_run:
+        DRY_RUN = True
+
     print("RSS Feed Processor")
     print("-----------------")
+    if DRY_RUN:
+        print("*** DRY RUN MODE: no changes will be written to the CSV ***")
     print(f"Rate limit delay: {RATE_LIMIT_DELAY}s between requests")
     print(f"Max retries: {MAX_RETRIES}\n")
 
@@ -428,6 +544,7 @@ def main():
     print(f"Found {len(feeds)} feed(s) to process\n")
 
     total_new_entries = 0
+    per_source_counts = {}
     start_time = time.time()
 
     for idx, (feed_type, url) in enumerate(feeds, 1):
@@ -449,21 +566,37 @@ def main():
 
         new_entries = processor(feed, existing_btihs)
 
-        for entry in new_entries:
-            append_to_csv(entry, csv_file_path)
+        if not DRY_RUN:
+            for entry in new_entries:
+                append_to_csv(entry, csv_file_path)
 
         if new_entries:
-            print(f"  Found {len(new_entries)} new entries")
+            verb = "Would add" if DRY_RUN else "Found"
+            print(f"  {verb} {len(new_entries)} new entries")
+            if DRY_RUN:
+                for entry in new_entries:
+                    print(f"    -> {entry[0][:70]} (btih: {entry[2][:16]}...)")
             total_new_entries += len(new_entries)
+            per_source_counts[feed_type] = per_source_counts.get(feed_type, 0) + len(new_entries)
         else:
             print(f"  No new entries (checked {len(feed.entries)} items)")
+            per_source_counts.setdefault(feed_type, 0)
 
         print()
 
     elapsed_time = time.time() - start_time
 
     print(f"{'='*50}")
-    print(f"Summary: Added {total_new_entries} new entries to database")
+    if DRY_RUN:
+        print(f"DRY RUN Summary: Would have added {total_new_entries} new entries to database")
+    else:
+        print(f"Summary: Added {total_new_entries} new entries to database")
+
+    if per_source_counts:
+        print("Per-source breakdown:")
+        for src in sorted(per_source_counts):
+            print(f"  - {src}: {per_source_counts[src]}")
+
     print(f"Total entries in database: {len(existing_btihs)}")
     print(f"Time taken: {elapsed_time:.1f} seconds")
     print("Process completed successfully")
