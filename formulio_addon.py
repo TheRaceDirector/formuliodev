@@ -986,6 +986,10 @@ def respond_with(data: dict):
     resp = jsonify(data)
     resp.headers['Access-Control-Allow-Origin'] = '*'
     resp.headers['Access-Control-Allow-Headers'] = '*'
+
+    # Cache Control Headers to fix Nuvio's caching lag
+    # max-age=3600 (1 hour cache), stale-while-revalidate=1800 (allows 30 mins background refreshing)
+    resp.headers['Cache-Control'] = 'max-age=3600, stale-while-revalidate=1800'
     return resp
 
 
