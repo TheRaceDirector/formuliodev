@@ -44,14 +44,11 @@ _rd_cache_lock = threading.Lock()
 _ad_cache: dict = {}
 _ad_cache_lock = threading.Lock()
 
-_tb_url_cache: dict = {}
-_tb_url_cache_lock = threading.Lock()
+_pm_cache: dict = {}
+_pm_cache_lock = threading.Lock()
 
-_tb_hashcheck_cache: dict = {}
-_tb_hashcheck_lock = threading.Lock()
-
-_tb_torrentid_cache: dict = {}
-_tb_torrentid_lock = threading.Lock()
+_tb_cache: dict = {}
+_tb_cache_lock = threading.Lock()
 
 
 def rd_cache_get(cache_key: str):
@@ -96,69 +93,46 @@ def ad_cache_set(cache_key: str, result):
         _ad_cache[cache_key] = {'result': result, 'time': now()}
 
 
-def tb_url_cache_get(cache_key: str):
-    with _tb_url_cache_lock:
-        entry = _tb_url_cache.get(cache_key)
+def pm_cache_get(cache_key: str):
+    with _pm_cache_lock:
+        entry = _pm_cache.get(cache_key)
         if not entry:
             return None
-        if now() - entry['time'] < 300:
+        ttl = 60 if entry['result'] == '__UNAVAILABLE__' else 300
+        if now() - entry['time'] < ttl:
             return entry['result']
-        del _tb_url_cache[cache_key]
+        del _pm_cache[cache_key]
         return None
 
 
-def tb_url_cache_set(cache_key: str, result):
-    with _tb_url_cache_lock:
-        if len(_tb_url_cache) > 1000:
+def pm_cache_set(cache_key: str, result):
+    with _pm_cache_lock:
+        if len(_pm_cache) > 1000:
             cutoff = now() - 300
-            for k in [k for k, v in _tb_url_cache.items() if v['time'] < cutoff]:
-                del _tb_url_cache[k]
-        _tb_url_cache[cache_key] = {'result': result, 'time': now()}
+            for k in [k for k, v in _pm_cache.items() if v['time'] < cutoff]:
+                del _pm_cache[k]
+        _pm_cache[cache_key] = {'result': result, 'time': now()}
 
 
-def tb_hashcheck_get(key: str, info_hashes: list):
-    cached = {}
-    uncached = []
-    cutoff = now() - 60
-    with _tb_hashcheck_lock:
-        for h in info_hashes:
-            entry = _tb_hashcheck_cache.get((key, h))
-            if entry and entry['time'] > cutoff:
-                cached[h] = entry['result']
-            else:
-                uncached.append(h)
-    return cached, uncached
-
-
-def tb_hashcheck_set(key: str, results: dict):
-    t = now()
-    with _tb_hashcheck_lock:
-        if len(_tb_hashcheck_cache) > 2000:
-            cutoff = t - 60
-            for k in [k for k, v in _tb_hashcheck_cache.items() if v['time'] < cutoff]:
-                del _tb_hashcheck_cache[k]
-        for h, v in results.items():
-            _tb_hashcheck_cache[(key, h)] = {'result': v, 'time': t}
-
-
-def tb_torrentid_get(key: str, info_hash: str):
-    with _tb_torrentid_lock:
-        entry = _tb_torrentid_cache.get((key, info_hash))
+def tb_cache_get(cache_key: str):
+    with _tb_cache_lock:
+        entry = _tb_cache.get(cache_key)
         if not entry:
             return None
-        if now() - entry['time'] < 300:
+        ttl = 60 if entry['result'] == '__UNAVAILABLE__' else 300
+        if now() - entry['time'] < ttl:
             return entry['result']
-        del _tb_torrentid_cache[(key, info_hash)]
+        del _tb_cache[cache_key]
         return None
 
 
-def tb_torrentid_set(key: str, info_hash: str, torrent_id):
-    with _tb_torrentid_lock:
-        if len(_tb_torrentid_cache) > 2000:
+def tb_cache_set(cache_key: str, result):
+    with _tb_cache_lock:
+        if len(_tb_cache) > 1000:
             cutoff = now() - 300
-            for k in [k for k, v in _tb_torrentid_cache.items() if v['time'] < cutoff]:
-                del _tb_torrentid_cache[k]
-        _tb_torrentid_cache[(key, info_hash)] = {'result': torrent_id, 'time': now()}
+            for k in [k for k, v in _tb_cache.items() if v['time'] < cutoff]:
+                del _tb_cache[k]
+        _tb_cache[cache_key] = {'result': result, 'time': now()}
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -171,7 +145,7 @@ class Config:
     RD_API_BASE = 'https://api.real-debrid.com/rest/1.0'
     AD_API_BASE = 'https://api.alldebrid.com/v4'
     AD_API_BASE_V41 = 'https://api.alldebrid.com/v4.1'
-    TB_STREAM_BUDGET = 4.0   # was 6.0 — keep /stream well under Stremio's timeout
+    PM_API_BASE = 'https://www.premiumize.me/api'
 
 
 config = Config()
@@ -183,42 +157,6 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 # ═══════════════════════════════════════════════════════════════════════════
 # TorBox Helper Functions
 # ═══════════════════════════════════════════════════════════════════════════
-
-def torbox_check_cached(api_key: str, info_hashes: list) -> dict:
-    """Check which hashes are cached on TorBox. Returns dict {hash: bool}."""
-    if not info_hashes:
-        return {}
-    unique_hashes = list(set(info_hashes))
-    key_hash = hashlib.md5(api_key.encode()).hexdigest()[:8]
-
-    cached, uncached = tb_hashcheck_get(key_hash, unique_hashes)
-    if not uncached:
-        return cached
-
-    url = f"{config.TORBOX_API_BASE}/v1/api/torrents/checkcached"
-    headers = {'Authorization': f'Bearer {api_key}'}
-    params = [('hash', h) for h in uncached]
-    params.append(('format', 'object'))
-    params.append(('list_files', 'true'))
-    try:
-        resp = requests.get(url, headers=headers, params=params, timeout=6)
-        resp.raise_for_status()
-        data = resp.json()
-        fresh: dict = {}
-        if data.get('success') and data.get('data'):
-            cached_data = data['data']
-            fresh = {h: bool(cached_data.get(h) and len(cached_data[h]) > 0) for h in uncached}
-        else:
-            fresh = {h: False for h in uncached}
-        tb_hashcheck_set(key_hash, fresh)
-        cached.update(fresh)
-        return cached
-    except Exception as e:
-        logger.error(f"TorBox check cached error: {e}")
-        for h in uncached:
-            cached[h] = False
-        return cached
-
 
 def torbox_create_torrent(api_key: str, info_hash: str):
     url = f"{config.TORBOX_API_BASE}/v1/api/torrents/createtorrent"
@@ -296,22 +234,11 @@ def torbox_get_torrent_info(api_key: str, torrent_id):
 
 
 def torbox_get_stream_url(api_key: str, info_hash: str, file_idx, filename, user_ip=None):
-    """Full flow: find/create torrent -> get download URL. Uses resolved-URL cache."""
+    """Full flow: find/create torrent -> get download URL."""
     try:
-        key_hash = hashlib.md5(api_key.encode()).hexdigest()[:8]
-        cache_key = f"{key_hash}:{info_hash}:{file_idx}:{filename or ''}"
-
-        cached_url = tb_url_cache_get(cache_key)
-        if cached_url:
-            return cached_url
-
-        torrent_id = tb_torrentid_get(key_hash, info_hash)
+        torrent_id = torbox_find_torrent_by_hash(api_key, info_hash)
         if not torrent_id:
-            torrent_id = torbox_find_torrent_by_hash(api_key, info_hash)
-            if not torrent_id:
-                torrent_id = torbox_create_torrent(api_key, info_hash)
-            if torrent_id:
-                tb_torrentid_set(key_hash, info_hash, torrent_id)
+            torrent_id = torbox_create_torrent(api_key, info_hash)
 
         if not torrent_id:
             return None
@@ -327,10 +254,7 @@ def torbox_get_stream_url(api_key: str, info_hash: str, file_idx, filename, user
                 if file_idx is not None and file_idx < len(torrent_data['files']):
                     tb_file_id = torrent_data['files'][file_idx].get('id', 0)
 
-        url = torbox_get_download_link(api_key, torrent_id, tb_file_id, user_ip=user_ip)
-        if url:
-            tb_url_cache_set(cache_key, url)
-        return url
+        return torbox_get_download_link(api_key, torrent_id, tb_file_id, user_ip=user_ip)
     except Exception as e:
         logger.error(f"TorBox stream URL error for {info_hash}: {e}")
         return None
@@ -734,6 +658,74 @@ def ad_validate_key(api_key: str):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# Premiumize Helper Functions
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _pm_pick_content(content: list, file_idx, filename):
+    """Pick the best matching file entry from a directdl content[] array."""
+    if not content:
+        return None
+
+    if filename:
+        for c in content:
+            path = c.get('path', '')
+            if filename in path or filename == path.split('/')[-1]:
+                return c
+
+    video_exts = ('.mkv', '.mp4', '.avi', '.mov', '.m4v', '.ts', '.flv', '.wmv', '.webm')
+    videos = [c for c in content if c.get('path', '').lower().endswith(video_exts)]
+    candidates = videos if videos else content
+
+    if file_idx is not None and 0 <= file_idx < len(candidates):
+        return candidates[file_idx]
+
+    return max(candidates, key=lambda c: c.get('size', 0))
+
+
+def pm_get_stream_url(api_key: str, info_hash: str, file_idx, filename, user_ip=None):
+    """
+    Resolve a magnet to a direct download link via /api/transfer/directdl.
+    This generates instant links without storing the transfer in the cloud.
+    """
+    url = f"{config.PM_API_BASE}/transfer/directdl"
+    headers = {'Authorization': f'Bearer {api_key}'}
+    magnet = f"magnet:?xt=urn:btih:{info_hash}"
+    try:
+        resp = requests.post(url, headers=headers, data={'src': magnet}, timeout=20)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get('status') != 'success':
+            logger.info(
+                f"PM directdl {info_hash[:8]} not ready: "
+                f"{data.get('code')} - {data.get('message')}"
+            )
+            return None
+        content = data.get('content', [])
+        picked = _pm_pick_content(content, file_idx, filename)
+        if not picked:
+            return None
+        return picked.get('link')
+    except Exception as e:
+        logger.error(f"PM stream URL error for {info_hash}: {e}")
+        return None
+
+
+def pm_validate_key(api_key: str):
+    url = f"{config.PM_API_BASE}/account/info"
+    headers = {'Authorization': f'Bearer {api_key}'}
+    try:
+        resp = requests.get(url, headers=headers, timeout=8)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get('status') == 'success':
+            return data
+        return None
+    except Exception as e:
+        logger.error(f"PM validate key error: {e}")
+        return None
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Config Parsing & User IP
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -1043,11 +1035,9 @@ def load_all_videos():
             continue
         new_videos = load_videos(video_file)
         if new_videos:
-            # Atomic swap — only replace when we actually have data
             series['videos'] = new_videos
             logger.info(f"Loaded {len(new_videos)} videos for '{series['name']}' from {video_file}")
         else:
-            # Keep the previous good list rather than blanking it out
             existing = series.get('videos') or []
             if existing:
                 logger.warning(
@@ -1181,7 +1171,6 @@ def run_pipeline_and_reload(directory: str) -> bool:
 
         mtime_after = os.path.getmtime(csv_path) if os.path.exists(csv_path) else 0
         if mtime_after != mtime_before:
-            # Verify the new CSV parses to >0 videos before reloading
             parsed = load_videos(csv_path)
             if parsed:
                 logger.info(f"CSV updated: {csv_path} ({len(parsed)} videos) — reloading")
@@ -1279,19 +1268,41 @@ def build_stream_title(video: dict, provider_tag: str) -> str:
     return header
 
 
+def _build_debrid_proxy_stream(provider: str, tag: str, video: dict, series: dict,
+                               season: int, debrid_cfg: dict, enable_p2p: bool) -> dict:
+    """Build a lazy proxy stream entry for a debrid provider (tb/rd/ad/pm)."""
+    info_hash = video['infoHash']
+    filename = video.get('filename', '')
+    file_idx = video.get('fileIdx', 0)
+
+    config_data = json.dumps({'debrid': debrid_cfg, 'enableP2P': enable_p2p})
+    config_b64 = base64.b64encode(config_data.encode('utf-8')).decode('utf-8').rstrip('=')
+    encoded_filename = urllib.parse.quote(filename, safe='') if filename else ''
+    proxy_url = (
+        f"{request.host_url.rstrip('/')}/{provider}/play"
+        f"/{config_b64}/{info_hash}/{file_idx}/{encoded_filename}"
+    )
+    stream = {
+        'title': build_stream_title(video, tag),
+        'url': proxy_url,
+        'behaviorHints': {
+            'bingeGroup': f"{provider}-{series['id']}-{season}",
+            'notWebReady': False
+        }
+    }
+    if filename:
+        stream['behaviorHints']['filename'] = filename
+    return stream
+
+
 def build_streams_for_video(video: dict, series: dict, season: int, debrid_cfg: dict,
-                            enable_p2p: bool, tb_cached: dict, tb_resolved_urls: dict,
-                            user_ip: str) -> list:
+                            enable_p2p: bool) -> list:
     """
     Build stream entries for a single video.
 
-    TorBox logic:
-      - If cached AND URL resolved  → ⚡ [TorBox]  direct URL
-      - If NOT cached (or URL not yet resolved) → ⏳ [TorBox]  proxy URL
-        Clicking the ⏳ entry hits /tb/play which calls createtorrent to kick off the download.
-
-    RD / AD are always lazy via proxy.
-    P2P shown when enabled.
+    All debrid providers (TorBox, Real-Debrid, AllDebrid, Premiumize) are lazy:
+    they point at a proxy /<provider>/play endpoint that resolves the link when
+    the user presses play. P2P is shown when enabled.
     """
     streams: list = []
     info_hash: str = video['infoHash']
@@ -1299,89 +1310,24 @@ def build_streams_for_video(video: dict, series: dict, season: int, debrid_cfg: 
     file_idx: int = video.get('fileIdx', 0)
 
     # ── TorBox ──────────────────────────────────────────────────────────────
-    tb_key: str = debrid_cfg.get('tb', {}).get('apiKey', '')
-    if tb_key:
-        is_cached: bool = tb_cached.get(info_hash, False)
-        download_url = tb_resolved_urls.get(info_hash) if is_cached else None
-
-        if is_cached and download_url:
-            # Ready — serve direct URL
-            stream: dict = {
-                'title': build_stream_title(video, '⚡ [TorBox]'),
-                'url': download_url,
-                'behaviorHints': {
-                    'bingeGroup': f"tb-{series['id']}-{season}",
-                    'notWebReady': False
-                }
-            }
-            if filename:
-                stream['behaviorHints']['filename'] = filename
-            streams.append(stream)
-        else:
-            # Not cached / not yet ready — show ⏳ and point at proxy that
-            # will call createtorrent when the user clicks play.
-            config_data = json.dumps({'debrid': debrid_cfg, 'enableP2P': enable_p2p})
-            config_b64 = base64.b64encode(config_data.encode('utf-8')).decode('utf-8').rstrip('=')
-            encoded_filename = urllib.parse.quote(filename, safe='') if filename else ''
-            proxy_url = (
-                f"{request.host_url.rstrip('/')}/tb/play"
-                f"/{config_b64}/{info_hash}/{file_idx}/{encoded_filename}"
-            )
-            stream = {
-                'title': build_stream_title(video, '⏳ [TorBox]'),
-                'url': proxy_url,
-                'behaviorHints': {
-                    'bingeGroup': f"tb-{series['id']}-{season}",
-                    'notWebReady': False
-                }
-            }
-            if filename:
-                stream['behaviorHints']['filename'] = filename
-            streams.append(stream)
+    if debrid_cfg.get('tb', {}).get('apiKey', ''):
+        streams.append(_build_debrid_proxy_stream(
+            'tb', '⚡ [TorBox]', video, series, season, debrid_cfg, enable_p2p))
 
     # ── Real-Debrid ──────────────────────────────────────────────────────────
-    rd_key: str = debrid_cfg.get('rd', {}).get('apiKey', '')
-    if rd_key:
-        config_data = json.dumps({'debrid': debrid_cfg, 'enableP2P': enable_p2p})
-        config_b64 = base64.b64encode(config_data.encode('utf-8')).decode('utf-8').rstrip('=')
-        encoded_filename = urllib.parse.quote(filename, safe='') if filename else ''
-        proxy_url = (
-            f"{request.host_url.rstrip('/')}/rd/play"
-            f"/{config_b64}/{info_hash}/{file_idx}/{encoded_filename}"
-        )
-        stream = {
-            'title': build_stream_title(video, '⚡ [RealDebrid]'),
-            'url': proxy_url,
-            'behaviorHints': {
-                'bingeGroup': f"rd-{series['id']}-{season}",
-                'notWebReady': False
-            }
-        }
-        if filename:
-            stream['behaviorHints']['filename'] = filename
-        streams.append(stream)
+    if debrid_cfg.get('rd', {}).get('apiKey', ''):
+        streams.append(_build_debrid_proxy_stream(
+            'rd', '⚡ [RealDebrid]', video, series, season, debrid_cfg, enable_p2p))
 
     # ── AllDebrid ────────────────────────────────────────────────────────────
-    ad_key: str = debrid_cfg.get('ad', {}).get('apiKey', '')
-    if ad_key:
-        config_data = json.dumps({'debrid': debrid_cfg, 'enableP2P': enable_p2p})
-        config_b64 = base64.b64encode(config_data.encode('utf-8')).decode('utf-8').rstrip('=')
-        encoded_filename = urllib.parse.quote(filename, safe='') if filename else ''
-        proxy_url = (
-            f"{request.host_url.rstrip('/')}/ad/play"
-            f"/{config_b64}/{info_hash}/{file_idx}/{encoded_filename}"
-        )
-        stream = {
-            'title': build_stream_title(video, '⚡ [AllDebrid]'),
-            'url': proxy_url,
-            'behaviorHints': {
-                'bingeGroup': f"ad-{series['id']}-{season}",
-                'notWebReady': False
-            }
-        }
-        if filename:
-            stream['behaviorHints']['filename'] = filename
-        streams.append(stream)
+    if debrid_cfg.get('ad', {}).get('apiKey', ''):
+        streams.append(_build_debrid_proxy_stream(
+            'ad', '⚡ [AllDebrid]', video, series, season, debrid_cfg, enable_p2p))
+
+    # ── Premiumize ───────────────────────────────────────────────────────────
+    if debrid_cfg.get('pm', {}).get('apiKey', ''):
+        streams.append(_build_debrid_proxy_stream(
+            'pm', '⚡ [Premiumize]', video, series, season, debrid_cfg, enable_p2p))
 
     # ── P2P ─────────────────────────────────────────────────────────────────
     if enable_p2p:
@@ -1491,12 +1437,6 @@ def ad_play(config_str: str, info_hash: str, file_idx: int, filename: str = ''):
 @app.route('/tb/play/<config_str>/<info_hash>/<int:file_idx>/')
 @app.route('/tb/play/<config_str>/<info_hash>/<int:file_idx>')
 def tb_play(config_str: str, info_hash: str, file_idx: int, filename: str = ''):
-    """
-    Called when user clicks a ⏳ [TorBox] stream entry.
-    Attempts to find or create the torrent on TorBox (kicking off the download),
-    then redirects to the download URL if it is already ready, or serves the
-    placeholder video while TorBox downloads it.
-    """
     if request.method == 'HEAD':
         return '', 200
 
@@ -1512,31 +1452,64 @@ def tb_play(config_str: str, info_hash: str, file_idx: int, filename: str = ''):
     key_hash = hashlib.md5(tb_key.encode()).hexdigest()[:8]
     cache_key = f"{key_hash}:{info_hash}:{file_idx}:{filename}"
 
-    # Fast path — URL already resolved and cached
-    cached_url = tb_url_cache_get(cache_key)
-    if cached_url:
-        logger.info(f"TB url cache hit for {info_hash[:8]}, redirecting")
-        return redirect(cached_url)
+    cached = tb_cache_get(cache_key)
+    if cached == '__UNAVAILABLE__':
+        return send_from_directory(app.static_folder, 'rd_downloading.mp4')
+    if cached:
+        logger.info(f"TB cache hit for {info_hash[:8]}")
+        return redirect(cached)
 
-    # Full flow: find existing torrent or create one (triggering the download),
-    # then request the download link.
     download_url = torbox_get_stream_url(tb_key, info_hash, file_idx, filename or None,
                                          user_ip=user_ip)
-
     if download_url:
-        logger.info(f"TB resolved {info_hash[:8]}, redirecting")
+        tb_cache_set(cache_key, download_url)
+        logger.info(f"TB resolved {info_hash[:8]}")
         return redirect(download_url)
+    else:
+        tb_cache_set(cache_key, '__UNAVAILABLE__')
+        logger.info(f"TB not ready for {info_hash[:8]}, serving placeholder")
+        return send_from_directory(app.static_folder, 'rd_downloading.mp4')
 
-    # Not ready yet — torrent has been queued/created.
-    # Bust the hash-check cache so the next /stream call re-checks TB and may
-    # show ⚡ once the torrent is cached.
-    logger.info(f"TB {info_hash[:8]} download initiated / not ready, serving placeholder")
-    with _tb_hashcheck_lock:
-        stale = [k for k in _tb_hashcheck_cache if k[1] == info_hash]
-        for k in stale:
-            del _tb_hashcheck_cache[k]
 
-    return send_from_directory(app.static_folder, 'rd_downloading.mp4')
+# ═══════════════════════════════════════════════════════════════════════════
+# Proxy Endpoints — PM
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.route('/pm/play/<config_str>/<info_hash>/<int:file_idx>/<path:filename>')
+@app.route('/pm/play/<config_str>/<info_hash>/<int:file_idx>/')
+@app.route('/pm/play/<config_str>/<info_hash>/<int:file_idx>')
+def pm_play(config_str: str, info_hash: str, file_idx: int, filename: str = ''):
+    if request.method == 'HEAD':
+        return '', 200
+
+    cfg = parse_config(config_str)
+    pm_key: str = cfg.get('debrid', {}).get('pm', {}).get('apiKey', '')
+    if not pm_key:
+        return send_from_directory(app.static_folder, 'rd_downloading.mp4')
+
+    user_ip = get_user_ip()
+    if filename:
+        filename = urllib.parse.unquote(filename)
+
+    key_hash = hashlib.md5(pm_key.encode()).hexdigest()[:8]
+    cache_key = f"{key_hash}:{info_hash}:{file_idx}:{filename}"
+
+    cached = pm_cache_get(cache_key)
+    if cached == '__UNAVAILABLE__':
+        return send_from_directory(app.static_folder, 'rd_downloading.mp4')
+    if cached:
+        logger.info(f"PM cache hit for {info_hash[:8]}")
+        return redirect(cached)
+
+    download_url = pm_get_stream_url(pm_key, info_hash, file_idx, filename, user_ip=user_ip)
+    if download_url:
+        pm_cache_set(cache_key, download_url)
+        logger.info(f"PM resolved {info_hash[:8]}")
+        return redirect(download_url)
+    else:
+        pm_cache_set(cache_key, '__UNAVAILABLE__')
+        logger.info(f"PM not ready for {info_hash[:8]}, serving placeholder")
+        return send_from_directory(app.static_folder, 'rd_downloading.mp4')
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1606,6 +1579,30 @@ def validate_alldebrid():
         return respond_with({'success': False, 'error': 'Invalid API key'})
     except Exception as e:
         logger.error(f"AD validation proxy error: {e}")
+        return respond_with({'success': False, 'error': 'Validation failed'})
+
+
+@app.route('/api/validate/pm', methods=['POST'])
+def validate_premiumize():
+    try:
+        data = request.get_json(silent=True) or {}
+        api_key: str = data.get('apiKey', '').strip()
+        if not api_key:
+            return respond_with({'success': False, 'error': 'No API key provided'})
+        info = pm_validate_key(api_key)
+        if info:
+            premium_until = info.get('premium_until')
+            is_premium = bool(premium_until) and premium_until > now()
+            account_type = 'premium' if is_premium else 'free'
+            return respond_with({
+                'success': True,
+                'username': info.get('customer_id', ''),
+                'type': account_type,
+                'isPremium': is_premium
+            })
+        return respond_with({'success': False, 'error': 'Invalid API key'})
+    except Exception as e:
+        logger.error(f"PM validation proxy error: {e}")
         return respond_with({'success': False, 'error': 'Validation failed'})
 
 
@@ -1760,11 +1757,6 @@ def _handle_meta(type: str, id: str):
 
     videos = item.get('videos') or []
 
-    # CRITICAL: never serve a series meta with zero videos.
-    # Stremio caches meta aggressively; an empty videos list makes it render
-    # the item like a single movie (all episodes shown as flat streams).
-    # Returning a transient error forces Stremio to retry instead of caching
-    # a broken layout for hours/days.
     if not videos:
         logger.error(f"Meta for {id} has 0 videos — returning 503 to avoid bad cache")
         resp = jsonify({'meta': {}, 'error': 'Catalog temporarily unavailable'})
@@ -1788,62 +1780,8 @@ def _handle_meta(type: str, id: str):
     resp = jsonify({'meta': meta})
     resp.headers['Access-Control-Allow-Origin'] = '*'
     resp.headers['Access-Control-Allow-Headers'] = '*'
-    # Encourage Stremio to refresh meta periodically rather than caching for days
     resp.headers['Cache-Control'] = 'public, max-age=300'
     return resp
-
-
-def _resolve_tb_urls_with_budget(api_key: str, videos_to_resolve: list,
-                                  user_ip: str, budget_seconds: float) -> dict:
-    """Resolve TB stream URLs in parallel within a time budget."""
-    results: dict = {h: None for h, _, _ in videos_to_resolve}
-    if not videos_to_resolve:
-        return results
-
-    deadline = now() + budget_seconds
-    key_hash = hashlib.md5(api_key.encode()).hexdigest()[:8]
-    to_fetch: list = []
-
-    for info_hash, file_idx, filename in videos_to_resolve:
-        cache_key = f"{key_hash}:{info_hash}:{file_idx}:{filename or ''}"
-        cached = tb_url_cache_get(cache_key)
-        if cached:
-            results[info_hash] = cached
-        else:
-            to_fetch.append((info_hash, file_idx, filename))
-
-    if not to_fetch:
-        return results
-
-    def worker(info_hash: str, file_idx, filename):
-        try:
-            return info_hash, torbox_get_stream_url(api_key, info_hash, file_idx,
-                                                     filename, user_ip=user_ip)
-        except Exception as e:
-            logger.error(f"TB worker error for {info_hash[:8]}: {e}")
-            return info_hash, None
-
-    max_workers = min(8, len(to_fetch))
-    with ThreadPoolExecutor(max_workers=max_workers) as ex:
-        futures = [ex.submit(worker, h, idx, fn) for h, idx, fn in to_fetch]
-        for fut in as_completed(futures):
-            remaining = deadline - now()
-            if remaining <= 0:
-                logger.warning(
-                    f"TB resolve budget exceeded — "
-                    f"{sum(1 for v in results.values() if v)}/{len(videos_to_resolve)} resolved"
-                )
-                for f in futures:
-                    if not f.done():
-                        f.cancel()
-                break
-            try:
-                info_hash, url = fut.result(timeout=remaining)
-                results[info_hash] = url
-            except Exception as e:
-                logger.error(f"TB future result error: {e}")
-
-    return results
 
 
 def _handle_stream(type: str, id: str, config_str):
@@ -1856,8 +1794,6 @@ def _handle_stream(type: str, id: str, config_str):
 
     if not debrid_cfg and not enable_p2p:
         enable_p2p = True
-
-    user_ip: str = get_user_ip()
 
     if ':' in id:
         try:
@@ -1881,48 +1817,16 @@ def _handle_stream(type: str, id: str, config_str):
     if not videos:
         abort(404)
 
-    hashes: list = list(set(v['infoHash'] for v in videos))
-
-    # ── TorBox: check cache status, resolve URLs for cached items ────────────
-    tb_cached: dict = {}
-    tb_resolved_urls: dict = {}
-    tb_key: str = debrid_cfg.get('tb', {}).get('apiKey', '')
-    if tb_key:
-        # Default every hash to "not cached" up front so a TB failure/timeout
-        # still produces ⏳ proxy entries instead of dropping TorBox entirely.
-        tb_cached = {h: False for h in hashes}
-        try:
-            checked = torbox_check_cached(tb_key, hashes)
-            for h in hashes:
-                tb_cached[h] = bool(checked.get(h, False))
-            cached_count = sum(1 for v in tb_cached.values() if v)
-            logger.info(f"TB cache: {cached_count}/{len(hashes)} cached")
-
-            videos_to_resolve = [
-                (v['infoHash'], v.get('fileIdx', 0), v.get('filename', ''))
-                for v in videos if tb_cached.get(v['infoHash'])
-            ]
-            if videos_to_resolve:
-                tb_resolved_urls = _resolve_tb_urls_with_budget(
-                    tb_key, videos_to_resolve, user_ip, config.TB_STREAM_BUDGET
-                )
-        except Exception as e:
-            logger.error(f"TB cache/resolve failed, falling back to ⏳ entries: {e}")
-            # tb_cached already all-False, tb_resolved_urls already {} → ⏳ shown
-
     all_streams: list = []
     for video in videos:
         try:
             all_streams.extend(
-                build_streams_for_video(
-                    video, series, season, debrid_cfg, enable_p2p,
-                    tb_cached, tb_resolved_urls, user_ip
-                )
+                build_streams_for_video(video, series, season, debrid_cfg, enable_p2p)
             )
         except Exception as e:
             logger.error(f"Error building streams for {video.get('infoHash', '?')[:8]}: {e}")
 
-    # Safety net: if nothing was built (debrid all failed AND p2p disabled),
+    # Safety net: if nothing was built (no debrid AND p2p disabled),
     # still offer P2P so Stremio never shows a bare "no streams found".
     if not all_streams:
         logger.warning(f"No streams built for {id} — emitting P2P fallback")
@@ -1941,7 +1845,6 @@ def _handle_stream(type: str, id: str, config_str):
     resp = jsonify({'streams': all_streams})
     resp.headers['Access-Control-Allow-Origin'] = '*'
     resp.headers['Access-Control-Allow-Headers'] = '*'
-    # Do NOT let Stremio cache a possibly-empty/transient stream list
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     return resp
 
