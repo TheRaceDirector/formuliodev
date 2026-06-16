@@ -81,6 +81,41 @@
             font-size: 0.82em; color: #bbb; line-height: 1.5;
         }
 
+        /* ── Sponsor Banner ───────────────────────────────────────────
+           To hide: add the `hidden` attribute to the .sponsor-bx div.
+           The [hidden] rule below ensures no gap or box is left behind.
+        ────────────────────────────────────────────────────────────── */
+        .sponsor-bx[hidden] { display: none; }
+        .sponsor-bx {
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(100,220,130,0.20);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-top: 20px;
+            text-align: left;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .sponsor-bx i {
+            color: #66cc88;
+            margin-top: 2px;
+            flex-shrink: 0;
+            font-size: 0.95em;
+        }
+        .sponsor-bx-text {
+            font-size: 0.82em;
+            color: #888;
+            line-height: 1.6;
+        }
+        .sponsor-bx-text strong { color: #aaa; }
+        .sponsor-bx-text a {
+            color: #66cc88;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .sponsor-bx-text a:hover { color: #88ffaa; text-decoration: underline; }
+
         .sec-head {
             display: flex; align-items: center; gap: 10px;
             border-bottom: 1px solid rgba(255,255,255,0.06);
@@ -344,6 +379,22 @@
         </div>
 
         <form onsubmit="return false;">
+
+            <!-- ═══════════════════════════════════════════════════════
+                 Sponsor Banner
+                 To hide with zero visual footprint, add the `hidden`
+                 attribute to this div:  <div class="sponsor-bx" hidden>
+            ═══════════════════════════════════════════════════════════ -->
+            <div class="sponsor-bx" id="sponsor-banner">
+                <i class="fas fa-heart"></i>
+                <div class="sponsor-bx-text">
+                    <strong>Big thanks to <a href="https://store.elfhosted.com/?utm_source=formulio&amp;utm_medium=landing&amp;utm_campaign=sponsor" target="_blank">ElfHosted</a></strong>
+                    for donating a server for this addon.<br>
+                    New to Stremio addons? Start with their <a href="https://stremio-addons-guide.elfhosted.com/?utm_source=formulio&amp;utm_medium=landing&amp;utm_campaign=guide" target="_blank">free addons guide ↗</a>.<br>
+                    Want managed addons of your own? Browse the <a href="https://store.elfhosted.com/product-category/stremio-addons/?utm_source=formulio&amp;utm_medium=landing&amp;utm_campaign=upgrade" target="_blank">Stremio addon catalogue ↗</a>.
+                </div>
+            </div>
+
             <div class="sec-head">
                 <i class="fas fa-bolt"></i> Debrid Providers
             </div>
