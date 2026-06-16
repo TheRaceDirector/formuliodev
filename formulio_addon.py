@@ -990,15 +990,45 @@ def respond_with(data: dict):
 
 
 def load_videos(filepath: str) -> list:
+    """
+    Load videos from a processed CSV.
+
+    Defensive guarantee: each (season, episode) slot is unique. If a malformed
+    CSV (e.g. a partial write, or a merger regression) contains two rows with
+    the same (season, episode), the FIRST one wins and the duplicate is logged
+    and dropped. This prevents Stremio from showing one episode in the meta
+    while resolving the stream of a different file, which would make the
+    displayed episode and the played content disagree.
+    """
     videos: list = []
+    seen_slots: dict = {}          # (season, episode) -> title (for logging)
+    duplicate_slots = 0
+
     try:
         with open(filepath, 'r', newline='') as f:
             reader = csv.DictReader(f)
             for row in reader:
+                try:
+                    season = int(row['season'].strip())
+                    episode = int(row['episode'].strip())
+                except (ValueError, KeyError):
+                    logger.error(f"Bad season/episode in {filepath}: {row}")
+                    continue
+
+                slot = (season, episode)
+                if slot in seen_slots:
+                    duplicate_slots += 1
+                    logger.error(
+                        f"Duplicate (S{season}E{episode}) in {filepath}: "
+                        f"'{row.get('title', '').strip()}' clashes with "
+                        f"'{seen_slots[slot]}' — keeping first, dropping this one"
+                    )
+                    continue
+
                 video_obj: dict = {
                     'id': row['series_id'].strip(),
-                    'season': int(row['season'].strip()),
-                    'episode': int(row['episode'].strip()),
+                    'season': season,
+                    'episode': episode,
                     'title': row['title'].strip(),
                     'thumbnail': row['thumbnail'].strip(),
                     'infoHash': row['infoHash'].strip(),
@@ -1015,8 +1045,17 @@ def load_videos(filepath: str) -> list:
                 filename = row.get('filename', '').strip()
                 if filename:
                     video_obj['filename'] = filename
+
+                seen_slots[slot] = video_obj['title']
                 videos.append(video_obj)
+
         videos.sort(key=lambda v: (v['season'], v['episode']))
+
+        if duplicate_slots:
+            logger.warning(
+                f"{filepath}: dropped {duplicate_slots} duplicate "
+                f"(season, episode) row(s) during load"
+            )
     except FileNotFoundError:
         logger.warning(f"CSV not found: {filepath}")
     except (ValueError, KeyError) as e:
