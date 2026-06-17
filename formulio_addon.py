@@ -50,6 +50,25 @@ _pm_cache_lock = threading.Lock()
 _tb_cache: dict = {}
 _tb_cache_lock = threading.Lock()
 
+_oc_cache: dict = {}
+_oc_cache_lock = threading.Lock()
+
+_oc_requestid_cache: dict = {}
+_oc_requestid_lock = threading.Lock()
+
+_oc_inflight_locks: dict = {}
+_oc_inflight_locks_guard = threading.Lock()
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Sentinels
+# ═══════════════════════════════════════════════════════════════════════════
+
+OC_PENDING = '__PENDING__'
+OC_ERROR = '__ERROR__'
+OC_CANCELED = '__CANCELED__'
+OC_UNAVAILABLE = '__UNAVAILABLE__'
+OC_REQ_NONE = '__NONE__'
+OC_CACHED = "__CACHED__"
 
 def rd_cache_get(cache_key: str):
     with _rd_cache_lock:
@@ -134,6 +153,69 @@ def tb_cache_set(cache_key: str, result):
                 del _tb_cache[k]
         _tb_cache[cache_key] = {'result': result, 'time': now()}
 
+def oc_cache_get(cache_key: str):
+    with _oc_cache_lock:
+        entry = _oc_cache.get(cache_key)
+        if not entry:
+            return None
+
+        result = entry['result']
+        age = now() - entry['time']
+
+        if result == '__PENDING__':
+            ttl = 15
+        elif result in ('__ERROR__', '__CANCELED__'):
+            ttl = 20
+        elif result == '__UNAVAILABLE__':
+            ttl = 60
+        else:
+            ttl = 300
+
+        if age < ttl:
+            return result
+
+        del _oc_cache[cache_key]
+        return None
+
+def oc_cache_set(cache_key: str, result):
+    with _oc_cache_lock:
+        if len(_oc_cache) > 1000:
+            cutoff = now() - 300
+            for k in [k for k, v in _oc_cache.items() if v['time'] < cutoff]:
+                del _oc_cache[k]
+        _oc_cache[cache_key] = {'result': result, 'time': now()}
+
+def oc_requestid_cache_get(key: str):
+    with _oc_requestid_lock:
+        entry = _oc_requestid_cache.get(key)
+        if not entry:
+            return None
+
+        result = entry['result']
+        age = now() - entry['time']
+
+        if result == OC_REQ_NONE:
+            ttl = 20
+        else:
+            ttl = 3600
+
+        if age < ttl:
+            return result
+
+        del _oc_requestid_cache[key]
+        return None
+
+def oc_requestid_cache_set(key: str, result):
+    with _oc_requestid_lock:
+        if len(_oc_requestid_cache) > 1000:
+            cutoff = now() - 3600
+            for k in [k for k, v in _oc_requestid_cache.items() if v['time'] < cutoff]:
+                del _oc_requestid_cache[k]
+        _oc_requestid_cache[key] = {'result': result, 'time': now()}
+
+def oc_requestid_cache_delete(key: str):
+    with _oc_requestid_lock:
+        _oc_requestid_cache.pop(key, None)
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Config
@@ -146,6 +228,7 @@ class Config:
     AD_API_BASE = 'https://api.alldebrid.com/v4'
     AD_API_BASE_V41 = 'https://api.alldebrid.com/v4.1'
     PM_API_BASE = 'https://www.premiumize.me/api'
+    OC_API_BASE = 'https://offcloud.com/api'
 
 
 config = Config()
@@ -153,7 +236,413 @@ config = Config()
 app = Flask(__name__, static_folder='static')
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
+# ═══════════════════════════════════════════════════════════════════════════
+# Offcloud Helper Functions
+# ═══════════════════════════════════════════════════════════════════════════
 
+def oc_add_magnet(api_key: str, info_hash: str):
+    url = f"{config.OC_API_BASE}/cloud"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {"url": f"magnet:?xt=urn:btih:{info_hash}"}
+    
+    try:
+        resp = requests.post(url, headers=headers, json=payload, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        
+        if "error" in data:
+            logger.error(f"OC add magnet error: {data['error']}")
+            return None
+            
+        return data
+    except Exception as e:
+        logger.error(f"OC add magnet error: {e}")
+        return None
+
+def oc_get_magnet_status(api_key: str, request_id: str):
+    url = f"{config.OC_API_BASE}/cloud/status"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {"requestId": request_id}
+    
+    try:
+        resp = requests.post(url, headers=headers, json=payload, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        
+        if isinstance(data, dict) and 'error' in data:
+            logger.error(f"OC status error: {data['error']}")
+            return None
+            
+        if isinstance(data, dict) and isinstance(data.get('status'), dict):
+            return data['status']
+            
+        return data
+    except Exception as e:
+        logger.error(f"OC get magnet status error: {e}")
+        return None
+
+def oc_explore_archive(api_key: str, request_id: str):
+    url = f"{config.OC_API_BASE}/cloud/explore/{request_id}"
+    headers = {"Authorization": f"Bearer {api_key}"}
+    params = {"format": "detailed"}
+    
+    try:
+        resp = requests.get(url, headers=headers, params=params, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        
+        if isinstance(data, dict) and "error" in data:
+            logger.error(f"OC explore archive error: {data['error']}")
+            return None
+            
+        if isinstance(data, dict) and "files" in data:
+            return data["files"]
+            
+        return data
+    except Exception as e:
+        logger.error(f"OC explore archive error: {e}")
+        return None
+
+def _oc_pick_file_link(items: list, file_idx, filename):
+    if not isinstance(items, list) or not items:
+        return None
+
+    normalized_filename = urllib.parse.unquote(filename).strip().lower() if filename else None
+
+    def item_url(item):
+        value = item.get("url")
+        return value if isinstance(value, str) and value else None
+
+    def item_name(item):
+        return str(item.get("filename") or item.get("fileName") or item.get("serverFileName") or item.get("name") or "").strip().lower()
+
+    def item_path(item):
+            path = item.get("path")
+            if isinstance(path, str) and path:
+                return path.strip("/").lower()
+                
+            folder = item.get("folder") or []
+            if isinstance(folder, list):
+                folder_path = "/".join(str(p).strip() for p in folder if p)
+            else:
+                folder_path = str(folder).strip()
+            name = item_name(item)
+            return f"{folder_path}/{name}".strip("/").lower()
+
+    if normalized_filename:
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            name = item_name(item)
+            path = item_path(item)
+            if normalized_filename in name or normalized_filename in path:
+                picked = item_url(item)
+                if picked:
+                    return picked
+
+    if file_idx is not None and 0 <= file_idx < len(items):
+        item = items[file_idx]
+        if isinstance(item, dict):
+            picked = item_url(item)
+            if picked:
+                return picked
+
+    video_exts = ('.mkv', '.mp4', '.avi', '.mov', '.m4v', '.ts', '.flv', '.wmv', '.webm')
+    video_items = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        name = item_name(item)
+        if name.endswith(video_exts):
+            video_items.append(item)
+
+    candidates = video_items if video_items else [item for item in items if isinstance(item, dict)]
+
+    if not candidates:
+        return None
+
+    biggest = max(candidates, key=lambda item: int(item.get("size") or 0))
+    return item_url(biggest)
+
+def oc_cache_info(api_key: str, info_hash: str, include_files: bool = False):
+    url = f"{config.OC_API_BASE}/cache/info"
+    magnet = f"magnet:?xt=urn:btih:{(info_hash or '').strip().lower()}"
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "urls": [magnet],
+        "includeFiles": bool(include_files),
+    }
+
+    try:
+        resp = requests.post(url, headers=headers, json=payload, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+
+        if isinstance(data, list) and data:
+            item = data[0]
+            if isinstance(item, dict):
+                cached = item.get("cached")
+                if isinstance(cached, str):
+                    item["cached"] = cached.strip().lower() in ("true", "1", "yes")
+                return item
+
+        return None
+    except Exception as e:
+        logger.warning(f"OC cache info error for {info_hash[:8]}: {e}")
+        return None
+
+def oc_cache_download(api_key: str, info_hash: str):
+    url = f"{config.OC_API_BASE}/cache/download"
+    magnet = f"magnet:?xt=urn:btih:{(info_hash or '').strip().lower()}"
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "url": magnet,
+    }
+
+    try:
+        resp = requests.post(url, headers=headers, json=payload, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        return data if isinstance(data, list) else []
+    except Exception as e:
+        logger.warning(f"OC cache download error for {info_hash[:8]}: {e}")
+        return []
+
+def _oc_resolve_downloaded_response(api_key: str, info_hash: str, request_id: str, file_idx, filename):
+    status_data = oc_get_magnet_status(api_key, request_id)
+    if not status_data:
+        return OC_ERROR, None
+
+    status = (status_data.get("status") or "").lower()
+
+    if status == "downloaded":
+        cached_files = oc_cache_download(api_key, info_hash)
+        picked = _oc_pick_file_link(cached_files, file_idx, filename)
+        if isinstance(picked, str) and picked:
+            return picked, status
+
+        explored = oc_explore_archive(api_key, request_id)
+        picked = _oc_pick_file_link(explored, file_idx, filename)
+        if isinstance(picked, str) and picked:
+            return picked, status
+
+        direct_url = status_data.get("url")
+        if isinstance(direct_url, str) and direct_url:
+            return direct_url, status
+
+        logger.warning(f"OC downloaded but no playable link found for request_id={request_id}")
+        return OC_UNAVAILABLE, status
+
+    if status in ("created", "downloading", "queued", "processing", "uploading"):
+        return OC_PENDING, status
+
+    if status == "error":
+        return OC_ERROR, status
+
+    if status == "canceled":
+        return OC_CANCELED, status
+
+    return OC_UNAVAILABLE, status
+
+def _oc_get_request_id(api_key: str, info_hash: str, requestid_key: str, allow_lookup: bool):
+    request_id = None
+    info_hash = (info_hash or '').strip().lower()
+
+    cached_request_id = oc_requestid_cache_get(requestid_key)
+    if cached_request_id == OC_REQ_NONE:
+        logger.info(f"OC requestId none cache hit for {info_hash[:8]}")
+        return None
+    elif cached_request_id:
+        logger.info(f"OC requestId cache hit for {info_hash[:8]}")
+        return cached_request_id
+
+    cache_info = oc_cache_info(api_key, info_hash, include_files=True)
+    if cache_info:
+        logger.info(f"OC cache/info {info_hash[:8]} cached={cache_info.get('cached')}")
+
+    if isinstance(cache_info, dict) and cache_info.get("cached") is False:
+        oc_requestid_cache_set(requestid_key, OC_REQ_NONE)
+        return None
+
+    if isinstance(cache_info, dict):
+        request_id = cache_info.get("requestId") or cache_info.get("request_id")
+        if request_id:
+            oc_requestid_cache_set(requestid_key, request_id)
+            return request_id
+        elif cache_info.get("cached") is True:
+            oc_requestid_cache_set(requestid_key, OC_CACHED)
+            return OC_CACHED
+
+    if not allow_lookup:
+        return None
+
+    oc_requestid_cache_set(requestid_key, OC_REQ_NONE)
+    return None
+
+def _oc_handle_add_response(api_key: str, info_hash: str, requestid_key: str,
+                            added: dict, file_idx, filename, log_prefix: str = "OC added magnet"):
+    if not added:
+        return OC_ERROR, None
+
+    request_id = added.get("requestId")
+    status = (added.get("status") or "").lower()
+
+    if not request_id:
+        return OC_ERROR, None
+
+    oc_requestid_cache_set(requestid_key, request_id)
+    logger.info(f"{log_prefix} {info_hash[:8]} status={status}")
+
+    if status in ("created", "downloading", "queued"):
+        return OC_PENDING, status
+
+    if status == "error":
+        return OC_ERROR, status
+
+    if status == "canceled":
+        return OC_CANCELED, status
+
+    return _oc_resolve_downloaded_response(api_key, info_hash, request_id, file_idx, filename)
+
+def oc_get_stream_url(api_key: str, info_hash: str, file_idx, filename, user_ip=None):
+    hash_lock = None
+    created_lock = False
+    requestid_key = None
+
+    key_hash = hashlib.md5(api_key.encode()).hexdigest()[:8]
+    cache_key = f"{key_hash}:{info_hash}:{file_idx}:{filename}"
+    requestid_key = f"{key_hash}:{info_hash}:request_id"
+
+    with _oc_inflight_locks_guard:
+        hash_lock = _oc_inflight_locks.get(requestid_key)
+        if hash_lock is None:
+            hash_lock = threading.Lock()
+            _oc_inflight_locks[requestid_key] = hash_lock
+            created_lock = True
+
+    try:
+        with hash_lock:
+            cached = oc_cache_get(cache_key)
+            if cached:
+                if cached in (OC_PENDING, OC_ERROR, OC_CANCELED, OC_UNAVAILABLE):
+                    return None
+                return cached
+
+            request_id = _oc_get_request_id(api_key, info_hash, requestid_key, allow_lookup=False)
+
+            if request_id == OC_CACHED:
+                logger.info(f"OC magnet {info_hash[:8]} is cached (no requestId), using cache/download directly")
+                cached_files = oc_cache_download(api_key, info_hash)
+                picked = _oc_pick_file_link(cached_files, file_idx, filename)
+                if isinstance(picked, str) and picked:
+                    oc_cache_set(cache_key, picked)
+                    return picked
+                
+                request_id = None
+
+            if request_id and request_id != OC_REQ_NONE:
+                resolved, status = _oc_resolve_downloaded_response(
+                    api_key, info_hash, request_id, file_idx, filename
+                )
+
+                logger.info(f"OC magnet {info_hash[:8]} status={status}")
+
+                if isinstance(resolved, str) and resolved not in (OC_PENDING, OC_ERROR, OC_CANCELED, OC_UNAVAILABLE):
+                    oc_cache_set(cache_key, resolved)
+                    return resolved
+
+                if resolved in (OC_CANCELED, OC_ERROR):
+                    logger.info(
+                        f"OC magnet {info_hash[:8]} not recoverable from current request; clearing requestId and re-adding"
+                    )
+                    oc_requestid_cache_delete(requestid_key)
+
+                    resolved, status = _oc_handle_add_response(
+                        api_key,
+                        info_hash,
+                        requestid_key,
+                        oc_add_magnet(api_key, info_hash),
+                        file_idx,
+                        filename,
+                        log_prefix="OC re-added magnet"
+                    )
+
+                    logger.info(f"OC magnet {info_hash[:8]} post-readd status={status}")
+
+                    if isinstance(resolved, str) and resolved not in (OC_PENDING, OC_ERROR, OC_CANCELED, OC_UNAVAILABLE):
+                        oc_cache_set(cache_key, resolved)
+                        return resolved
+
+                if resolved in (OC_ERROR, OC_UNAVAILABLE, OC_CANCELED):
+                    oc_requestid_cache_delete(requestid_key)
+
+                if not resolved:
+                    resolved = OC_PENDING
+
+                oc_cache_set(cache_key, resolved)
+                return None
+
+        resolved, status = _oc_handle_add_response(
+            api_key,
+            info_hash,
+            requestid_key,
+            oc_add_magnet(api_key, info_hash),
+            file_idx,
+            filename,
+            log_prefix="OC added magnet"
+        )
+
+        logger.info(f"OC magnet {info_hash[:8]} status={status}")
+
+        if resolved in (OC_ERROR, OC_UNAVAILABLE, OC_CANCELED):
+            oc_requestid_cache_delete(requestid_key)
+
+        oc_cache_set(cache_key, resolved)
+        if resolved not in (OC_PENDING, OC_ERROR, OC_CANCELED, OC_UNAVAILABLE):
+            return resolved
+        return None
+
+    except Exception as e:
+        logger.error(f"OC stream URL error for {info_hash}: {e}")
+        return None
+
+    finally:
+        if created_lock and hash_lock is not None and requestid_key is not None:
+            with _oc_inflight_locks_guard:
+                if _oc_inflight_locks.get(requestid_key) is hash_lock:
+                    _oc_inflight_locks.pop(requestid_key, None)
+
+def oc_validate_key(api_key: str):
+    url = f"{config.OC_API_BASE}/account/info"
+    headers = {"Authorization": f"Bearer {api_key}"}
+    try:
+        resp = requests.get(url, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            data = resp.json()
+            return {
+                "email": data.get("email"),
+                "is_premium": data.get("is_premium"),
+                "can_download": data.get("can_download")
+            }
+        return False
+    except Exception as e:
+        logger.error(f"OC validate key error: {e}")
+        return False
+        
 # ═══════════════════════════════════════════════════════════════════════════
 # TorBox Helper Functions
 # ═══════════════════════════════════════════════════════════════════════════
@@ -992,7 +1481,6 @@ def respond_with(data: dict):
     resp.headers['Cache-Control'] = 'max-age=3600, stale-while-revalidate=1800'
     return resp
 
-
 def load_videos(filepath: str) -> list:
     """
     Load videos from a processed CSV.
@@ -1351,7 +1839,7 @@ def build_streams_for_video(video: dict, series: dict, season: int, debrid_cfg: 
     info_hash: str = video['infoHash']
     filename: str = video.get('filename', '')
     file_idx: int = video.get('fileIdx', 0)
-
+                                       
     # ── TorBox ──────────────────────────────────────────────────────────────
     if debrid_cfg.get('tb', {}).get('apiKey', ''):
         streams.append(_build_debrid_proxy_stream(
@@ -1371,6 +1859,28 @@ def build_streams_for_video(video: dict, series: dict, season: int, debrid_cfg: 
     if debrid_cfg.get('pm', {}).get('apiKey', ''):
         streams.append(_build_debrid_proxy_stream(
             'pm', '⚡ [Premiumize]', video, series, season, debrid_cfg, enable_p2p))
+
+    # ── Offcloud ────────────────────────────────────────────────────────────
+    oc_key: str = debrid_cfg.get('oc', {}).get('apiKey', '')
+    if oc_key:
+        config_data = json.dumps({'debrid': debrid_cfg, 'enableP2P': enable_p2p})
+        config_b64 = base64.b64encode(config_data.encode('utf-8')).decode('utf-8').rstrip('=')
+        encoded_filename = urllib.parse.quote(filename, safe='') if filename else ''
+        proxy_url = (
+            f"{request.host_url.rstrip('/')}/oc/play"
+            f"/{config_b64}/{info_hash}/{file_idx}/{encoded_filename}"
+        )
+        stream = {
+            'title': build_stream_title(video, '⚡ [Offcloud]'),
+            'url': proxy_url,
+            'behaviorHints': {
+                'bingeGroup': f"oc-{series['id']}-{season}",
+                'notWebReady': False
+            }
+        }
+        if filename:
+            stream['behaviorHints']['filename'] = filename
+        streams.append(stream)
 
     # ── P2P ─────────────────────────────────────────────────────────────────
     if enable_p2p:
@@ -1554,6 +2064,53 @@ def pm_play(config_str: str, info_hash: str, file_idx: int, filename: str = ''):
         logger.info(f"PM not ready for {info_hash[:8]}, serving placeholder")
         return send_from_directory(app.static_folder, 'rd_downloading.mp4')
 
+# ═══════════════════════════════════════════════════════════════════════════
+# Proxy Endpoints — OC
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.route('/oc/play/<config_str>/<info_hash>/<int:file_idx>/<path:filename>')
+@app.route('/oc/play/<config_str>/<info_hash>/<int:file_idx>/')
+@app.route('/oc/play/<config_str>/<info_hash>/<int:file_idx>')
+def oc_play(config_str: str, info_hash: str, file_idx: int, filename: str = ''):
+    if request.method == 'HEAD':
+        return '', 200
+
+    cfg = parse_config(config_str)
+    oc_key: str = cfg.get('debrid', {}).get('oc', {}).get('apiKey', '')
+    if not oc_key:
+        return send_from_directory(app.static_folder, 'rd_downloading.mp4')
+
+    user_ip = get_user_ip()
+    info_hash = (info_hash or '').strip().lower()
+    filename = urllib.parse.unquote(filename).strip().lower() if filename else ''
+
+    key_hash = hashlib.md5(oc_key.encode()).hexdigest()[:8]
+    cache_key = f"{key_hash}:{info_hash}:{file_idx}:{filename}"
+
+    cached = oc_cache_get(cache_key)
+    if cached in (OC_PENDING, OC_ERROR, OC_CANCELED, OC_UNAVAILABLE):
+        logger.info(f"OC cached state for {info_hash[:8]}: {cached}")
+        return send_from_directory(app.static_folder, 'rd_downloading.mp4')
+
+    if cached:
+        logger.info(f"OC cache hit for {info_hash[:8]}")
+        return redirect(cached)
+
+    download_url = oc_get_stream_url(oc_key, info_hash, file_idx, filename, user_ip=user_ip)
+    if download_url:
+        oc_cache_set(cache_key, download_url)
+        logger.info(f"OC resolved {info_hash[:8]}")
+        return redirect(download_url)
+
+    cached_state = oc_cache_get(cache_key)
+    if cached_state in (OC_PENDING, OC_ERROR, OC_CANCELED, OC_UNAVAILABLE):
+        logger.info(f"OC not ready for {info_hash[:8]}, state={cached_state}, serving placeholder")
+        return send_from_directory(app.static_folder, 'rd_downloading.mp4')
+
+    # FIX: We deleted the oc_cache_set line here.
+    # Now it just serves the video without writing a 60-second block to the cache!
+    logger.info(f"OC not ready for {info_hash[:8]}, no explicit state set, serving placeholder")
+    return send_from_directory(app.static_folder, 'rd_downloading.mp4')
 
 # ═══════════════════════════════════════════════════════════════════════════
 # API Validation Proxy Endpoints
@@ -1624,6 +2181,26 @@ def validate_alldebrid():
         logger.error(f"AD validation proxy error: {e}")
         return respond_with({'success': False, 'error': 'Validation failed'})
 
+@app.route('/api/validate/oc', methods=['POST'])
+def validate_offcloud():
+    try:
+        data = request.get_json(silent=True) or {}
+        apikey = str(data.get("apiKey", "")).strip()
+        if not apikey:
+            return respond_with({"success": False, "error": "No API key provided"})
+            
+        userdata = oc_validate_key(apikey)
+        if userdata:
+            return respond_with({
+                "success": True,
+                "email": userdata.get("email", ""),
+                "is_premium": userdata.get("is_premium"),
+                "can_download": userdata.get("can_download")
+            })
+        return respond_with({"success": False, "error": "Invalid API key"})
+    except Exception as e:
+        logger.error(f"OC validation proxy error: {e}")
+        return respond_with({"success": False, "error": "Validation failed"})
 
 @app.route('/api/validate/pm', methods=['POST'])
 def validate_premiumize():
