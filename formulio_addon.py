@@ -35,7 +35,7 @@ PYTHON_EXE = sys.executable
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# TTL caches
+# TTL caches & Locks
 # ═══════════════════════════════════════════════════════════════════════════
 
 _rd_cache: dict = {}
@@ -49,6 +49,8 @@ _pm_cache_lock = threading.Lock()
 
 _tb_cache: dict = {}
 _tb_cache_lock = threading.Lock()
+_tb_inflight_locks: dict = {}
+_tb_inflight_locks_guard = threading.Lock()
 
 _oc_cache: dict = {}
 _oc_cache_lock = threading.Lock()
@@ -671,21 +673,30 @@ def _tb_pick_file(files: list, file_idx, filename):
     if not files or not isinstance(files, list):
         return None
 
-    # 1. Match by filename (case-insensitive & URL-unquoted)
-    if filename:
-        norm_fn = urllib.parse.unquote(filename).strip().lower()
-        for f in files:
-            name = str(f.get('name') or f.get('short_name') or f.get('absolute_path') or '').strip().lower()
-            if norm_fn in name or name in norm_fn or norm_fn == name.split('/')[-1]:
-                return f.get('id')
-
-    # 2. Filter out non-video files (.nfo, .txt, .sfv, samples)
     video_exts = ('.mkv', '.mp4', '.avi', '.mov', '.m4v', '.ts', '.flv', '.wmv', '.webm')
-    video_files = [
+
+    # 1. Filter out non-video files (.nfo, .txt, .sfv) BEFORE matching names
+    candidates = [
         f for f in files
         if str(f.get('name') or f.get('short_name') or '').lower().endswith(video_exts)
     ]
-    candidates = video_files if video_files else files
+    if not candidates:
+        candidates = files
+
+    # 2. Match by filename / stem (case-insensitive & URL-unquoted)
+    if filename:
+        norm_fn = urllib.parse.unquote(filename).strip().lower()
+        norm_stem = os.path.splitext(norm_fn)[0]
+
+        for f in candidates:
+            name = str(f.get('name') or f.get('short_name') or f.get('absolute_path') or '').strip().lower()
+            base_name = name.split('/')[-1]
+            base_stem = os.path.splitext(base_name)[0]
+
+            if norm_fn in (name, base_name) or (norm_stem and norm_stem == base_stem):
+                return f.get('id')
+            if norm_stem and (norm_stem in name or norm_fn in name):
+                return f.get('id')
 
     # 3. Match by file_idx
     if file_idx is not None:
@@ -897,6 +908,28 @@ def rd_find_torrent_by_hash(api_key: str, info_hash: str):
         return None
 
 
+def _rd_pick_and_unrestrict(api_key: str, info: dict, links: list, file_idx, filename, user_ip):
+    files = info.get('files', [])
+    selected_files = [f for f in files if f.get('selected') == 1]
+    link_to_use = links[0]
+
+    if selected_files and len(links) == len(selected_files):
+        if filename:
+            for i, f in enumerate(selected_files):
+                if filename in f.get('path', ''):
+                    link_to_use = links[i]
+                    break
+        elif file_idx is not None:
+            for i, f in enumerate(selected_files):
+                if f.get('id') == file_idx + 1:
+                    link_to_use = links[i]
+                    break
+    elif file_idx is not None and file_idx < len(links):
+        link_to_use = links[file_idx]
+
+    return rd_unrestrict_link(api_key, link_to_use, user_ip=user_ip)
+
+
 def rd_get_stream_url(api_key: str, info_hash: str, file_idx, filename, user_ip=None):
     try:
         existing = rd_find_torrent_by_hash(api_key, info_hash)
@@ -953,28 +986,6 @@ def rd_get_stream_url(api_key: str, info_hash: str, file_idx, filename, user_ip=
     except Exception as e:
         logger.error(f"RD stream URL error for {info_hash}: {e}")
         return None
-
-
-def _rd_pick_and_unrestrict(api_key: str, info: dict, links: list, file_idx, filename, user_ip):
-    files = info.get('files', [])
-    selected_files = [f for f in files if f.get('selected') == 1]
-    link_to_use = links[0]
-
-    if selected_files and len(links) == len(selected_files):
-        if filename:
-            for i, f in enumerate(selected_files):
-                if filename in f.get('path', ''):
-                    link_to_use = links[i]
-                    break
-        elif file_idx is not None:
-            for i, f in enumerate(selected_files):
-                if f.get('id') == file_idx + 1:
-                    link_to_use = links[i]
-                    break
-    elif file_idx is not None and file_idx < len(links):
-        link_to_use = links[file_idx]
-
-    return rd_unrestrict_link(api_key, link_to_use, user_ip=user_ip)
 
 
 def rd_validate_key(api_key: str):
@@ -1065,7 +1076,7 @@ def ad_get_magnet_files(api_key: str, magnet_id):
     url = f"{config.AD_API_BASE}/magnet/files"
     headers = {'Authorization': f'Bearer {api_key}'}
     try:
-        resp = requests.post(url, headers=headers, data={'id[]': magnet_id}, timeout=15)
+        resp = requests.post(url, headers=headers, data={'id': magnet_id}, timeout=15)
         resp.raise_for_status()
         data = resp.json()
         if data.get('status') == 'success':
@@ -1362,7 +1373,7 @@ CATALOG = {
             'id': 'hpytt0202615',
             'name': 'F1TV UHD (English)',
             'type': 'series',
-            'description': 'F1TV Live UHD\n🇬🇧 Alex Jacques, Jolyon Palmer, David Coulthard, Alex Brundle\n🇪🇸 Chacho López, Diego Mejía, Giselle Zarur',
+            'description': 'F1TV Live UHD\n🇬🇧 Alex Jacques, Jolyon Palmer, David Coulthard, Alex Brundle\n🇪🇸 Chacho López, Diego Mejía, Giselle Zarur.',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/43xW3VMN/f1tenglishuhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -1426,7 +1437,7 @@ CATALOG = {
             'id': 'hpytt0202603',
             'name': 'F1TV (English)',
             'type': 'series',
-            'description': 'F1TV Live\n🇬🇧 Alex Jacques, Jolyon Palmer, David Coulthard, Alex Brundle\n🇪🇸 Chacho López, Diego Mejía, Giselle Zarur',
+            'description': 'F1TV Live\n🇬🇧 Alex Jacques, Jolyon Palmer, David Coulthard, Alex Brundle\n🇪🇸 Chacho López, Diego Mejía, Giselle Zarur.',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/pXf4j9GD/f1tveng.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -2044,7 +2055,9 @@ def tb_play(config_str: str, info_hash: str, file_idx: int, filename: str = ''):
 
     key_hash = hashlib.md5(tb_key.encode()).hexdigest()[:8]
     cache_key = f"{key_hash}:{info_hash}:{file_idx}:{filename}"
+    lock_key = f"{key_hash}:{info_hash}"
 
+    # 1. Immediate cache check
     cached = tb_cache_get(cache_key)
     if cached == '__UNAVAILABLE__':
         return send_from_directory(app.static_folder, 'rd_downloading.mp4')
@@ -2052,15 +2065,31 @@ def tb_play(config_str: str, info_hash: str, file_idx: int, filename: str = ''):
         logger.info(f"TB cache hit for {info_hash[:8]}")
         return redirect(cached)
 
-    download_url = torbox_get_stream_url(tb_key, info_hash, file_idx, filename or None,
-                                         user_ip=user_ip)
-    if download_url:
-        tb_cache_set(cache_key, download_url)
-        logger.info(f"TB resolved {info_hash[:8]}")
-        return redirect(download_url)
-    else:
-        logger.info(f"TB not ready for {info_hash[:8]}, serving placeholder")
-        return send_from_directory(app.static_folder, 'rd_downloading.mp4')
+    # 2. Block parallel media-player requests for the same torrent
+    with _tb_inflight_locks_guard:
+        hash_lock = _tb_inflight_locks.get(lock_key)
+        if hash_lock is None:
+            hash_lock = threading.Lock()
+            _tb_inflight_locks[lock_key] = hash_lock
+
+    with hash_lock:
+        # Re-check cache once acquired in case another thread already resolved it
+        cached = tb_cache_get(cache_key)
+        if cached == '__UNAVAILABLE__':
+            return send_from_directory(app.static_folder, 'rd_downloading.mp4')
+        if cached:
+            return redirect(cached)
+
+        download_url = torbox_get_stream_url(tb_key, info_hash, file_idx, filename or None, user_ip=user_ip)
+        if download_url:
+            tb_cache_set(cache_key, download_url)
+            logger.info(f"TB resolved {info_hash[:8]}")
+            return redirect(download_url)
+        else:
+            # Shield TorBox against repeated player retries
+            tb_cache_set(cache_key, '__UNAVAILABLE__')
+            logger.info(f"TB not ready for {info_hash[:8]}, serving placeholder (shield active)")
+            return send_from_directory(app.static_folder, 'rd_downloading.mp4')
 
 
 # ═══════════════════════════════════════════════════════════════════════════
