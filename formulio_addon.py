@@ -70,6 +70,7 @@ OC_UNAVAILABLE = '__UNAVAILABLE__'
 OC_REQ_NONE = '__NONE__'
 OC_CACHED = "__CACHED__"
 
+
 def rd_cache_get(cache_key: str):
     with _rd_cache_lock:
         entry = _rd_cache.get(cache_key)
@@ -153,6 +154,7 @@ def tb_cache_set(cache_key: str, result):
                 del _tb_cache[k]
         _tb_cache[cache_key] = {'result': result, 'time': now()}
 
+
 def oc_cache_get(cache_key: str):
     with _oc_cache_lock:
         entry = _oc_cache.get(cache_key)
@@ -177,6 +179,7 @@ def oc_cache_get(cache_key: str):
         del _oc_cache[cache_key]
         return None
 
+
 def oc_cache_set(cache_key: str, result):
     with _oc_cache_lock:
         if len(_oc_cache) > 1000:
@@ -184,6 +187,7 @@ def oc_cache_set(cache_key: str, result):
             for k in [k for k, v in _oc_cache.items() if v['time'] < cutoff]:
                 del _oc_cache[k]
         _oc_cache[cache_key] = {'result': result, 'time': now()}
+
 
 def oc_requestid_cache_get(key: str):
     with _oc_requestid_lock:
@@ -205,6 +209,7 @@ def oc_requestid_cache_get(key: str):
         del _oc_requestid_cache[key]
         return None
 
+
 def oc_requestid_cache_set(key: str, result):
     with _oc_requestid_lock:
         if len(_oc_requestid_cache) > 1000:
@@ -213,9 +218,11 @@ def oc_requestid_cache_set(key: str, result):
                 del _oc_requestid_cache[k]
         _oc_requestid_cache[key] = {'result': result, 'time': now()}
 
+
 def oc_requestid_cache_delete(key: str):
     with _oc_requestid_lock:
         _oc_requestid_cache.pop(key, None)
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Config
@@ -236,6 +243,7 @@ config = Config()
 app = Flask(__name__, static_folder='static')
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
+
 # ═══════════════════════════════════════════════════════════════════════════
 # Offcloud Helper Functions
 # ═══════════════════════════════════════════════════════════════════════════
@@ -247,20 +255,21 @@ def oc_add_magnet(api_key: str, info_hash: str):
         "Content-Type": "application/json"
     }
     payload = {"url": f"magnet:?xt=urn:btih:{info_hash}"}
-    
+
     try:
         resp = requests.post(url, headers=headers, json=payload, timeout=10)
         resp.raise_for_status()
         data = resp.json()
-        
+
         if "error" in data:
             logger.error(f"OC add magnet error: {data['error']}")
             return None
-            
+
         return data
     except Exception as e:
         logger.error(f"OC add magnet error: {e}")
         return None
+
 
 def oc_get_magnet_status(api_key: str, request_id: str):
     url = f"{config.OC_API_BASE}/cloud/status"
@@ -269,45 +278,47 @@ def oc_get_magnet_status(api_key: str, request_id: str):
         "Content-Type": "application/json"
     }
     payload = {"requestId": request_id}
-    
+
     try:
         resp = requests.post(url, headers=headers, json=payload, timeout=10)
         resp.raise_for_status()
         data = resp.json()
-        
+
         if isinstance(data, dict) and 'error' in data:
             logger.error(f"OC status error: {data['error']}")
             return None
-            
+
         if isinstance(data, dict) and isinstance(data.get('status'), dict):
             return data['status']
-            
+
         return data
     except Exception as e:
         logger.error(f"OC get magnet status error: {e}")
         return None
 
+
 def oc_explore_archive(api_key: str, request_id: str):
     url = f"{config.OC_API_BASE}/cloud/explore/{request_id}"
     headers = {"Authorization": f"Bearer {api_key}"}
     params = {"format": "detailed"}
-    
+
     try:
         resp = requests.get(url, headers=headers, params=params, timeout=10)
         resp.raise_for_status()
         data = resp.json()
-        
+
         if isinstance(data, dict) and "error" in data:
             logger.error(f"OC explore archive error: {data['error']}")
             return None
-            
+
         if isinstance(data, dict) and "files" in data:
             return data["files"]
-            
+
         return data
     except Exception as e:
         logger.error(f"OC explore archive error: {e}")
         return None
+
 
 def _oc_pick_file_link(items: list, file_idx, filename):
     if not isinstance(items, list) or not items:
@@ -323,17 +334,17 @@ def _oc_pick_file_link(items: list, file_idx, filename):
         return str(item.get("filename") or item.get("fileName") or item.get("serverFileName") or item.get("name") or "").strip().lower()
 
     def item_path(item):
-            path = item.get("path")
-            if isinstance(path, str) and path:
-                return path.strip("/").lower()
-                
-            folder = item.get("folder") or []
-            if isinstance(folder, list):
-                folder_path = "/".join(str(p).strip() for p in folder if p)
-            else:
-                folder_path = str(folder).strip()
-            name = item_name(item)
-            return f"{folder_path}/{name}".strip("/").lower()
+        path = item.get("path")
+        if isinstance(path, str) and path:
+            return path.strip("/").lower()
+
+        folder = item.get("folder") or []
+        if isinstance(folder, list):
+            folder_path = "/".join(str(p).strip() for p in folder if p)
+        else:
+            folder_path = str(folder).strip()
+        name = item_name(item)
+        return f"{folder_path}/{name}".strip("/").lower()
 
     if normalized_filename:
         for item in items:
@@ -370,6 +381,7 @@ def _oc_pick_file_link(items: list, file_idx, filename):
     biggest = max(candidates, key=lambda item: int(item.get("size") or 0))
     return item_url(biggest)
 
+
 def oc_cache_info(api_key: str, info_hash: str, include_files: bool = False):
     url = f"{config.OC_API_BASE}/cache/info"
     magnet = f"magnet:?xt=urn:btih:{(info_hash or '').strip().lower()}"
@@ -401,6 +413,7 @@ def oc_cache_info(api_key: str, info_hash: str, include_files: bool = False):
         logger.warning(f"OC cache info error for {info_hash[:8]}: {e}")
         return None
 
+
 def oc_cache_download(api_key: str, info_hash: str):
     url = f"{config.OC_API_BASE}/cache/download"
     magnet = f"magnet:?xt=urn:btih:{(info_hash or '').strip().lower()}"
@@ -421,6 +434,7 @@ def oc_cache_download(api_key: str, info_hash: str):
     except Exception as e:
         logger.warning(f"OC cache download error for {info_hash[:8]}: {e}")
         return []
+
 
 def _oc_resolve_downloaded_response(api_key: str, info_hash: str, request_id: str, file_idx, filename):
     status_data = oc_get_magnet_status(api_key, request_id)
@@ -458,6 +472,7 @@ def _oc_resolve_downloaded_response(api_key: str, info_hash: str, request_id: st
 
     return OC_UNAVAILABLE, status
 
+
 def _oc_get_request_id(api_key: str, info_hash: str, requestid_key: str, allow_lookup: bool):
     request_id = None
     info_hash = (info_hash or '').strip().lower()
@@ -493,6 +508,7 @@ def _oc_get_request_id(api_key: str, info_hash: str, requestid_key: str, allow_l
     oc_requestid_cache_set(requestid_key, OC_REQ_NONE)
     return None
 
+
 def _oc_handle_add_response(api_key: str, info_hash: str, requestid_key: str,
                             added: dict, file_idx, filename, log_prefix: str = "OC added magnet"):
     if not added:
@@ -517,6 +533,7 @@ def _oc_handle_add_response(api_key: str, info_hash: str, requestid_key: str,
         return OC_CANCELED, status
 
     return _oc_resolve_downloaded_response(api_key, info_hash, request_id, file_idx, filename)
+
 
 def oc_get_stream_url(api_key: str, info_hash: str, file_idx, filename, user_ip=None):
     hash_lock = None
@@ -551,7 +568,7 @@ def oc_get_stream_url(api_key: str, info_hash: str, file_idx, filename, user_ip=
                 if isinstance(picked, str) and picked:
                     oc_cache_set(cache_key, picked)
                     return picked
-                
+
                 request_id = None
 
             if request_id and request_id != OC_REQ_NONE:
@@ -626,6 +643,7 @@ def oc_get_stream_url(api_key: str, info_hash: str, file_idx, filename, user_ip=
                 if _oc_inflight_locks.get(requestid_key) is hash_lock:
                     _oc_inflight_locks.pop(requestid_key, None)
 
+
 def oc_validate_key(api_key: str):
     url = f"{config.OC_API_BASE}/account/info"
     headers = {"Authorization": f"Bearer {api_key}"}
@@ -642,10 +660,45 @@ def oc_validate_key(api_key: str):
     except Exception as e:
         logger.error(f"OC validate key error: {e}")
         return False
-        
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # TorBox Helper Functions
 # ═══════════════════════════════════════════════════════════════════════════
+
+def _tb_pick_file(files: list, file_idx, filename):
+    """Select the best matching file ID from a TorBox files list."""
+    if not files or not isinstance(files, list):
+        return None
+
+    # 1. Match by filename (case-insensitive & URL-unquoted)
+    if filename:
+        norm_fn = urllib.parse.unquote(filename).strip().lower()
+        for f in files:
+            name = str(f.get('name') or f.get('short_name') or f.get('absolute_path') or '').strip().lower()
+            if norm_fn in name or name in norm_fn or norm_fn == name.split('/')[-1]:
+                return f.get('id')
+
+    # 2. Filter out non-video files (.nfo, .txt, .sfv, samples)
+    video_exts = ('.mkv', '.mp4', '.avi', '.mov', '.m4v', '.ts', '.flv', '.wmv', '.webm')
+    video_files = [
+        f for f in files
+        if str(f.get('name') or f.get('short_name') or '').lower().endswith(video_exts)
+    ]
+    candidates = video_files if video_files else files
+
+    # 3. Match by file_idx
+    if file_idx is not None:
+        for f in candidates:
+            if f.get('id') == file_idx:
+                return f.get('id')
+        if 0 <= file_idx < len(candidates):
+            return candidates[file_idx].get('id')
+
+    # 4. Fallback: Largest video file
+    biggest = max(candidates, key=lambda f: int(f.get('size') or 0))
+    return biggest.get('id')
+
 
 def torbox_create_torrent(api_key: str, info_hash: str):
     url = f"{config.TORBOX_API_BASE}/v1/api/torrents/createtorrent"
@@ -682,6 +735,27 @@ def torbox_find_torrent_by_hash(api_key: str, info_hash: str):
         return None
 
 
+def torbox_get_torrent_info(api_key: str, torrent_id):
+    url = f"{config.TORBOX_API_BASE}/v1/api/torrents/mylist"
+    headers = {'Authorization': f'Bearer {api_key}'}
+    try:
+        resp = requests.get(url, headers=headers, params={
+            'id': torrent_id, 'bypass_cache': 'true'
+        }, timeout=8)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get('success') and data.get('data'):
+            res = data['data']
+            # TorBox returns a list even when filtering by single id query
+            if isinstance(res, list):
+                return res[0] if res else None
+            return res
+        return None
+    except Exception as e:
+        logger.error(f"TorBox get torrent info error: {e}")
+        return None
+
+
 def torbox_get_download_link(api_key: str, torrent_id, file_idx=None, user_ip=None):
     url = f"{config.TORBOX_API_BASE}/v1/api/torrents/requestdl"
     params = {
@@ -699,31 +773,15 @@ def torbox_get_download_link(api_key: str, torrent_id, file_idx=None, user_ip=No
         data = resp.json()
         if data.get('success') and data.get('data'):
             return data['data']
+        logger.error(f"TorBox requestdl unsuccessful: {data}")
         return None
     except Exception as e:
         logger.error(f"TorBox request download error: {e}")
         return None
 
 
-def torbox_get_torrent_info(api_key: str, torrent_id):
-    url = f"{config.TORBOX_API_BASE}/v1/api/torrents/mylist"
-    headers = {'Authorization': f'Bearer {api_key}'}
-    try:
-        resp = requests.get(url, headers=headers, params={
-            'id': torrent_id, 'bypass_cache': 'true'
-        }, timeout=8)
-        resp.raise_for_status()
-        data = resp.json()
-        if data.get('success') and data.get('data'):
-            return data['data']
-        return None
-    except Exception as e:
-        logger.error(f"TorBox get torrent info error: {e}")
-        return None
-
-
 def torbox_get_stream_url(api_key: str, info_hash: str, file_idx, filename, user_ip=None):
-    """Full flow: find/create torrent -> get download URL."""
+    """Full flow: find/create torrent -> resolve target file -> get download URL."""
     try:
         torrent_id = torbox_find_torrent_by_hash(api_key, info_hash)
         if not torrent_id:
@@ -732,16 +790,20 @@ def torbox_get_stream_url(api_key: str, info_hash: str, file_idx, filename, user
         if not torrent_id:
             return None
 
-        tb_file_id = 0
-        torrent_data = torbox_get_torrent_info(api_key, torrent_id)
-        if torrent_data and 'files' in torrent_data:
-            for f in torrent_data['files']:
-                if filename and filename in f.get('name', ''):
-                    tb_file_id = f.get('id', 0)
-                    break
-            else:
-                if file_idx is not None and file_idx < len(torrent_data['files']):
-                    tb_file_id = torrent_data['files'][file_idx].get('id', 0)
+        # Allow TorBox up to 3 seconds to populate file metadata if newly added
+        torrent_data = None
+        for _ in range(3):
+            torrent_data = torbox_get_torrent_info(api_key, torrent_id)
+            if torrent_data and torrent_data.get('files'):
+                break
+            time.sleep(1.0)
+
+        tb_file_id = None
+        if torrent_data and isinstance(torrent_data, dict) and torrent_data.get('files'):
+            tb_file_id = _tb_pick_file(torrent_data['files'], file_idx, filename)
+
+        if tb_file_id is None:
+            tb_file_id = file_idx if file_idx is not None else 0
 
         return torbox_get_download_link(api_key, torrent_id, tb_file_id, user_ip=user_ip)
     except Exception as e:
@@ -1293,7 +1355,7 @@ CATALOG = {
             'videos': [],
             'videoFile': './egor/eg4/6processed.csv',
             'behaviorHints': {
-            'hasScheduledVideos': True,
+                'hasScheduledVideos': True,
             },
         },
         {
@@ -1309,11 +1371,11 @@ CATALOG = {
             'videos': [],
             'videoFile': './ss/ssf4/6processed.csv',
             'behaviorHints': {
-            'hasScheduledVideos': True,
+                'hasScheduledVideos': True,
             },
         },
         {
-            'id': 'hpytt0202614', 
+            'id': 'hpytt0202614',
             'name': 'F1TV UHD (Global)',
             'type': 'series',
             'description': 'F1TV World Feed UHD\n🇩🇪 🇫🇷 🇳🇱 🇵🇹 🇯🇵 🇪🇸 🇬🇧 🔇',
@@ -1322,14 +1384,14 @@ CATALOG = {
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing', 'Motorsport'],
-            'videos': [],            
+            'videos': [],
             'videoFile': './ss/ssm4/6processed.csv',
             'behaviorHints': {
-            'hasScheduledVideos': True,
+                'hasScheduledVideos': True,
             },
         },
         {
-            'id': 'hpytt0202606', 
+            'id': 'hpytt0202606',
             'name': 'Sky F1 UHD (Alt)',
             'type': 'series',
             'description': 'SkyF1 UK UHD\n🇬🇧 David Croft, Martin Brundle, Bernie Collins, Anthony Davidson',
@@ -1338,14 +1400,14 @@ CATALOG = {
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing', 'Motorsport'],
-            'videos': [],            
+            'videos': [],
             'videoFile': './smcg/sm4/6processed.csv',
             'behaviorHints': {
-            'hasScheduledVideos': True,
+                'hasScheduledVideos': True,
             },
         },
         {
-            'id': 'hpytt0202601', 
+            'id': 'hpytt0202601',
             'name': 'Sky F1',
             'type': 'series',
             'description': 'SkyF1 UK\n🇬🇧 David Croft, Martin Brundle, Bernie Collins, Anthony Davidson',
@@ -1354,14 +1416,14 @@ CATALOG = {
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing', 'Motorsport'],
-            'videos': [],            
+            'videos': [],
             'videoFile': './egor/ego/6processed.csv',
             'behaviorHints': {
-            'hasScheduledVideos': True,
+                'hasScheduledVideos': True,
             },
         },
         {
-            'id': 'hpytt0202603', 
+            'id': 'hpytt0202603',
             'name': 'F1TV (English)',
             'type': 'series',
             'description': 'F1TV Live\n🇬🇧 Alex Jacques, Jolyon Palmer, David Coulthard, Alex Brundle\n🇪🇸 Chacho López, Diego Mejía, Giselle Zarur.',
@@ -1370,14 +1432,14 @@ CATALOG = {
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing', 'Motorsport'],
-            'videos': [],            
+            'videos': [],
             'videoFile': './ss/ssf/6processed.csv',
             'behaviorHints': {
-            'hasScheduledVideos': True,
+                'hasScheduledVideos': True,
             },
         },
         {
-            'id': 'hpytt0202604', 
+            'id': 'hpytt0202604',
             'name': 'F1TV (Global)',
             'type': 'series',
             'description': 'F1TV World Feed\n🇩🇪 🇫🇷 🇳🇱 🇵🇹 🇯🇵 🇪🇸 🇬🇧 🔇',
@@ -1386,14 +1448,14 @@ CATALOG = {
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing', 'Motorsport'],
-            'videos': [],            
+            'videos': [],
             'videoFile': './ss/ssm/6processed.csv',
             'behaviorHints': {
-            'hasScheduledVideos': True,
+                'hasScheduledVideos': True,
             },
         },
         {
-            'id': 'hpytt0202602', 
+            'id': 'hpytt0202602',
             'name': 'Sky F1 (Alternative)',
             'type': 'series',
             'description': 'SkyF1 UK\n🇬🇧 David Croft, Martin Brundle, Bernie Collins, Anthony Davidson',
@@ -1402,14 +1464,14 @@ CATALOG = {
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing', 'Motorsport'],
-            'videos': [],            
+            'videos': [],
             'videoFile': './smcg/smc/6processed.csv',
             'behaviorHints': {
-            'hasScheduledVideos': True,
+                'hasScheduledVideos': True,
             },
         },
         {
-            'id': 'hpytt0202612', 
+            'id': 'hpytt0202612',
             'name': 'MotoGP 4K',
             'type': 'series',
             'description': 'TNT MotoGP 4K\n🇬🇧 Gavin Emmett, Steve Day, Neil Hodgson, Sylvain Guintoli',
@@ -1418,14 +1480,14 @@ CATALOG = {
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
             'background': 'https://i.postimg.cc/fR252zq3/motobackground.jpg',
             'genres': ['Moto Racing', 'Motorsport'],
-            'videos': [],            
+            'videos': [],
             'videoFile': './smcm/sm4/6processed.csv',
             'behaviorHints': {
-            'hasScheduledVideos': True,
+                'hasScheduledVideos': True,
             },
         },
         {
-            'id': 'hpytt0202611', 
+            'id': 'hpytt0202611',
             'name': 'MotoGP',
             'type': 'series',
             'description': 'TNT MotoGP\n🇬🇧 Gavin Emmett, Steve Day, Neil Hodgson, Sylvain Guintoli',
@@ -1434,14 +1496,14 @@ CATALOG = {
             'logo': 'https://i.postimg.cc/nh8PKc5n/moto.png',
             'background': 'https://i.postimg.cc/fR252zq3/motobackground.jpg',
             'genres': ['Moto Racing', 'Motorsport'],
-            'videos': [],            
+            'videos': [],
             'videoFile': './smcm/smc/6processed.csv',
             'behaviorHints': {
-            'hasScheduledVideos': True,
+                'hasScheduledVideos': True,
             },
         },
         {
-            'id': 'hpytt0202607', 
+            'id': 'hpytt0202607',
             'name': 'Sky F1 SD',
             'type': 'series',
             'description': 'Low Quality SD\nformulio@tuta.io',
@@ -1450,10 +1512,10 @@ CATALOG = {
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
             'background': 'https://i.postimg.cc/TPThqWJg/background1.jpg',
             'genres': ['Formula Racing', 'Motorsport'],
-            'videos': [],            
+            'videos': [],
             'videoFile': './smcg/sms/6processed.csv',
             'behaviorHints': {
-            'hasScheduledVideos': True,
+                'hasScheduledVideos': True,
             },
         }
     ]
@@ -1475,25 +1537,13 @@ def respond_with(data: dict):
     resp = jsonify(data)
     resp.headers['Access-Control-Allow-Origin'] = '*'
     resp.headers['Access-Control-Allow-Headers'] = '*'
-
-    # Cache Control Headers to fix Nuvio's caching lag
-    # max-age=3600 (1 hour cache), stale-while-revalidate=1800 (allows 30 mins background refreshing)
     resp.headers['Cache-Control'] = 'max-age=3600, stale-while-revalidate=1800'
     return resp
 
-def load_videos(filepath: str) -> list:
-    """
-    Load videos from a processed CSV.
 
-    Defensive guarantee: each (season, episode) slot is unique. If a malformed
-    CSV (e.g. a partial write, or a merger regression) contains two rows with
-    the same (season, episode), the FIRST one wins and the duplicate is logged
-    and dropped. This prevents Stremio from showing one episode in the meta
-    while resolving the stream of a different file, which would make the
-    displayed episode and the played content disagree.
-    """
+def load_videos(filepath: str) -> list:
     videos: list = []
-    seen_slots: dict = {}          # (season, episode) -> title (for logging)
+    seen_slots: dict = {}
     duplicate_slots = 0
 
     try:
@@ -1558,8 +1608,6 @@ def load_videos(filepath: str) -> list:
 
 
 def load_all_videos():
-    """Atomically reload videos. Never replaces a populated list with an empty
-    one (prevents Stremio caching a 'movie-like' meta with zero videos)."""
     for series in CATALOG['series']:
         video_file = series.get('videoFile')
         if not video_file:
@@ -1801,7 +1849,6 @@ def build_stream_title(video: dict, provider_tag: str) -> str:
 
 def _build_debrid_proxy_stream(provider: str, tag: str, video: dict, series: dict,
                                season: int, debrid_cfg: dict, enable_p2p: bool) -> dict:
-    """Build a lazy proxy stream entry for a debrid provider (tb/rd/ad/pm)."""
     info_hash = video['infoHash']
     filename = video.get('filename', '')
     file_idx = video.get('fileIdx', 0)
@@ -1828,18 +1875,11 @@ def _build_debrid_proxy_stream(provider: str, tag: str, video: dict, series: dic
 
 def build_streams_for_video(video: dict, series: dict, season: int, debrid_cfg: dict,
                             enable_p2p: bool) -> list:
-    """
-    Build stream entries for a single video.
-
-    All debrid providers (TorBox, Real-Debrid, AllDebrid, Premiumize) are lazy:
-    they point at a proxy /<provider>/play endpoint that resolves the link when
-    the user presses play. P2P is shown when enabled.
-    """
     streams: list = []
     info_hash: str = video['infoHash']
     filename: str = video.get('filename', '')
     file_idx: int = video.get('fileIdx', 0)
-                                       
+
     # ── TorBox ──────────────────────────────────────────────────────────────
     if debrid_cfg.get('tb', {}).get('apiKey', ''):
         streams.append(_build_debrid_proxy_stream(
@@ -2019,7 +2059,6 @@ def tb_play(config_str: str, info_hash: str, file_idx: int, filename: str = ''):
         logger.info(f"TB resolved {info_hash[:8]}")
         return redirect(download_url)
     else:
-        tb_cache_set(cache_key, '__UNAVAILABLE__')
         logger.info(f"TB not ready for {info_hash[:8]}, serving placeholder")
         return send_from_directory(app.static_folder, 'rd_downloading.mp4')
 
@@ -2064,6 +2103,7 @@ def pm_play(config_str: str, info_hash: str, file_idx: int, filename: str = ''):
         logger.info(f"PM not ready for {info_hash[:8]}, serving placeholder")
         return send_from_directory(app.static_folder, 'rd_downloading.mp4')
 
+
 # ═══════════════════════════════════════════════════════════════════════════
 # Proxy Endpoints — OC
 # ═══════════════════════════════════════════════════════════════════════════
@@ -2107,10 +2147,9 @@ def oc_play(config_str: str, info_hash: str, file_idx: int, filename: str = ''):
         logger.info(f"OC not ready for {info_hash[:8]}, state={cached_state}, serving placeholder")
         return send_from_directory(app.static_folder, 'rd_downloading.mp4')
 
-    # FIX: We deleted the oc_cache_set line here.
-    # Now it just serves the video without writing a 60-second block to the cache!
     logger.info(f"OC not ready for {info_hash[:8]}, no explicit state set, serving placeholder")
     return send_from_directory(app.static_folder, 'rd_downloading.mp4')
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # API Validation Proxy Endpoints
@@ -2181,6 +2220,7 @@ def validate_alldebrid():
         logger.error(f"AD validation proxy error: {e}")
         return respond_with({'success': False, 'error': 'Validation failed'})
 
+
 @app.route('/api/validate/oc', methods=['POST'])
 def validate_offcloud():
     try:
@@ -2188,7 +2228,7 @@ def validate_offcloud():
         apikey = str(data.get("apiKey", "")).strip()
         if not apikey:
             return respond_with({"success": False, "error": "No API key provided"})
-            
+
         userdata = oc_validate_key(apikey)
         if userdata:
             return respond_with({
@@ -2201,6 +2241,7 @@ def validate_offcloud():
     except Exception as e:
         logger.error(f"OC validation proxy error: {e}")
         return respond_with({"success": False, "error": "Validation failed"})
+
 
 @app.route('/api/validate/pm', methods=['POST'])
 def validate_premiumize():
@@ -2446,8 +2487,6 @@ def _handle_stream(type: str, id: str, config_str):
         except Exception as e:
             logger.error(f"Error building streams for {video.get('infoHash', '?')[:8]}: {e}")
 
-    # Safety net: if nothing was built (no debrid AND p2p disabled),
-    # still offer P2P so Stremio never shows a bare "no streams found".
     if not all_streams:
         logger.warning(f"No streams built for {id} — emitting P2P fallback")
         for video in videos:
