@@ -25,9 +25,9 @@ def extract_infohash(magnet_link, pattern):
     return match.group(1) if match else None
 
 
-def get_output_row(row, config):
+# ADDED: output_columns is now passed as an argument so we don't rely strictly on the config dictionary
+def get_output_row(parsed_date, row, config, output_columns):
     csv_config = config['csv_processing']
-    output_columns = csv_config.get('output_columns', ['torrent_name', 'infohash', 'magnet_link'])
 
     column_values = {
         'torrent_name': row[csv_config['torrent_name_column_index']],
@@ -35,7 +35,8 @@ def get_output_row(row, config):
         'infohash': extract_infohash(
             row[csv_config['magnet_link_column_index']],
             csv_config['infohash_pattern']
-        )
+        ),
+        'timestamp': parsed_date.isoformat() 
     }
 
     for i, value in enumerate(row):
@@ -58,7 +59,13 @@ def process_csv_files(config):
     input_pattern = csv_config['input_file_pattern']
     date_column = csv_config['date_column_index']
     date_format = csv_config['date_format']
-    output_columns = csv_config.get('output_columns', ['torrent_name', 'infohash', 'magnet_link'])
+    
+    # CLEAN FIX: Create a fresh local copy of the columns using list()
+    # Then append 'timestamp' if it isn't there. This leaves info.json completely untouched.
+    output_columns = list(csv_config.get('output_columns', ['torrent_name', 'infohash', 'magnet_link']))
+    if 'timestamp' not in output_columns:
+        output_columns.append('timestamp')
+
     output_ext = csv_config['output_extensions']
     create_subdir = csv_config.get('create_subdirectory', True)
     skip_extensions = csv_config.get('skip_if_exists', ['.csv', '.archive', '.old'])
@@ -98,8 +105,10 @@ def process_csv_files(config):
 
         written_count = 0
         skipped_count = 0
-        for (_, row) in rows:
-            output_row = get_output_row(row, config)
+        
+        for (parsed_date, row) in rows:
+            # Pass our freshly updated local `output_columns` list here
+            output_row = get_output_row(parsed_date, row, config, output_columns)
             infohash = output_row[infohash_idx]
 
             if not infohash:

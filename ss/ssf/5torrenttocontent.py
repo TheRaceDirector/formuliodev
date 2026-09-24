@@ -742,7 +742,8 @@ def process_csv_files():
     if not os.path.isfile(content_file_path):
         with open(content_file_path, 'w', newline='', encoding='utf-8') as content_file:
             content_writer = csv.writer(content_file)
-            content_writer.writerow(['torrent file name', 'filename within torrent', 'infohash', 'file index', 'filesize_gb'])
+            # Add timestamp to the header
+            content_writer.writerow(['torrent file name', 'filename within torrent', 'infohash', 'file index', 'filesize_gb', 'timestamp'])
 
     # Get all directories
     all_dirs = [d for d in os.listdir('.') if os.path.isdir(d)]
@@ -766,16 +767,16 @@ def process_csv_files():
     if matching_dirs:
         print(f"\n[DIRS] Found {len(matching_dirs)} directories matching quality '{quality}':")
         for d in matching_dirs:
-            print(f"   • {d}")
+            print(f"  • {d}")
     else:
         print(f"\n[WARNING] No directories found matching quality '{quality}'")
     
     if skipped_dirs:
         print(f"\n[JUMPED] Skipping {len(skipped_dirs)} directories (wrong quality):")
         for d in skipped_dirs[:5]:  # Show first 5
-            print(f"   • {d}")
+            print(f"  • {d}")
         if len(skipped_dirs) > 5:
-            print(f"   ... and {len(skipped_dirs) - 5} more")
+            print(f"  ... and {len(skipped_dirs) - 5} more")
     
     print()
     
@@ -809,26 +810,32 @@ def process_csv_files():
                  open(content_file_path, 'a', newline='', encoding='utf-8') as content_file:
                 
                 content_writer = csv.writer(content_file)
+                # Use built-in csv.reader instead of manually splitting strings
+                csv_reader = csv.reader(file)
                 
-                for line_num, line in enumerate(file, 1):
+                for line_num, parts in enumerate(csv_reader, 1):
                     if shutdown_requested or check_overall_timeout():
                         print("\n[WARNING] Shutdown/timeout requested - stopping current file")
                         all_magnets_successful = False
                         break
                     
-                    line = line.strip()
-                    if not line:
+                    if not parts:
                         continue
                     
-                    parts = line.rsplit(',', 2)
-                    if len(parts) != 3:
-                        print(f"  [FAILED] Line {line_num}: Incorrect format")
+                    # Safely handle both legacy 3-column data and new 4-column data
+                    timestamp = ""
+                    if len(parts) >= 4:
+                        torrent_name, infohash, magnet_link, timestamp = parts[:4]
+                    elif len(parts) == 3:
+                        torrent_name, infohash, magnet_link = parts
+                    else:
+                        print(f"  [FAILED] Line {line_num}: Incorrect format (found {len(parts)} columns)")
                         continue
                     
-                    torrent_name, infohash, magnet_link = parts
                     torrent_name = torrent_name.strip()
                     infohash = infohash.strip()
                     magnet_link = magnet_link.strip()
+                    timestamp = timestamp.strip()
 
                     print(f"\n[{line_num}] {torrent_name[:55]}...")
                     
@@ -861,7 +868,8 @@ def process_csv_files():
                     
                     for file_index, (filepath, size) in enumerate(files):
                         size_gb = size_to_gb(size)
-                        content_writer.writerow([torrent_name, filepath, infohash, file_index, size_gb])
+                        # Append the timestamp to the final CSV output
+                        content_writer.writerow([torrent_name, filepath, infohash, file_index, size_gb, timestamp])
                         print(f'    [{file_index}] {filepath} ({format_size(size)}, {size_gb} GB)')
 
             if shutdown_requested or check_overall_timeout():

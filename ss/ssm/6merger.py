@@ -185,8 +185,7 @@ def compile_patterns(config: Config, raw_config: Dict) -> None:
         print(f"Warning: Invalid fallback_title_pattern: {e}")
         config._fallback_title_regex = re.compile(r'^(.+?)\.(mp4|mkv)$', re.IGNORECASE)
 
-    # Optional explicit session-key pattern. If not provided, session keys are
-    # derived automatically (see derive_session_key).
+    # Optional explicit session-key pattern
     session_key = filename_parsing.get('session_key_pattern', '')
     if session_key:
         try:
@@ -258,7 +257,6 @@ def load_sport_config(config: Config) -> Dict:
 def detect_columns(header: List[str], column_mapping: Dict[str, List[str]]) -> Dict[str, int]:
     """
     Detect column indices from header row using flexible matching.
-
     Returns a dict mapping logical column names to their indices.
     """
     indices = {}
@@ -284,7 +282,8 @@ def get_default_column_mapping() -> Dict[str, List[str]]:
         'filename': ['filename within torrent', 'filename', 'file', 'path'],
         'infohash': ['infohash', 'hash', 'info_hash'],
         'file_index': ['file index', 'file_index', 'fileindex', 'index', 'idx'],
-        'filesize': ['filesize_gb', 'filesize', 'size', 'file_size', 'size_gb']
+        'filesize': ['filesize_gb', 'filesize', 'size', 'file_size', 'size_gb'],
+        'timestamp': ['timestamp', 'time', 'date', 'release']
     }
 
 
@@ -326,29 +325,26 @@ def _normalize_key(text: str) -> str:
     return t
 
 
-def extract_round_info(torrent_name: str, config: Config) -> Tuple[str, str]:
+def extract_round_info(text: str, config: Config) -> Tuple[str, str]:
     """
-    Extract round number and grand prix name from torrent name.
-
-    Returns (round_number, grand_prix_name). The grand_prix_name is cosmetic
-    only; 'Unknown' is acceptable and does NOT affect deduplication.
+    Extract round number and grand prix name from text (torrent name or filename).
     """
     round_number = 'Unknown'
     grand_prix_name = 'Unknown'
 
     if config._round_regex:
-        match = config._round_regex.search(torrent_name)
+        match = config._round_regex.search(text)
         if match:
             groups = match.groups()
-            round_number = groups[-1]  # Last group is always the round number
+            round_number = groups[-1]
 
     if config._gp_regex:
-        match = config._gp_regex.search(torrent_name)
+        match = config._gp_regex.search(text)
         if match:
             grand_prix_name = match.group(1)
 
     if grand_prix_name == 'Unknown' and config._fallback_gp_regex:
-        match = config._fallback_gp_regex.search(torrent_name)
+        match = config._fallback_gp_regex.search(text)
         if match:
             grand_prix_name = match.group(1)
 
@@ -360,7 +356,6 @@ def extract_round_info(torrent_name: str, config: Config) -> Tuple[str, str]:
 def normalize_round(round_number: str) -> str:
     """
     Normalize a round number to a canonical integer-string form.
-    'R05' -> '5', '05' -> '5', '5' -> '5'. Returns 'Unknown' if not numeric.
     """
     if round_number is None:
         return 'Unknown'
@@ -396,10 +391,6 @@ def extract_title(filename: str, config: Config) -> str:
     return title
 
 
-# Source/quality tail tokens we strip when deriving the session key. These are
-# matched as whole, dot/space separated tokens. Combined tags like "SkyF1HD" or
-# "SkySports" are handled by the regex tail-strip in derive_session_key, but we
-# also list common standalone tokens here for the token-popping pass.
 _SESSION_TAIL_TOKENS = {
     'sky', 'skysports', 'skyf1hd', 'skyf1uhd', 'skyuhd', 'sports', 'f1',
     'f1tv', 'tv', 'uhd', 'hd', 'sd', 'fhd', 'uk', 'world', 'feed', 'multi',
@@ -408,9 +399,6 @@ _SESSION_TAIL_TOKENS = {
     'avc', 'aac', 'ac3', 'ddp', 'dd', 'mp4', 'mkv', 'ts', 'avi',
 }
 
-# Regex that strips a trailing run of source/quality junk after the session
-# name. It targets the common F1 tail forms regardless of how the source tag is
-# glued together (Sky.Sports.F1.UHD, SkyF1HD.1080P, F1TV.2160p, etc.).
 _TAIL_JUNK_RE = re.compile(
     r'[.\s_\-]+'
     r'(?:sky\w*|f1\w*|sports?|uhd|hd|sd|fhd|tv|uk|world|feed|multi|web\w*|'
@@ -423,56 +411,31 @@ _TAIL_JUNK_RE = re.compile(
 
 
 def derive_session_key(filename: str, config: Config) -> str:
-    """
-    Derive a stable, GP-name-independent session identity from a filename.
-
-    Strategy (all generic, no per-source config required):
-      1. Drop the file extension.
-      2. Drop a leading episode-number prefix ("08.").
-      3. Drop everything up to and including a "...Grand Prix" marker, or
-         failing that, everything up to and including the round token (Rxx /
-         Round xx).
-      4. Strip trailing source/quality junk via regex (handles SkyF1HD,
-         Sky.Sports.F1.UHD, F1TV.2160p, etc.).
-      5. Pop any residual standalone source/quality tokens.
-      6. Normalize the remaining session words.
-
-    If an explicit session_key_pattern is configured, that is used instead.
-    Falls back to the cleaned display title if nothing else works.
-    """
+    """Derive a stable, GP-name-independent session identity from a filename."""
     if config._session_key_regex:
         m = config._session_key_regex.search(filename)
         if m and m.groups():
             return _normalize_key(m.groups()[-1])
 
     name = filename
-
-    # 1. strip extension
     name = re.sub(r'\.(mkv|mp4|avi|ts)$', '', name, flags=re.IGNORECASE)
-
-    # 2. strip leading episode number ("08.")
     name = re.sub(r'^\d+[.\s]+', '', name)
 
-    # 3a. Prefer cutting after "...Grand Prix"
     gp_cut = re.search(r'grand[.\s]prix[.\s]+(.*)$', name, flags=re.IGNORECASE)
     if gp_cut:
         session_part = gp_cut.group(1)
     else:
-        # 3b. Fallback: cut after the round token if present.
         rcut = re.search(r'r\d+[.\s]+(.*)$', name, flags=re.IGNORECASE)
         session_part = rcut.group(1) if rcut else name
 
-    # 4. strip trailing source/quality junk (handles glued tags like SkyF1HD)
     session_part = _TAIL_JUNK_RE.sub('', session_part)
 
-    # 5. pop any residual standalone source/quality tokens
     tokens = re.split(r'[.\s_\-]+', session_part)
     while tokens and tokens[-1].lower() in _SESSION_TAIL_TOKENS:
         tokens.pop()
 
     session = ' '.join(tokens).strip()
 
-    # 6. normalize, with a sensible fallback
     key = _normalize_key(session)
     if not key:
         key = _normalize_key(extract_title(filename, config))
@@ -496,10 +459,7 @@ def format_title(title: str, grand_prix: str, config: Config) -> str:
 # ============================================================================
 
 def build_thumbnail_map(sport_config: Dict) -> Dict[str, str]:
-    """
-    Build a mapping from normalized round number to thumbnail URL.
-    Calendar keys are normalized so 'R05'/'05'/'5' all resolve.
-    """
+    """Build a mapping from normalized round number to thumbnail URL."""
     countries = sport_config.get('countries', {})
     calendar = sport_config.get('calendar', {})
 
@@ -518,10 +478,7 @@ def parse_row(
     col_indices: Dict[str, int],
     config: Config
 ) -> Optional[Dict]:
-    """
-    Parse a single CSV row into an intermediate record dict WITHOUT assigning
-    episode numbers or doing dedup. Returns None if the row should be skipped.
-    """
+    """Parse a single CSV row into an intermediate record dict."""
     required_cols = ['torrent_name', 'filename', 'infohash', 'file_index']
     for col in required_cols:
         if col not in col_indices:
@@ -542,17 +499,29 @@ def parse_row(
     if 'filesize' in col_indices and col_indices['filesize'] < len(row):
         filesize = row[col_indices['filesize']].strip()
 
+    timestamp = ''
+    if 'timestamp' in col_indices and col_indices['timestamp'] < len(row):
+        timestamp = row[col_indices['timestamp']].strip()
+
     actual_filename = extract_filename(filename)
 
-    # Skip non-video files
     file_ext = os.path.splitext(actual_filename)[1].lower()
     if file_ext not in {'.mkv', '.mp4', '.avi', '.ts'}:
         if config.debug.get('log_skipped_rows'):
             print(f"  Skipped (non-video): {actual_filename}")
         return None
 
-    # Round (the source of truth) + cosmetic GP name.
-    round_number_raw, grand_prix_name = extract_round_info(torrent_name, config)
+    # Try extracting round/GP from the actual filename first to handle mislabeled torrents
+    round_number_raw, grand_prix_name = extract_round_info(actual_filename, config)
+    
+    # If the filename didn't contain them, fallback to the torrent name
+    if round_number_raw == 'Unknown' or grand_prix_name == 'Unknown':
+        t_round, t_gp = extract_round_info(torrent_name, config)
+        if round_number_raw == 'Unknown':
+            round_number_raw = t_round
+        if grand_prix_name == 'Unknown':
+            grand_prix_name = t_gp
+
     round_number = normalize_round(round_number_raw)
 
     if round_number == 'Unknown' and config.output.get('deduplicate', True):
@@ -560,16 +529,13 @@ def parse_row(
             print(f"  Skipped (unknown round): {torrent_name}")
         return None
 
-    # Display title from the filename.
     title = extract_title(actual_filename, config)
     if title == 'Unknown':
         if config.debug.get('log_skipped_rows'):
             print(f"  Skipped (no title match): {actual_filename}")
         return None
 
-    # Session identity for dedup — independent of the GP name.
     session_key = derive_session_key(actual_filename, config)
-
     formatted_title = format_title(title, grand_prix_name, config)
 
     return {
@@ -583,19 +549,15 @@ def parse_row(
         'file_index': file_index,
         'filename': actual_filename,
         'filesize': filesize,
+        'timestamp': timestamp,
     }
 
 
 # ============================================================================
-# Torrent completeness scoring (optional, only used when prefer_complete)
+# Torrent completeness scoring
 # ============================================================================
 
 def score_torrents(records: List[Dict]) -> Dict[str, Dict]:
-    """
-    Group records by infohash and score each torrent. Only used when
-    output.prefer_complete_torrents is enabled (default: disabled, so the
-    first occurrence in input order wins instead).
-    """
     torrents: Dict[str, Dict] = {}
     for rec in records:
         h = rec['infohash']
@@ -615,7 +577,6 @@ def score_torrents(records: List[Dict]) -> Dict[str, Dict]:
 
 
 def torrent_rank(infohash: str, torrent_stats: Dict[str, Dict]) -> Tuple:
-    """Return a sortable rank tuple for a torrent. Higher tuples are better."""
     stats = torrent_stats.get(infohash, {})
     return (
         stats.get('file_count', 0),
@@ -629,18 +590,6 @@ def torrent_rank(infohash: str, torrent_stats: Dict[str, Dict]) -> Tuple:
 # ============================================================================
 
 def process_csv(config: Config, sport_config: Dict, dry_run: bool = False) -> int:
-    """
-    Process the input CSV and generate output CSV.
-
-    Pipeline:
-      1. Parse every video row into an intermediate record.
-      2. Deduplicate by (round, session). By default the FIRST occurrence in
-         input order wins (first-come-first-served). The GP name plays NO part
-         in the dedup key, so a round never contains two of the same session.
-      3. Number episodes deterministically within each round.
-
-    Returns the number of entries processed.
-    """
     input_path = resolve_path(config.data_paths.get('input_csv', 'content.csv'))
     output_path = resolve_path(config.data_paths.get('output_csv', '6processed.csv'))
 
@@ -648,16 +597,18 @@ def process_csv(config: Config, sport_config: Dict, dry_run: bool = False) -> in
         print(f"Error: Input file not found: {input_path}")
         return 0
 
-    column_mapping = config.column_mapping or get_default_column_mapping()
+    # PERFECTLY FORMATTED FIX: Load defaults, then merge info.json mapping
+    column_mapping = get_default_column_mapping()
+    if config.column_mapping:
+        column_mapping.update(config.column_mapping)
+
     thumbnail_map = build_thumbnail_map(sport_config)
 
-    # ---- Pass 1: parse all rows (preserving input order) ----
     records: List[Dict] = []
     skipped_count = 0
 
     with open(input_path, 'r', newline='', encoding='utf-8') as f:
         reader = csv.reader(f)
-
         try:
             header = next(reader)
         except StopIteration:
@@ -673,7 +624,6 @@ def process_csv(config: Config, sport_config: Dict, dry_run: bool = False) -> in
         missing = [col for col in required if col not in col_indices]
         if missing:
             print(f"Error: Missing required columns: {missing}")
-            print(f"Available columns: {header}")
             return 0
 
         for row_num, row in enumerate(reader, start=2):
@@ -688,24 +638,18 @@ def process_csv(config: Config, sport_config: Dict, dry_run: bool = False) -> in
     if config.debug.get('verbose'):
         print(f"Parsed {len(records)} candidate rows, skipped {skipped_count}")
 
-    # ---- Pass 2: deduplicate by (round, session) ----
     deduplicate = config.output.get('deduplicate', True)
-    dedup_mode = config.output.get('dedup_by', 'session')  # 'session' (default) or 'title'
-    # Default is FIRST-OCCURRENCE-WINS. Set prefer_complete_torrents:true to
-    # instead pick the most complete torrent for each session.
+    dedup_mode = config.output.get('dedup_by', 'session')
     prefer_complete = config.output.get('prefer_complete_torrents', False)
 
     torrent_stats = score_torrents(records) if prefer_complete else {}
-
     best_by_key: Dict[Tuple[str, str], Dict] = {}
 
     for rec in records:
         if deduplicate:
             if dedup_mode == 'title':
-                # Legacy behaviour (NOT recommended): GP name via title.
                 key = (rec['round_number'], _normalize_key(rec['formatted_title']))
             else:
-                # Default, recommended: round + session only.
                 key = (rec['round_number'], rec['session_key'])
         else:
             key = (rec['round_number'], f"{rec['infohash']}:{rec['file_index']}")
@@ -732,7 +676,6 @@ def process_csv(config: Config, sport_config: Dict, dry_run: bool = False) -> in
                     print(f"  Skipped duplicate session {key}: keeping "
                           f"{existing['infohash'][:8]}")
         else:
-            # First-occurrence-wins: keep what we already have, drop this one.
             if config.debug.get('verbose'):
                 print(f"  Skipped duplicate session {key}: keeping first "
                       f"({existing['infohash'][:8]}, dropped {rec['infohash'][:8]})")
@@ -750,7 +693,8 @@ def process_csv(config: Config, sport_config: Dict, dry_run: bool = False) -> in
 
     output_data: List[Dict] = []
     for round_number, recs in rounds.items():
-        recs.sort(key=lambda r: (file_prefix_num(r), r['formatted_title']))
+        # Sort primarily by timestamp so episodes are numbered chronologically
+        recs.sort(key=lambda r: (r.get('timestamp', ''), file_prefix_num(r), r['formatted_title']))
 
         try:
             season = int(round_number)
@@ -769,6 +713,7 @@ def process_csv(config: Config, sport_config: Dict, dry_run: bool = False) -> in
                 'infoHash': rec['infohash'],
                 'fileIdx': rec['file_index'],
                 'filename': rec['filename'],
+                'timestamp': rec['timestamp']
             }
             if config.output.get('include_filesize', True):
                 output['filesize'] = rec['filesize']
@@ -798,7 +743,7 @@ def process_csv(config: Config, sport_config: Dict, dry_run: bool = False) -> in
         except Exception:
             pass
 
-    fieldnames = ['series_id', 'season', 'episode', 'title', 'thumbnail', 'infoHash', 'fileIdx']
+    fieldnames = ['series_id', 'season', 'episode', 'title', 'thumbnail', 'infoHash', 'fileIdx', 'timestamp']
     if config.output.get('include_filesize', True):
         fieldnames.append('filesize')
     if config.output.get('include_quality', False):
@@ -828,7 +773,6 @@ def process_csv(config: Config, sport_config: Dict, dry_run: bool = False) -> in
 # ============================================================================
 
 def main():
-    """Main entry point."""
     parser = argparse.ArgumentParser(
         description='Process torrent content CSV for Stremio addon'
     )

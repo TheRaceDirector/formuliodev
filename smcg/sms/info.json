@@ -2,7 +2,7 @@
   "series_id": "hpytt0202607",
   "sport": "f1",
   "quality": "SD",
-  "per_magnet_timeout": 90,
+  "per_magnet_timeout": 120,
   "overall_script_timeout": 900,
   
   "record_processing": {
@@ -114,8 +114,8 @@
   
   "peer_settings": {
     "max_peers_to_try": 100,
-    "peer_connect_timeout": 5,
-    "peer_metadata_timeout": 30
+    "peer_connect_timeout": 10,
+    "peer_metadata_timeout": 60
   },
   "tracker_settings": {
     "tracker_timeout": 10,
