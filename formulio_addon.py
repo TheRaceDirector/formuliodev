@@ -1373,7 +1373,7 @@ CATALOG = {
             'id': 'hpytt0202615',
             'name': 'F1TV UHD (English)',
             'type': 'series',
-            'description': 'F1TV Live UHD\n🇬🇧 Alex Jacques, Jolyon Palmer, David Coulthard, Alex Brundle\n🇪🇸 Chacho López, Diego Mejía, Giselle Zarur.',
+            'description': 'F1TV Live UHD\n🇬🇧 Alex Jacques, Jolyon Palmer, David Coulthard, Alex Brundle\n🇪🇸 Chacho López, Diego Mejía, Giselle Zarur',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/43xW3VMN/f1tenglishuhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
