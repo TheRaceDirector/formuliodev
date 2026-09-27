@@ -854,8 +854,8 @@ def process_csv_files():
                         continue
                         
                     # Strictly enforce quality in the actual filename
-                    if quality == '4K' and not ('4k' in t_name_lower or '2160p' in t_name_lower):
-                        print("  [SKIPPED] Does not contain 4K/2160p in title")
+                    if quality == '4K' and not ('4k' in t_name_lower or '2160p' in t_name_lower or 'uhd' in t_name_lower):
+                        print("  [SKIPPED] Does not contain 4K/2160p/UHD in title")
                         continue
                     elif quality == 'FHD' and not ('1080p' in t_name_lower or 'fhd' in t_name_lower):
                         print("  [SKIPPED] Does not contain 1080p/FHD in title")
