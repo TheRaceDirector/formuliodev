@@ -1373,7 +1373,7 @@ CATALOG = {
             'id': 'hpytt0202615',
             'name': 'F1TV UHD (English)',
             'type': 'series',
-            'description': 'F1TV Live UHD\n🇬🇧 Alex Jacques, Jolyon Palmer, David Coulthard, Alex Brundle\n🇪🇸 Chacho López, Diego Mejía, Giselle Zarur',
+            'description': 'F1TV Live UHD\n🇬🇧 Alex Jacques, Jolyon Palmer, David Coulthard, Alex Brundle\n🇪🇸 Chacho López, Diego Mejía, Giselle Zarur.',
             'releaseInfo': '2026',
             'poster': 'https://i.postimg.cc/43xW3VMN/f1tenglishuhd.jpg',
             'logo': 'https://i.postimg.cc/Vs0MNnGk/f1logo.png',
@@ -1586,16 +1586,6 @@ def load_videos(filepath: str) -> list:
                     'thumbnail': row['thumbnail'].strip(),
                     'infoHash': row['infoHash'].strip(),
                 }
-                
-                # Extract and format the timestamp for Stremio's global localization
-                timestamp = row.get('timestamp', '').strip()
-                if timestamp:
-                    # Convert '+00:00' to standard 'Z' (Zulu time) for maximum compatibility 
-                    # with Stremio's internal Javascript date parser.
-                    if timestamp.endswith('+00:00'):
-                        timestamp = timestamp.replace('+00:00', '.000Z')
-                    video_obj['released'] = timestamp
-
                 file_idx = row.get('fileIdx', '').strip()
                 if file_idx:
                     video_obj['fileIdx'] = int(file_idx)

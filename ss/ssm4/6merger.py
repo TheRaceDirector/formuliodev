@@ -470,13 +470,74 @@ def build_thumbnail_map(sport_config: Dict) -> Dict[str, str]:
 
 
 # ============================================================================
+# Smart Inference Mapping
+# ============================================================================
+
+def build_gp_to_round_map(sport_config: Dict, raw_rows: List[List[str]], col_indices: Dict[str, int], config: Config) -> Dict[str, str]:
+    """
+    Builds a mapping of Grand Prix names to Round numbers.
+    Sources from sport config calendar, and scans the current CSV for valid pairs.
+    """
+    mapping = {}
+    
+    def add_to_map(gp: str, r: str):
+        if not gp or gp == 'Unknown' or not r or r == 'Unknown':
+            return
+        gp_norm = gp.lower()
+        mapping[gp_norm] = r
+        # Automatically generate variants with and without "GP"
+        if gp_norm.endswith('gp'):
+            mapping[gp_norm[:-2].strip()] = r
+        else:
+            mapping[gp_norm + 'gp'] = r
+            mapping[gp_norm + ' gp'] = r
+
+    # 1. Seed from sport config calendar (e.g., f1_config.json)
+    calendar = sport_config.get('calendar', {})
+    for r_num, gp_name in calendar.items():
+        r_norm = normalize_round(r_num)
+        gp_clean = clean_title(gp_name, config.parsing.title_cleanup)
+        add_to_map(gp_clean, r_norm)
+        
+    # 2. Seed from current CSV data (handles uploader typos if at least one file is named right)
+    for row in raw_rows:
+        if 'filename' not in col_indices or 'torrent_name' not in col_indices:
+            continue
+        if col_indices['filename'] >= len(row) or col_indices['torrent_name'] >= len(row):
+            continue
+            
+        filename = row[col_indices['filename']].strip()
+        torrent_name = row[col_indices['torrent_name']].strip()
+        actual_filename = extract_filename(filename)
+        
+        r_raw, gp_name = extract_round_info(actual_filename, config)
+        if r_raw == 'Unknown' or gp_name == 'Unknown':
+            tr_raw, t_gp = extract_round_info(torrent_name, config)
+            if r_raw == 'Unknown': r_raw = tr_raw
+            if gp_name == 'Unknown': gp_name = t_gp
+            
+        r_norm = normalize_round(r_raw)
+        
+        # Only trust the CSV round number if it's a sensible motorsport round (<= 30)
+        if r_norm != 'Unknown':
+            try:
+                if 0 < int(r_norm) <= 30:
+                    add_to_map(gp_name, r_norm)
+            except ValueError:
+                pass
+                
+    return mapping
+
+
+# ============================================================================
 # Row parsing (pass 1)
 # ============================================================================
 
 def parse_row(
     row: List[str],
     col_indices: Dict[str, int],
-    config: Config
+    config: Config,
+    gp_to_round: Dict[str, str]
 ) -> Optional[Dict]:
     """Parse a single CSV row into an intermediate record dict."""
     required_cols = ['torrent_name', 'filename', 'infohash', 'file_index']
@@ -523,6 +584,26 @@ def parse_row(
             grand_prix_name = t_gp
 
     round_number = normalize_round(round_number_raw)
+
+    # --- NEW SMART INFERENCE LOGIC ---
+    is_suspicious_round = False
+    if round_number != 'Unknown':
+        try:
+            # Catch absolute episode indices (e.g. > 30)
+            if int(round_number) > 30:
+                is_suspicious_round = True
+        except ValueError:
+            pass
+
+    if (round_number == 'Unknown' or is_suspicious_round) and grand_prix_name != 'Unknown':
+        lookup = grand_prix_name.lower()
+        if lookup in gp_to_round:
+            round_number = gp_to_round[lookup]
+        elif lookup.endswith('gp'):
+            fallback = lookup[:-2].strip()
+            if fallback in gp_to_round:
+                round_number = gp_to_round[fallback]
+    # ---------------------------------
 
     if round_number == 'Unknown' and config.output.get('deduplicate', True):
         if config.debug.get('log_skipped_rows'):
@@ -597,7 +678,6 @@ def process_csv(config: Config, sport_config: Dict, dry_run: bool = False) -> in
         print(f"Error: Input file not found: {input_path}")
         return 0
 
-    # PERFECTLY FORMATTED FIX: Load defaults, then merge info.json mapping
     column_mapping = get_default_column_mapping()
     if config.column_mapping:
         column_mapping.update(config.column_mapping)
@@ -626,14 +706,23 @@ def process_csv(config: Config, sport_config: Dict, dry_run: bool = False) -> in
             print(f"Error: Missing required columns: {missing}")
             return 0
 
+        # --- TWO-PASS PARSING UPDATE ---
+        raw_rows = []
         for row_num, row in enumerate(reader, start=2):
             if not row or all(cell.strip() == '' for cell in row):
                 continue
-            rec = parse_row(row, col_indices, config)
+            raw_rows.append(row)
+
+        # Build the rescue map
+        gp_to_round = build_gp_to_round_map(sport_config, raw_rows, col_indices, config)
+
+        for row in raw_rows:
+            rec = parse_row(row, col_indices, config, gp_to_round)
             if rec:
                 records.append(rec)
             else:
                 skipped_count += 1
+        # -------------------------------
 
     if config.debug.get('verbose'):
         print(f"Parsed {len(records)} candidate rows, skipped {skipped_count}")

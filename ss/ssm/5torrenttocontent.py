@@ -51,6 +51,10 @@ CONFIG = load_config()
 try:
     quality = CONFIG['quality'].strip().upper()
     
+    # Extract source preferences and lowercase them for matching
+    parsing_config = CONFIG.get('parsing', {})
+    source_prefs = [s.lower() for s in parsing_config.get('source_preference', [])]
+    
     # Validate quality
     VALID_QUALITIES = ['SD', 'FHD', '4K']
     if quality not in VALID_QUALITIES:
@@ -81,6 +85,8 @@ except KeyError as e:
 
 print(f"[QUALITY] Filter: {quality}")
 print(f"  Will process directories ending with: {quality}")
+if source_prefs:
+    print(f"[SOURCE] Filter: Required tags in filename: {', '.join(source_prefs)}")
 print(f"[TIMEOUTS] Per-magnet: {PER_MAGNET_TIMEOUT}s | Overall script: {OVERALL_SCRIPT_TIMEOUT}s")
 print()
 
@@ -838,6 +844,26 @@ def process_csv_files():
                     timestamp = timestamp.strip()
 
                     print(f"\n[{line_num}] {torrent_name[:55]}...")
+                    
+                    # --- Row-level filtering logic ---
+                    t_name_lower = torrent_name.lower()
+                    
+                    # Check Source (e.g., requires 'f1tv', skips 'multi' if not listed)
+                    if source_prefs and not any(pref in t_name_lower for pref in source_prefs):
+                        print(f"  [SKIPPED] Does not match source preference: {source_prefs}")
+                        continue
+                        
+                    # Strictly enforce quality in the actual filename
+                    if quality == '4K' and not ('4k' in t_name_lower or '2160p' in t_name_lower):
+                        print("  [SKIPPED] Does not contain 4K/2160p in title")
+                        continue
+                    elif quality == 'FHD' and not ('1080p' in t_name_lower or 'fhd' in t_name_lower):
+                        print("  [SKIPPED] Does not contain 1080p/FHD in title")
+                        continue
+                    elif quality == 'SD' and not ('720p' in t_name_lower or 'sd' in t_name_lower):
+                        print("  [SKIPPED] Does not contain 720p/SD in title")
+                        continue
+                    # -------------------------------------------
                     
                     start_time = time.time()
                     

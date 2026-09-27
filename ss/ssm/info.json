@@ -68,28 +68,28 @@
     "backup_extension": ".old"
   },
   
-"parsing": {
-  "torrent_name": {
-    "round_pattern": "[x.]R(\\d+)\\.",
-    "grand_prix_pattern": "\\.R\\d+\\.([A-Za-z]+GP)\\.",
-    "fallback_gp_pattern": "\\.([A-Za-z]+GP)\\."
+  "parsing": {
+    "torrent_name": {
+      "round_pattern": "[x.](?:R)?(\\d+)\\.",
+      "grand_prix_pattern": "\\.(?:R\\d+\\.|x\\d+\\.)?([A-Za-z]+(?:GP)?)\\.",
+      "fallback_gp_pattern": "\\.([A-Za-z]+(?:GP)?)\\."
+    },
+    "filename": {
+      "title_pattern": "^Formula\\.1\\.\\d+.*?(?:[x.]R|x)\\d+\\.(?:R\\d+\\.)?([A-Za-z]+(?:GP)?)\\.(.+?)\\.MULTi\\.[^.]+\\.SS\\.mkv$",
+      "fallback_title_pattern": "^NOMATCH$"
+    },
+    "video_extensions": [".mkv", ".mp4", ".avi", ".ts"],
+    "source_preference": ["MULTi"],
+    "session_types": [],
+    "quality_markers": [],
+    "title_format": "{title} - {grand_prix}",
+    "title_cleanup": {
+      "replace_dots": true,
+      "replace_underscores": true,
+      "title_case": false,
+      "remove_common_suffixes": true
+    }
   },
-  "filename": {
-    "title_pattern": "^Formula\\.1\\.\\d+.*[x.]R\\d+\\.[A-Za-z]+GP\\.(.+?)\\.MULTi\\.[^.]+\\.SS\\.mkv$",
-    "fallback_title_pattern": "^NOMATCH$"
-  },
-  "video_extensions": [".mkv", ".mp4", ".avi", ".ts"],
-  "source_preference": ["MULTi"],
-  "session_types": [],
-  "quality_markers": [],
-  "title_format": "{title} - {grand_prix}",
-  "title_cleanup": {
-    "replace_dots": true,
-    "replace_underscores": true,
-    "title_case": false,
-    "remove_common_suffixes": true
-  }
-},
   
   "data_paths": {
     "config_file": "../../data/f1_config.json",

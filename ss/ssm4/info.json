@@ -68,14 +68,14 @@
     "backup_extension": ".old"
   },
   
-"parsing": {
+  "parsing": {
     "torrent_name": {
-      "round_pattern": "[x.]R(\\d+)\\.",
-      "grand_prix_pattern": "\\.R\\d+\\.([A-Za-z]+GP)\\.",
-      "fallback_gp_pattern": "\\.([A-Za-z]+GP)\\."
+      "round_pattern": "[x.](?:R)?(\\d+)\\.",
+      "grand_prix_pattern": "\\.(?:R\\d+\\.|x\\d+\\.)?([A-Za-z]+(?:GP)?)\\.",
+      "fallback_gp_pattern": "\\.([A-Za-z]+(?:GP)?)\\."
     },
     "filename": {
-      "title_pattern": "^Formula\\.1\\.\\d+.*[x.]R\\d+\\.([A-Za-z]+GP)\\.(.+?)\\.MULTi\\..+?\\.SS\\.mkv$",
+      "title_pattern": "^Formula\\.1\\.\\d+.*?(?:[x.]R|x)\\d+\\.(?:R\\d+\\.)?([A-Za-z]+(?:GP)?)\\.(.+?)\\.MULTi\\..+?\\.SS\\.mkv$",
       "fallback_title_pattern": "^NOMATCH$"
     },
     "video_extensions": [".mkv", ".mp4", ".avi", ".ts"],
