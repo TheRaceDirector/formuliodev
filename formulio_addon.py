@@ -17,6 +17,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from flask import Flask, jsonify, abort, send_from_directory, request, redirect
 from werkzeug.middleware.proxy_fix import ProxyFix
 from time import time as now
+from datetime import datetime, timezone
+
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1552,19 +1554,38 @@ def respond_with(data: dict):
     return resp
 
 
+def _format_released_iso(ts_raw: str) -> str:
+    """Ensure timestamp string is formatted as YYYY-MM-DDTHH:MM:SS.000Z for Stremio/Nuvio."""
+    if not ts_raw or not ts_raw.strip():
+        return '2026-01-01T00:00:00.000Z'
+    s = ts_raw.strip()
+    if s.endswith('.000Z'):
+        return s
+    try:
+        iso_candidate = s.replace('Z', '+00:00') if s.endswith('Z') else s
+        dt = datetime.fromisoformat(iso_candidate)
+        if dt.tzinfo is not None:
+            dt = dt.astimezone(timezone.utc)
+        else:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+    except Exception:
+        return '2026-01-01T00:00:00.000Z'
+
+
 def load_videos(filepath: str) -> list:
     videos: list = []
     seen_slots: dict = {}
     duplicate_slots = 0
 
     try:
-        with open(filepath, 'r', newline='') as f:
+        with open(filepath, 'r', newline='', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 try:
                     season = int(row['season'].strip())
                     episode = int(row['episode'].strip())
-                except (ValueError, KeyError):
+                except (ValueError, KeyError, AttributeError):
                     logger.error(f"Bad season/episode in {filepath}: {row}")
                     continue
 
@@ -1578,6 +1599,9 @@ def load_videos(filepath: str) -> list:
                     )
                     continue
 
+                raw_ts = (row.get('timestamp') or row.get('released') or '').strip()
+                released_iso = _format_released_iso(raw_ts)
+
                 video_obj: dict = {
                     'id': row['series_id'].strip(),
                     'season': season,
@@ -1585,17 +1609,19 @@ def load_videos(filepath: str) -> list:
                     'title': row['title'].strip(),
                     'thumbnail': row['thumbnail'].strip(),
                     'infoHash': row['infoHash'].strip(),
+                    'released': released_iso,
+                    'timestamp': released_iso,
                 }
-                file_idx = row.get('fileIdx', '').strip()
+                file_idx = (row.get('fileIdx') or '').strip()
                 if file_idx:
                     video_obj['fileIdx'] = int(file_idx)
-                filesize = row.get('filesize', '').strip()
+                filesize = (row.get('filesize') or '').strip()
                 if filesize:
                     video_obj['filesize'] = filesize
-                quality = row.get('quality', '').strip()
+                quality = (row.get('quality') or '').strip()
                 if quality:
                     video_obj['quality'] = quality
-                filename = row.get('filename', '').strip()
+                filename = (row.get('filename') or '').strip()
                 if filename:
                     video_obj['filename'] = filename
 
