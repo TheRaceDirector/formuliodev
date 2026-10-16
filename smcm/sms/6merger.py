@@ -101,11 +101,6 @@ def load_info_json() -> Dict:
 def build_pattern(pattern: str, config: Dict) -> str:
     """
     Build a regex pattern by substituting placeholders.
-
-    Supported placeholders:
-        {year} - The configured year
-        {session_types} - Alternation of session types
-        {quality_markers} - Alternation of quality markers
     """
     year = config.get('year', 2026)
     parsing = config.get('parsing', {})
@@ -218,25 +213,25 @@ def load_config() -> Tuple[Config, Dict]:
 
 
 def load_sport_config(config: Config) -> Dict:
-    """Load sport-specific configuration (countries, calendar, etc.)."""
+    """Load sport-specific configuration (countries, calendar, round_dates, etc.)."""
     config_file = config.data_paths.get('config_file')
 
     if not config_file:
-        return {'countries': {}, 'calendar': {}}
+        return {'countries': {}, 'calendar': {}, 'round_dates': {}}
 
     config_path = resolve_path(config_file)
 
     if not config_path.exists():
         if config.debug.get('verbose'):
             print(f"Warning: Sport config not found at {config_path}")
-        return {'countries': {}, 'calendar': {}}
+        return {'countries': {}, 'calendar': {}, 'round_dates': {}}
 
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     except json.JSONDecodeError as e:
         print(f"Warning: Invalid JSON in sport config: {e}")
-        return {'countries': {}, 'calendar': {}}
+        return {'countries': {}, 'calendar': {}, 'round_dates': {}}
 
 
 # ============================================================================
@@ -277,7 +272,7 @@ def get_default_column_mapping() -> Dict[str, List[str]]:
 
 
 # ============================================================================
-# Timestamp Normalization
+# Timestamp Normalization & Date-Range Round Matching
 # ============================================================================
 
 def normalize_timestamp(ts_str: str, default_year: int = 2026) -> str:
@@ -313,7 +308,7 @@ def normalize_timestamp(ts_str: str, default_year: int = 2026) -> str:
     except ValueError:
         pass
 
-    # Fallback common date formats (e.g., RFC 2822 / CSV dates)
+    # Fallback common date formats
     for fmt in (
         "%d %b %Y %H:%M:%S %z",
         "%a, %d %b %Y %H:%M:%S %z",
@@ -332,6 +327,38 @@ def normalize_timestamp(ts_str: str, default_year: int = 2026) -> str:
             continue
 
     return f"{default_year}-01-01T00:00:00.000Z"
+
+
+def lookup_round_by_date(ts_iso: str, sport_config: Dict) -> Optional[str]:
+    """
+    Match a normalized ISO-8601 timestamp ('YYYY-MM-DDTHH:MM:SS.000Z') against
+    'round_dates' in sport_config (e.g., f1_config.json).
+    """
+    round_dates = sport_config.get('round_dates', {})
+    if not round_dates or not ts_iso or ts_iso.endswith('-01-01T00:00:00.000Z'):
+        return None
+
+    try:
+        file_date = datetime.strptime(ts_iso[:10], "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+    for r_num, info in round_dates.items():
+        if not isinstance(info, dict):
+            continue
+        start_s = info.get('start')
+        end_s = info.get('end')
+        if not start_s or not end_s:
+            continue
+        try:
+            start_d = datetime.strptime(start_s, "%Y-%m-%d").date()
+            end_d = datetime.strptime(end_s, "%Y-%m-%d").date()
+            if start_d <= file_date <= end_d:
+                return normalize_round(r_num)
+        except ValueError:
+            continue
+
+    return None
 
 
 # ============================================================================
@@ -372,6 +399,30 @@ def _normalize_key(text: str) -> str:
     return t
 
 
+def _strip_formula1_prefix(text: str) -> str:
+    """
+    Remove leading file index (e.g., '01.') and normalize 'Formula.1' / 'Formula 1'
+    to 'F1' so regexes like `[x.](?:R)?(\\d+)\\.` NEVER accidentally match the `.1.`
+    in `Formula.1.2026x84...`!
+    """
+    cleaned = re.sub(r'^\d+[.\s_]+', '', text)
+    cleaned = re.sub(r'\bFormula[.\s_]+1\b', 'F1', cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r'\bFormula[.\s_]+One\b', 'F1', cleaned, flags=re.IGNORECASE)
+    return cleaned
+
+
+def extract_explicit_r_round(text: str) -> Optional[str]:
+    """
+    Return the round number string ONLY if text has an explicit R<num> or Round <num>
+    marker (not YYYYxNN).
+    """
+    cleaned = _strip_formula1_prefix(text)
+    m = re.search(r'(?:^|[.\s_])(?:R|Round[.\s_]*)(\d{1,2})(?=[.\s_]|$)', cleaned, re.IGNORECASE)
+    if m:
+        return m.group(1)
+    return None
+
+
 def extract_round_info(text: str, config: Config) -> Tuple[str, str]:
     """
     Extract round number and grand prix name from text (torrent name or filename).
@@ -379,21 +430,42 @@ def extract_round_info(text: str, config: Config) -> Tuple[str, str]:
     round_number = 'Unknown'
     grand_prix_name = 'Unknown'
 
-    if config._round_regex:
-        match = config._round_regex.search(text)
-        if match:
-            groups = match.groups()
-            round_number = groups[-1]
+    cleaned_for_round = _strip_formula1_prefix(text)
+
+    # 1. Explicit R<num> or Round <num> (e.g., R15, Round 15) takes highest priority
+    explicit_r = extract_explicit_r_round(text)
+    if explicit_r is not None:
+        round_number = explicit_r
+    else:
+        # 2. Explicit <year>x<num> (e.g., 2026x84)
+        m_explicit_x = re.search(r'\b\d{4}x(\d{1,3})\b', cleaned_for_round, re.IGNORECASE)
+        if m_explicit_x:
+            round_number = m_explicit_x.group(1)
+        elif config._round_regex:
+            # 3. Configured round_pattern on cleaned string (without Formula.1.)
+            match = config._round_regex.search(cleaned_for_round)
+            if match and match.groups():
+                round_number = match.groups()[-1]
 
     if config._gp_regex:
-        match = config._gp_regex.search(text)
+        match = config._gp_regex.search(cleaned_for_round)
+        if not match:
+            match = config._gp_regex.search(text)
         if match:
             grand_prix_name = match.group(1)
 
     if grand_prix_name == 'Unknown' and config._fallback_gp_regex:
-        match = config._fallback_gp_regex.search(text)
+        match = config._fallback_gp_regex.search(cleaned_for_round)
+        if not match:
+            match = config._fallback_gp_regex.search(text)
         if match:
             grand_prix_name = match.group(1)
+
+    # Also allow title_regex group(1) to supply GP name if title_regex has 2 groups (like in ss/ssf4)
+    if grand_prix_name == 'Unknown' and config._title_regex:
+        t_match = config._title_regex.search(text)
+        if t_match and len(t_match.groups()) >= 2:
+            grand_prix_name = t_match.group(1)
 
     grand_prix_name = clean_title(grand_prix_name, config.parsing.title_cleanup)
 
@@ -443,21 +515,21 @@ _SESSION_TAIL_TOKENS = {
     'f1tv', 'tv', 'uhd', 'hd', 'sd', 'fhd', 'uk', 'world', 'feed', 'multi',
     'web', 'webrip', 'webdl', '2160p', '1080p', '720p', '480p', '2160',
     '1080', '720', '480', '4k', 'h264', 'h265', 'x264', 'x265', 'hevc',
-    'avc', 'aac', 'ac3', 'ddp', 'dd', 'mp4', 'mkv', 'ts', 'avi',
+    'avc', 'aac', 'ac3', 'ddp', 'dd', 'mp4', 'mkv', 'ts', 'avi', 'ss',
 }
 
 _TAIL_JUNK_RE = re.compile(
     r'[.\s_\-]+'
     r'(?:sky\w*|f1\w*|sports?|uhd|hd|sd|fhd|tv|uk|world|feed|multi|web\w*|'
-    r'\d{3,4}p|\d{3,4}|4k|h26[45]|x26[45]|hevc|avc|aac|ac3|ddp?)'
+    r'\d{3,4}p|\d{3,4}|4k|h26[45]|x26[45]|hevc|avc|aac|ac3|ddp?|ss)'
     r'(?:[.\s_\-]+(?:sky\w*|f1\w*|sports?|uhd|hd|sd|fhd|tv|uk|world|feed|'
-    r'multi|web\w*|\d{3,4}p|\d{3,4}|4k|h26[45]|x26[45]|hevc|avc|aac|ac3|ddp?))*'
+    r'multi|web\w*|\d{3,4}p|\d{3,4}|4k|h26[45]|x26[45]|hevc|avc|aac|ac3|ddp?|ss))*'
     r'$',
     flags=re.IGNORECASE
 )
 
 
-def derive_session_key(filename: str, config: Config) -> str:
+def derive_session_key(filename: str, config: Config, extracted_title: str = '') -> str:
     """Derive a stable, GP-name-independent session identity from a filename."""
     if config._session_key_regex:
         m = config._session_key_regex.search(filename)
@@ -471,9 +543,15 @@ def derive_session_key(filename: str, config: Config) -> str:
     gp_cut = re.search(r'grand[.\s]prix[.\s]+(.*)$', name, flags=re.IGNORECASE)
     if gp_cut:
         session_part = gp_cut.group(1)
+    elif extracted_title and extracted_title != 'Unknown':
+        session_part = extracted_title
     else:
-        rcut = re.search(r'r\d+[.\s]+(.*)$', name, flags=re.IGNORECASE)
-        session_part = rcut.group(1) if rcut else name
+        rcut = re.search(r'(?:^|[.\s])r\d+[.\s]+[a-z]+[.\s]+(.*)$', name, flags=re.IGNORECASE)
+        if rcut:
+            session_part = rcut.group(1)
+        else:
+            xcut = re.search(r'\d{4}x\d+[.\s]+(?:r\d+[.\s]+)?[a-z]+[.\s]+(.*)$', name, flags=re.IGNORECASE)
+            session_part = xcut.group(1) if xcut else name
 
     session_part = _TAIL_JUNK_RE.sub('', session_part)
 
@@ -485,7 +563,7 @@ def derive_session_key(filename: str, config: Config) -> str:
 
     key = _normalize_key(session)
     if not key:
-        key = _normalize_key(extract_title(filename, config))
+        key = _normalize_key(extracted_title or extract_title(filename, config))
 
     # Normalize common uploader typos so they deduplicate cleanly
     key = key.replace('team pricipal ', 'team principals ')
@@ -493,7 +571,7 @@ def derive_session_key(filename: str, config: Config) -> str:
     return key
 
 
-# Canonical chronological order for a motorsport weekend (fallback when files lack 01..11 prefixes)
+# Canonical chronological order for a motorsport weekend
 _CANONICAL_SESSION_ORDER = [
     ('weekend warm up', 10),
     ('drivers press conference', 15),
@@ -502,6 +580,7 @@ _CANONICAL_SESSION_ORDER = [
     ('paddock uncut', 20),
     ('free practice one', 30),
     ('free practice 1', 30),
+    ('practice one', 30),
     ('practice 1', 30),
     ('fp1', 30),
     ('team principals press conference', 40),
@@ -509,30 +588,44 @@ _CANONICAL_SESSION_ORDER = [
     ('team pricipal press conference', 40),
     ('free practice two', 50),
     ('free practice 2', 50),
+    ('practice two', 50),
     ('practice 2', 50),
     ('fp2', 50),
+    ('pre sprint qualifying', 52),
+    ('sprint qualifying pre', 52),
     ('sprint qualifying', 55),
     ('sprint shootout', 55),
+    ('post sprint qualifying', 57),
+    ('sprint qualifying post', 57),
     ('f1 show', 60),
     ('free practice three', 70),
     ('free practice 3', 70),
+    ('practice three', 70),
     ('practice 3', 70),
     ('fp3', 70),
+    ('pre sprint', 72),
+    ('sprint pre', 72),
     ('sprint', 75),
+    ('post sprint', 77),
+    ('sprint post', 77),
     ('teds sprint notebook', 78),
     ('sprint notebook', 78),
-    ('qualifying pre show', 82),
+    ('pre qualifying', 82),
+    ('qualifying pre', 82),
     ('qualifying', 85),
-    ('qualifying post show', 88),
+    ('post qualifying', 88),
+    ('qualifying post', 88),
     ('teds qualifying notebook', 90),
     ('qualifying notebook', 90),
     ('grand prix sunday', 95),
-    ('race pre show', 95),
+    ('pre race', 95),
+    ('race pre', 95),
     ('build up', 95),
     ('race', 100),
     ('grand prix', 100),
     ('chequered flag', 105),
-    ('race post show', 105),
+    ('post race', 105),
+    ('race post', 105),
     ('teds notebook', 110),
     ('notebook', 110),
 ]
@@ -541,11 +634,9 @@ _CANONICAL_SESSION_ORDER = [
 def canonical_session_rank(session_key: str) -> int:
     """Return a canonical weekend ordering rank for a session key."""
     s = session_key.lower().strip()
-    # Check exact match first
     for pattern, rank in _CANONICAL_SESSION_ORDER:
         if s == pattern:
             return rank
-    # Check substring match (longest pattern first to avoid 'sprint' matching 'sprint qualifying' early)
     for pattern, rank in sorted(_CANONICAL_SESSION_ORDER, key=lambda x: len(x[0]), reverse=True):
         if pattern in s:
             return rank
@@ -580,35 +671,99 @@ def build_thumbnail_map(sport_config: Dict) -> Dict[str, str]:
 
 
 # ============================================================================
-# Smart Inference Mapping
+# Smart Inference Mapping (Aliases + Calendar + Date Ranges)
 # ============================================================================
 
-def build_gp_to_round_map(sport_config: Dict, raw_rows: List[List[str]], col_indices: Dict[str, int], config: Config) -> Dict[str, str]:
-    """
-    Builds a mapping of Grand Prix names to Round numbers.
-    Sources from sport config calendar, and scans the current CSV for valid pairs.
-    """
-    mapping = {}
+# Built-in fallback aliases in case a sport config doesn't list round_dates aliases
+_BUILTIN_F1_ALIASES: Dict[str, List[str]] = {
+    'Australia': ['Australian', 'Melbourne', 'Albert Park'],
+    'China': ['Chinese', 'Shanghai'],
+    'Japan': ['Japanese', 'Suzuka'],
+    'Canada': ['Canadian', 'Montreal'],
+    'Monaco': ['Monte Carlo'],
+    'Austria': ['Austrian', 'Spielberg', 'Red Bull Ring'],
+    'United Kingdom': ['British', 'Great Britain', 'Silverstone', 'UK'],
+    'Belgium': ['Belgian', 'Spa', 'Spa-Francorchamps'],
+    'Hungary': ['Hungarian', 'Budapest', 'Hungaroring'],
+    'Netherlands': ['Dutch', 'Zandvoort'],
+    'Italy': ['Italian', 'Monza'],
+    'Azerbaijan': ['Azerbaijani', 'Baku'],
+    'Malaysia': ['Bahrain', 'Bahraini', 'Malaysian', 'Sepang', 'Sakhir'],
+    'Singapore': ['Marina Bay'],
+    'Mexico': ['Mexican', 'Mexico City'],
+    'Brazil': ['Brazilian', 'Sao Paulo', 'Interlagos'],
+    'Qatar': ['Qatari', 'Lusail', 'Losail'],
+    'United Arab Emirates': ['Abu Dhabi', 'UAE', 'Yas Marina'],
+}
 
-    def add_to_map(gp: str, r: str):
-        if not gp or gp == 'Unknown' or not r or r == 'Unknown':
+
+def _gp_lookup_variants(gp: str) -> List[str]:
+    """Generate normalized lookup variants for a Grand Prix / country / track name."""
+    if not gp or gp == 'Unknown':
+        return []
+    # Split CamelCase (e.g. SaudiArabiaGP -> Saudi Arabia GP, DutchGP -> Dutch GP)
+    s = re.sub(r'([a-z])([A-Z])', r'\1 \2', gp)
+    s = s.lower()
+    s = re.sub(r'[._\-]+', ' ', s)
+    s = ' '.join(s.split()).strip()
+
+    core = re.sub(r'\s*(?:grand\s+prix|gp)$', '', s).strip()
+    core_nospace = core.replace(' ', '')
+
+    variants = [
+        s,
+        core,
+        core_nospace,
+        f"{core} gp",
+        f"{core}gp",
+        f"{core_nospace}gp",
+        f"{core} grand prix",
+    ]
+    return [v for v in dict.fromkeys(variants) if v]
+
+
+def build_gp_to_round_map(
+    sport_config: Dict,
+    raw_rows: List[List[str]],
+    col_indices: Dict[str, int],
+    config: Config
+) -> Tuple[Dict[str, str], Dict[str, List[str]]]:
+    """
+    Builds a mapping of Grand Prix names/aliases to Round numbers:
+    Returns:
+      - unambiguous_map: variant -> round_norm (when a name maps to a single round, or latest round)
+      - multi_map: variant -> list of round_norms (tracks ambiguous names like 'Spain' or 'United States')
+    """
+    multi_map: Dict[str, List[str]] = {}
+
+    def register_name(gp: str, r_norm: str):
+        if not gp or gp == 'Unknown' or not r_norm or r_norm in ('Unknown', '0'):
             return
-        gp_norm = gp.lower()
-        mapping[gp_norm] = r
-        if gp_norm.endswith('gp'):
-            mapping[gp_norm[:-2].strip()] = r
-        else:
-            mapping[gp_norm + 'gp'] = r
-            mapping[gp_norm + ' gp'] = r
+        for variant in _gp_lookup_variants(gp):
+            rounds_list = multi_map.setdefault(variant, [])
+            if r_norm not in rounds_list:
+                rounds_list.append(r_norm)
 
-    # 1. Seed from sport config calendar (e.g., f1_config.json)
-    calendar = sport_config.get('calendar', {})
-    for r_num, gp_name in calendar.items():
+    # 1. Seed from sport_config['round_dates'] aliases (most specific)
+    round_dates = sport_config.get('round_dates', {})
+    for r_num, info in round_dates.items():
         r_norm = normalize_round(r_num)
-        gp_clean = clean_title(gp_name, config.parsing.title_cleanup)
-        add_to_map(gp_clean, r_norm)
+        if isinstance(info, dict):
+            for alias in info.get('aliases', []):
+                register_name(alias, r_norm)
 
-    # 2. Seed from current CSV data (handles uploader typos if at least one file is named right)
+    # 2. Seed from sport_config['calendar'] + built-in demonym aliases
+    calendar = sport_config.get('calendar', {})
+    for r_num, country_name in calendar.items():
+        r_norm = normalize_round(r_num)
+        if r_norm == '0':
+            continue
+        gp_clean = clean_title(country_name, config.parsing.title_cleanup)
+        register_name(gp_clean, r_norm)
+        for builtin_alias in _BUILTIN_F1_ALIASES.get(country_name, []):
+            register_name(builtin_alias, r_norm)
+
+    # 3. Seed from current CSV data ONLY when the row has an explicit R<num>
     for row in raw_rows:
         if 'filename' not in col_indices or 'torrent_name' not in col_indices:
             continue
@@ -619,25 +774,90 @@ def build_gp_to_round_map(sport_config: Dict, raw_rows: List[List[str]], col_ind
         torrent_name = row[col_indices['torrent_name']].strip()
         actual_filename = extract_filename(filename)
 
-        r_raw, gp_name = extract_round_info(actual_filename, config)
-        if r_raw == 'Unknown' or gp_name == 'Unknown':
-            tr_raw, t_gp = extract_round_info(torrent_name, config)
-            if r_raw == 'Unknown':
-                r_raw = tr_raw
-            if gp_name == 'Unknown':
-                gp_name = t_gp
+        explicit_r = extract_explicit_r_round(actual_filename) or extract_explicit_r_round(torrent_name)
+        if not explicit_r:
+            continue
 
-        r_norm = normalize_round(r_raw)
+        _, gp_name = extract_round_info(actual_filename, config)
+        if gp_name == 'Unknown':
+            _, gp_name = extract_round_info(torrent_name, config)
 
-        # Only trust the CSV round number if it's a sensible motorsport round (<= 30)
+        r_norm = normalize_round(explicit_r)
         if r_norm != 'Unknown':
             try:
                 if 0 < int(r_norm) <= 30:
-                    add_to_map(gp_name, r_norm)
+                    register_name(gp_name, r_norm)
             except ValueError:
                 pass
 
-    return mapping
+    unambiguous_map: Dict[str, str] = {}
+    for variant, rounds_list in multi_map.items():
+        if len(rounds_list) == 1:
+            unambiguous_map[variant] = rounds_list[0]
+
+    return unambiguous_map, multi_map
+
+
+def resolve_round_number(
+    actual_filename: str,
+    torrent_name: str,
+    grand_prix_name: str,
+    timestamp_iso: str,
+    extracted_round_norm: str,
+    unambiguous_gp_map: Dict[str, str],
+    multi_gp_map: Dict[str, List[str]],
+    sport_config: Dict,
+) -> str:
+    """
+    Resolve the true motorsport Round number using a 4-step priority hierarchy:
+      1. Explicit R<num> / Round <num> in the inner filename (e.g. R15) -> authoritative.
+      2. Unambiguous GP name/alias match in f1_config (e.g. 'Bahrain' -> 16, 'DutchGP' -> 12).
+      3. Date-range match in f1_config['round_dates'] using the file's timestamp
+         (resolves missing round numbers, YYYYxNN files, and multi-race countries like Spain/USA).
+      4. Explicit R<num> in the outer torrent name, or fallback to multi_gp_map / extracted round.
+    """
+    # Step 1: Explicit R<num> in the inner video filename itself
+    file_explicit_r = extract_explicit_r_round(actual_filename)
+    if file_explicit_r is not None:
+        r_norm = normalize_round(file_explicit_r)
+        if r_norm != 'Unknown' and int(r_norm) <= 30:
+            return r_norm
+
+    # Step 2: Check GP name against unambiguous aliases & check timestamp against round_dates
+    date_round = lookup_round_by_date(timestamp_iso, sport_config)
+
+    if grand_prix_name and grand_prix_name != 'Unknown':
+        for variant in _gp_lookup_variants(grand_prix_name):
+            # If the GP name maps to a single unique round in the season (e.g. Bahrain -> 16, Singapore -> 17)
+            if variant in unambiguous_gp_map:
+                return unambiguous_gp_map[variant]
+            # If the GP name maps to multiple rounds (e.g. Spain -> 7 or 14, United States -> 4, 18, 21)
+            if variant in multi_gp_map:
+                candidate_rounds = multi_gp_map[variant]
+                if date_round and date_round in candidate_rounds:
+                    return date_round
+                return candidate_rounds[-1]
+
+    # Step 3: If no explicit R<num> in filename and GP name didn't uniquely resolve it, use date range!
+    if date_round:
+        return date_round
+
+    # Step 4: Fallback to explicit R<num> in torrent_name (if reasonable)
+    torrent_explicit_r = extract_explicit_r_round(torrent_name)
+    if torrent_explicit_r is not None:
+        r_norm = normalize_round(torrent_explicit_r)
+        if r_norm != 'Unknown' and int(r_norm) <= 30:
+            return r_norm
+
+    # Final fallback: only use extracted_round_norm if it's <= 30
+    if extracted_round_norm != 'Unknown':
+        try:
+            if 0 < int(extracted_round_norm) <= 30:
+                return extracted_round_norm
+        except ValueError:
+            pass
+
+    return 'Unknown'
 
 
 # ============================================================================
@@ -648,7 +868,9 @@ def parse_row(
     row: List[str],
     col_indices: Dict[str, int],
     config: Config,
-    gp_to_round: Dict[str, str]
+    unambiguous_gp_map: Dict[str, str],
+    multi_gp_map: Dict[str, List[str]],
+    sport_config: Dict,
 ) -> Optional[Dict]:
     """Parse a single CSV row into an intermediate record dict."""
     required_cols = ['torrent_name', 'filename', 'infohash', 'file_index']
@@ -684,10 +906,8 @@ def parse_row(
             print(f"  Skipped (non-video): {actual_filename}")
         return None
 
-    # Try extracting round/GP from the actual filename first to handle mislabeled torrents
+    # Extract raw round/GP from filename first, then fallback to torrent_name
     round_number_raw, grand_prix_name = extract_round_info(actual_filename, config)
-
-    # If the filename didn't contain them, fallback to the torrent name
     if round_number_raw == 'Unknown' or grand_prix_name == 'Unknown':
         t_round, t_gp = extract_round_info(torrent_name, config)
         if round_number_raw == 'Unknown':
@@ -695,26 +915,19 @@ def parse_row(
         if grand_prix_name == 'Unknown':
             grand_prix_name = t_gp
 
-    round_number = normalize_round(round_number_raw)
+    extracted_round_norm = normalize_round(round_number_raw)
 
-    # --- SMART INFERENCE LOGIC ---
-    is_suspicious_round = False
-    if round_number != 'Unknown':
-        try:
-            if int(round_number) > 30:
-                is_suspicious_round = True
-        except ValueError:
-            pass
-
-    if (round_number == 'Unknown' or is_suspicious_round) and grand_prix_name != 'Unknown':
-        lookup = grand_prix_name.lower()
-        if lookup in gp_to_round:
-            round_number = gp_to_round[lookup]
-        elif lookup.endswith('gp'):
-            fallback = lookup[:-2].strip()
-            if fallback in gp_to_round:
-                round_number = gp_to_round[fallback]
-    # -----------------------------
+    # Resolve authoritative round number via Explicit R<num> -> GP Alias -> Date Range
+    round_number = resolve_round_number(
+        actual_filename=actual_filename,
+        torrent_name=torrent_name,
+        grand_prix_name=grand_prix_name,
+        timestamp_iso=timestamp,
+        extracted_round_norm=extracted_round_norm,
+        unambiguous_gp_map=unambiguous_gp_map,
+        multi_gp_map=multi_gp_map,
+        sport_config=sport_config,
+    )
 
     if round_number == 'Unknown' and config.output.get('deduplicate', True):
         if config.debug.get('log_skipped_rows'):
@@ -727,7 +940,7 @@ def parse_row(
             print(f"  Skipped (no title match): {actual_filename}")
         return None
 
-    session_key = derive_session_key(actual_filename, config)
+    session_key = derive_session_key(actual_filename, config, extracted_title=title)
     formatted_title = format_title(title, grand_prix_name, config)
 
     return {
@@ -823,10 +1036,14 @@ def process_csv(config: Config, sport_config: Dict, dry_run: bool = False) -> in
                 continue
             raw_rows.append(row)
 
-        gp_to_round = build_gp_to_round_map(sport_config, raw_rows, col_indices, config)
+        unambiguous_gp_map, multi_gp_map = build_gp_to_round_map(
+            sport_config, raw_rows, col_indices, config
+        )
 
         for row in raw_rows:
-            rec = parse_row(row, col_indices, config, gp_to_round)
+            rec = parse_row(
+                row, col_indices, config, unambiguous_gp_map, multi_gp_map, sport_config
+            )
             if rec:
                 records.append(rec)
             else:
@@ -837,7 +1054,6 @@ def process_csv(config: Config, sport_config: Dict, dry_run: bool = False) -> in
 
     deduplicate = config.output.get('deduplicate', True)
     dedup_mode = config.output.get('dedup_by', 'session')
-    # Default prefer_complete_torrents to True so full weekend packs beat partial incremental packs
     prefer_complete = config.output.get('prefer_complete_torrents', True)
 
     torrent_stats = score_torrents(records) if prefer_complete else {}
@@ -881,9 +1097,15 @@ def process_csv(config: Config, sport_config: Dict, dry_run: bool = False) -> in
     chosen = list(best_by_key.values())
 
     # ---- Pass 3: episode numbering ----
-    def file_prefix_num(rec: Dict) -> int:
+    def leading_file_num(rec: Dict) -> int:
+        """Match leading file number (e.g., '01.F1...'), else 9999."""
         m = re.match(r'^(\d+)[.\s_\-]', rec['filename'])
         return int(m.group(1)) if m else 9999
+
+    def x_seq_num(rec: Dict) -> int:
+        """Match ShowSplitter-style '2026x91' sequence counter as tie-breaker."""
+        mx = re.search(r'\b\d{4}x(\d+)\b', rec['filename'], re.IGNORECASE)
+        return int(mx.group(1)) if mx else 9999
 
     rounds: Dict[str, List[Dict]] = {}
     for rec in chosen:
@@ -891,14 +1113,15 @@ def process_csv(config: Config, sport_config: Dict, dry_run: bool = False) -> in
 
     output_data: List[Dict] = []
     for round_number, recs in rounds.items():
-        # Sort by:
-        # 1. Leading file number (01..11) if present
-        # 2. Canonical weekend session order (Drivers Press Conf -> FP1 -> ... -> Race -> Notebook)
-        # 3. Timestamp (chronological fallback)
-        # 4. File index within torrent & title
+        # Sort order within each round:
+        # 1. Leading file index prefix (01..11) if present
+        # 2. Canonical motorsport weekend order (Pre Quali -> Quali -> Post Quali -> Pre Race -> Race -> Post Race)
+        # 3. YYYYxNN sequence number (if present)
+        # 4. Timestamp & file_index
         recs.sort(key=lambda r: (
-            file_prefix_num(r),
+            leading_file_num(r),
             canonical_session_rank(r['session_key']),
+            x_seq_num(r),
             r.get('timestamp', ''),
             r.get('file_index', 0),
             r['formatted_title']
